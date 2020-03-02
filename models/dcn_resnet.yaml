@@ -1,0 +1,9 @@
+MODEL:  #detectron2://ImageNetPretrained/MSRA/R-50.pkl
+  WEIGHTS: "/root/code/resnet50-19c8e357.pth"
+  BACKBONE:
+    NAME: "build_resnet_backbone"
+  RESNETS:
+    DEPTH: 50
+    DEFORM_ON_PER_STAGE: [False, True, True, True] # on Res3,Res4,Res5
+    DEFORM_MODULATED: True
+    OUT_FEATURES: ["res2", "res3", "res4", "res5"]

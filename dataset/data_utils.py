@@ -19,8 +19,29 @@ import config
 
 from boundary_loss import class2one_hot, one_hot2dist
 
+from albumentations import (
+    Compose, RGBShift, RandomBrightness, RandomContrast,
+    HueSaturationValue, ChannelShuffle, CLAHE,
+    RandomContrast, Blur, ToGray, JpegCompression,
+    CoarseDropout  
+)
+
 data_aug = PSEDataAugment()
 
+def augument():
+    augm = Compose([
+        RGBShift(),
+        RandomBrightness(),
+        RandomContrast(),
+        HueSaturationValue(p=0.2),
+        ChannelShuffle(),
+        CLAHE(),
+        Blur(),
+        ToGray(),
+        CoarseDropout()
+    ],
+    p=0.5)
+    return augm
 
 def check_and_validate_polys(polys, xxx_todo_changeme):
     '''
@@ -224,6 +245,8 @@ class PSEDataset(data.Dataset):
         self.n = n
         self.m = m
 
+        self.aug = augument()  #20200302增加新augument方式
+
     def __getitem__(self, index):
         # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
@@ -232,6 +255,9 @@ class PSEDataset(data.Dataset):
                                                      m=self.m,
                                                      scales = np.array(config.random_scales))
         # img = draw_bbox(img,text_polys)
+
+        img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
+
         if self.transform:
             img = self.transform(img)
         if self.target_transform:

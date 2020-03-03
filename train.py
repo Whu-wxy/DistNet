@@ -20,9 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset.data_utils import PSEDataset
 
 from models import FPN_ResNet
-from models import CB_FPN_ResNet, ACCL_CB_FPN_ResNet
-from models.dla_up import dla60up, dla34up
-from models.pseloss import PSELoss, PSE_Focalloss, PSE_GHMloss
+from models.loss import Loss
 from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
 from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
 
@@ -80,7 +78,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, labels, training_mask, dist_map) in enumerate(train_loader):
+    for i, (images, labels, training_mask, dist_map, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
@@ -91,6 +89,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
         labels, training_mask = labels.to(device), training_mask.to(device)
+        distance_map = distance_map.to(device)
+
         if config.bd_loss:
             dist_map = dist_map.to(device)
             # 没有前景时，距离图要有距离
@@ -456,7 +456,7 @@ if __name__ == '__main__':
 
     # model = CB_FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n, scale=config.scale)
 
-    criterion = PSELoss(Lambda=config.Lambda, ratio=config.OHEM_ratio, reduction='mean', bd_loss=config.bd_loss)
+    criterion = Loss(Lambda=config.Lambda, ratio=config.OHEM_ratio, reduction='mean', bd_loss=config.bd_loss)
     # criterion = PSE_Focalloss(Lambda=config.Lambda, reduction='mean', size_average=True)
     # criterion = PSE_GHMloss(Lambda=config.Lambda, reduction='mean')
 

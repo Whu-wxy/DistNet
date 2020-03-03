@@ -5,16 +5,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
-from models.focalloss import FocalLoss
-from models.ghm_loss import GHMC
 from boundary_loss import boundary_loss
 
 
-class PSELoss(nn.Module):
+class Loss(nn.Module):
     def __init__(self, Lambda, ratio=3, reduction='mean', bd_loss=False):
         """Implement PSE Loss.
         """
-        super(PSELoss, self).__init__()
+        super(Loss, self).__init__()
         assert reduction in ['mean', 'sum'], " reduction must in ['mean','sum']"
         self.Lambda = Lambda
         self.ratio = ratio
@@ -181,82 +179,7 @@ class PSELoss(nn.Module):
         return F.binary_cross_entropy(scores, target, reduction='mean')
 
 
-
-class PSE_Focalloss(nn.Module):
-    def __init__(self, Lambda, reduction='mean', size_average=False):
-        """Implement PSE Loss.
-        """
-        super(PSE_Focalloss, self).__init__()
-        assert reduction in ['mean', 'sum'], " reduction must in ['mean','sum']"
-        self.Lambda = Lambda
-        self.reduction = reduction
-        self._focal_loss = FocalLoss(0.1, 1, size_average=size_average)
-
-    def forward(self, outputs, labels, training_masks=None):
-        texts = outputs[:, -1, :, :]
-        kernels = outputs[:, :-1, :, :]
-        gt_texts = labels[:, -1, :, :]
-        gt_kernels = labels[:, :-1, :, :]
-
-        loss_text = self._focal_loss(texts, gt_texts)
-
-        loss_kernels = []
-        kernels_num = gt_kernels.size()[1]
-        for i in range(kernels_num):
-            kernel_i = kernels[:, i, :, :]
-            gt_kernel_i = gt_kernels[:, i, :, :]
-            loss_kernel_i = self._focal_loss(kernel_i, gt_kernel_i)
-            loss_kernels.append(loss_kernel_i)
-        loss_kernels = torch.stack(loss_kernels).mean(0)
-        if self.reduction == 'mean':
-            loss_text = loss_text.mean()
-            loss_kernels = loss_kernels.mean()
-        elif self.reduction == 'sum':
-            loss_text = loss_text.sum()
-            loss_kernels = loss_kernels.sum()
-
-        loss = self.Lambda * loss_text + (1 - self.Lambda) * loss_kernels
-        return loss_text, loss_kernels, loss
-
-
-class PSE_GHMloss(nn.Module):
-    def __init__(self, Lambda, reduction='mean'):
-        """Implement PSE Loss.
-        """
-        super(PSE_GHMloss, self).__init__()
-        assert reduction in ['mean', 'sum'], " reduction must in ['mean','sum']"
-        self.Lambda = Lambda
-        self.reduction = reduction
-        self._GHM_loss = GHMC(bins=10, momentum=0)
-
-    def forward(self, outputs, labels, training_masks=None):
-        texts = outputs[:, -1, :, :]
-        kernels = outputs[:, :-1, :, :]
-        gt_texts = labels[:, -1, :, :]
-        gt_kernels = labels[:, :-1, :, :]
-
-        loss_text = self._GHM_loss(texts, gt_texts, torch.ones_like(gt_texts))
-
-        loss_kernels = []
-        kernels_num = gt_kernels.size()[1]
-        for i in range(kernels_num):
-            kernel_i = kernels[:, i, :, :]
-            gt_kernel_i = gt_kernels[:, i, :, :]
-            loss_kernel_i = self._GHM_loss(kernel_i, gt_kernel_i, torch.ones_like(gt_kernel_i))
-            loss_kernels.append(loss_kernel_i)
-        loss_kernels = torch.stack(loss_kernels).mean(0)
-        if self.reduction == 'mean':
-            loss_text = loss_text.mean()
-            loss_kernels = loss_kernels.mean()
-        elif self.reduction == 'sum':
-            loss_text = loss_text.sum()
-            loss_kernels = loss_kernels.sum()
-
-        loss = self.Lambda * loss_text + (1 - self.Lambda) * loss_kernels
-        return loss_text, loss_kernels, loss
-
 if __name__ == '__main__':
-    #测试时把Focal_loss里的pred = nn.Sigmoid()(pred)注释起来,容易看结果是否正确
     criteria = PSELoss(0.3)
     logits = torch.randn(1, 6, 4, 4)
     label = torch.randint(0, 2, (1, 6, 4, 4))

@@ -2,6 +2,7 @@
 # @Time    : 2018/6/11 15:54
 # @Author  : zhoujun
 
+import time
 import config
 import os
 import random
@@ -18,12 +19,14 @@ from utils.utils import draw_bbox
 import config
 
 from boundary_loss import class2one_hot, one_hot2dist
+import Polygon
+from Polygon.Utils import pointList
 
 from albumentations import (
     Compose, RGBShift, RandomBrightness, RandomContrast,
     HueSaturationValue, ChannelShuffle, CLAHE,
     RandomContrast, Blur, ToGray, JpegCompression,
-    CoarseDropout  
+    CoarseDropout
 )
 
 data_aug = PSEDataAugment()
@@ -84,6 +87,7 @@ def generate_rbox(im_size, text_polys, text_tags, training_mask, i, n, m, origin
                 cv2.fillPoly(score_map, [poly], 1)
             else:
                 r_i = 1 - (1 - m) * (n - i) / (n - 1)
+                # print('r_i:', r_i)
                 d_i = cv2.contourArea(poly) * (1 - r_i * r_i) / cv2.arcLength(poly, True)
                 pco = pyclipper.PyclipperOffset()
                 # pco.AddPath(pyclipper.scale_to_clipper(poly), pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
@@ -160,7 +164,7 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     h, w, _ = im.shape
     # 检查越界
     text_polys = check_and_validate_polys(text_polys, (h, w))
-    im, text_polys, = augmentation(im, text_polys, scales, degrees, input_size)
+    #im, text_polys, = augmentation(im, text_polys, scales, degrees, input_size)
 
     h, w, _ = im.shape
     short_edge = min(h, w)
@@ -170,6 +174,34 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
         im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
         text_polys *= scale
 
+    h, w, _ = im.shape
+
+    #####################################
+    #start = time.time()
+
+    overlap_map = np.zeros((h, w), dtype=np.uint8)
+    for (i, text_poly) in enumerate(text_polys):
+        p = Polygon.Polygon(text_poly.astype(np.int))
+        for tempPoly in text_polys[i+1:]:
+            p2 = Polygon.Polygon(tempPoly)
+            if p.overlaps(p2):
+                pts = pointList(p&p2)
+                pts2 = []
+                for pt in pts:
+                    pts2.append([int(pt[0]), int(pt[1])])
+                overlap_poly = np.array([pts2])
+                cv2.fillPoly(overlap_map, overlap_poly, 1)
+
+    score_maps_line = np.zeros((h, w), dtype=np.uint8)
+    for text_poly in text_polys:
+        pts = []
+        for pt in text_poly:
+            pts.append([int(pt[0]), int(pt[1])])
+        cv2.polylines(score_maps_line, np.array([pts]), True, 1, lineType=cv2.LINE_8)
+
+    #mid = time.time()
+    #####################################
+
     # normal images
     if config.img_norm:
         im = im.astype(np.float32)
@@ -185,55 +217,45 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
         score_map, training_mask = generate_rbox((h, w), text_polys, text_tags, training_mask, i, n, m, origin_shrink=config.origin_shrink)
         score_maps.append(score_map)
     score_maps = np.array(score_maps, dtype=np.float32)
+
+    ##############################
+    #mid2 = time.time() - mid
+    distance_map = get_distance_map(score_maps, overlap_map, score_maps_line)
+    #dur = time.time() - start - mid2
+
+    ##############################
     imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask], (input_size, input_size))
-    return imgs[0], imgs[1].transpose((2, 0, 1)), imgs[2]    #im,score_maps,training_mask#
+    #return im,score_maps,training_mask, overlap_map
+    return imgs[0], imgs[1].transpose((2, 0, 1)), imgs[2], distance_map#, dur   #im,score_maps,training_mask#
 
 
-#用来导出csv时使用
-def image_label_vis_excel(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: float, input_size: int,
-                degrees: int = 10,
-                scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
-    '''
-    get image's corresponding matrix and ground truth
-    return
-    images [512, 512, 3]
-    score  [128, 128, 1]
-    geo    [128, 128, 5]
-    mask   [128, 128, 1]
-    '''
+def get_distance_map(label, overlap_map, score_maps_line):
+    masklarge = label[0].astype(np.uint8)  # .transpose((1, 2, 0))
+    overlap_map = overlap_map.astype(np.uint8)  # .transpose((1, 2, 0))
+    score_maps_line = score_maps_line.astype(np.uint8)
+    interMask = masklarge - score_maps_line - overlap_map
 
-    im = cv2.imread(im_fn)
-    im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-    h, w, _ = im.shape
-    # 检查越界
-    text_polys = check_and_validate_polys(text_polys, (h, w))
-   # im, text_polys, = augmentation(im, text_polys, scales, degrees, input_size)
+    distance_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_C, maskSize=5)
 
-    h, w, _ = im.shape
-    short_edge = min(h, w)
-    # if short_edge < input_size:
-    #     # 保证短边 >= inputsize
-    #     scale = input_size / short_edge
-    #     im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
-    #     text_polys *= scale
+    cv2.normalize(distance_map, distance_map, 0.5, 1, cv2.NORM_MINMAX, mask=masklarge)
+    ####局部归一化
+    masklarge = masklarge * np.where(distance_map > 0.6, 1, 0)  # 选出大于阈值的子区域
+    ####局部归一化
+    connect_num, connect_img = cv2.connectedComponents(masklarge.astype(np.uint8), connectivity=4)
+    max_value = np.max(distance_map)
+    for lab in range(connect_num):
+        if lab == 0:
+            continue
+        lab_img_i = np.where(connect_img == lab, 1, 0)
+        part_dist_map = distance_map * lab_img_i
+        part_max = np.max(part_dist_map)
+        part_dist_map = part_dist_map * max_value / part_max
+        distance_map = (1 - lab_img_i) * distance_map + part_dist_map
 
-    # normal images
-    if config.img_norm:
-        im = im.astype(np.float32)
-        im /= 255.0
-        im -= np.array((0.485, 0.456, 0.406))
-        im /= np.array((0.229, 0.224, 0.225))
-
-    h, w, _ = im.shape
-    training_mask = np.ones((h, w), dtype=np.uint8)
-    score_maps = []
-    for i in range(1, n + 1):
-        # s1->sn,由小到大
-        score_map, training_mask = generate_rbox((h, w), text_polys, text_tags, training_mask, i, n, m, origin_shrink=config.origin_shrink)
-        score_maps.append(score_map)
-    score_maps = np.array(score_maps, dtype=np.float32)
-  #  imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask], (input_size, input_size))
-    return im, score_maps, training_mask
+    cv2.normalize(distance_map, distance_map, 0.3, 0.5, cv2.NORM_MINMAX, mask=overlap_map)
+    cv2.normalize(distance_map, distance_map, 0.3, 0.5, cv2.NORM_MINMAX, mask=score_maps_line)
+    # np.savetxt('F:\\distance_map_8_'+str(i)+'.csv', distance_map, delimiter=',', fmt='%F')
+    return distance_map
 
 
 class PSEDataset(data.Dataset):
@@ -250,11 +272,11 @@ class PSEDataset(data.Dataset):
     def __getitem__(self, index):
         # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
-        img, score_maps, training_mask = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
+        img, score_maps, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
                                                      n=self.n,
                                                      m=self.m,
                                                      scales = np.array(config.random_scales))
-        # img = draw_bbox(img,text_polys)
+        #img = draw_bbox(img,text_polys)
 
         img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
 
@@ -277,7 +299,7 @@ class PSEDataset(data.Dataset):
                 dist_maps_list.append(dist_map)
             dist_maps = np.stack(dist_maps_list, axis=0) # cwh
 
-        return img, score_maps, training_mask, dist_maps
+        return img, score_maps, training_mask, dist_maps, distance_map #, dur
 
     def load_data(self, data_dir: str) -> list:
         data_list = []
@@ -303,7 +325,7 @@ class PSEDataset(data.Dataset):
                 try:
                     if len(params) >= 8:
                         label = params[8]
-                        if label == '*' or label == '###':
+                        if label == '*' or label == '###':   #在loss中用mask去掉
                             text_tags.append(True)  # True
                         else:
                             text_tags.append(False)  # False
@@ -327,6 +349,7 @@ class PSEDataset(data.Dataset):
 
 
 
+
 if __name__ == '__main__':
     import torch
     import config
@@ -340,7 +363,7 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = PSEDataset('F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train', data_shape=config.data_shape, n=1, m=config.m,
+    train_data = PSEDataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\\', data_shape=config.data_shape, n=1, m=config.m,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
@@ -348,49 +371,58 @@ if __name__ == '__main__':
     empty_count = 0
     max_values = []
 
-    for i, (img, label, mask, dist_maps) in enumerate(train_loader):
+    # config.bd_loss = False
+
+    time_sum = 0
+    for i, (img, label, mask, dist_maps, distance_map, dur) in enumerate(train_loader):
         pbar.update(1)
 
-        if torch.sum(dist_maps) == 0:
-            dist_maps = dist_maps.add(10)
-
-        dist_maps = torch.clamp(dist_maps, max=100)
-
-        dist_maps = dist_maps.numpy()
-        if dist_maps.sum() == 0:
-            empty_count = empty_count + 1
-        max_value = dist_maps.max()
-        if max_value != 0:
-            max_values.append(max_value)
-
-    temp = Counter(max_values)
-
-    print('empty_count: ', empty_count)
-
-    print('max in max: ', max(max_values))
-    print('lens in max: ', len(max_values))
-
-    print('max_values count: ', len(temp))
-    print('most_common: ', temp.most_common(10))
+        time_sum = time_sum + dur
 
     pbar.close()
+    print('all time:', time_sum)
+    print('count:', len(train_loader))
+    print('ave time:', time_sum/len(train_loader))
+        #print(distance_map.shape)
 
-    # 114
-    # 135
-    # empty_count: 135
-    # max in max: 886
-    # lens in max: 864
-    # max_values
-    # count: 437
-    # most_common: [(442, 7), (472, 6), (551, 6), (355, 6), (464, 6),
-    #               (460, 6), (454, 6), (572, 5), (423, 5), (501, 5)]
+        #print(label[:, 0, :, :].shape)
+        # print(img.shape)
+        # #print(dist_maps.shape)
+        # print(label.shape)
+        # print(label[0][-1].sum())
+        # print(label[0][-2].sum())
+        # print(mask[0].shape)
 
 
-    #     print(label.shape)
-    #     print(img.shape)
-    #     #print(dist_maps.shape)
-    #     print(label[0][-1].sum())
-    #     print(mask[0].shape)
+
+    #     #dist_map
+    #     if torch.sum(dist_maps) == 0:
+    #         dist_maps = dist_maps.add(10)
+    #
+    #     dist_maps = torch.clamp(dist_maps, max=100)
+    #
+    #     dist_maps = dist_maps.numpy()
+    #     if dist_maps.sum() == 0:
+    #         empty_count = empty_count + 1
+    #     max_value = dist_maps.max()
+    #     if max_value != 0:
+    #         max_values.append(max_value)
+    #
+    # temp = Counter(max_values)
+    # print('empty_count: ', empty_count)
+    # print('max in max: ', max(max_values))
+    # print('lens in max: ', len(max_values))
+    # print('max_values count: ', len(temp))
+    # print('most_common: ', temp.most_common(10))
+    # pbar.close()
+    # # dist_map
+
+
+
+
+    #print(count_dict)
+
+        #np.savetxt('F:\\save_connect' + '.csv', label_list, delimiter=',', fmt='%d')
     #
     #     # for i in range(6):
     #     #     dist_map = dist_maps[0]
@@ -407,3 +439,4 @@ if __name__ == '__main__':
     #     plt.show()
     #
     # pbar.close()
+

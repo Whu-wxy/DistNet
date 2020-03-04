@@ -8,31 +8,95 @@ import numpy as np
 from boundary_loss import boundary_loss
 
 
-class Loss(nn.Module):
-    def __init__(self, OHEM_ratio=3, reduction='mean'):
+class PSELoss(nn.Module):
+    def __init__(self, Lambda, ratio=3, reduction='mean', bd_loss=False):
         """Implement PSE Loss.
         """
-        super(Loss, self).__init__()
+        super(PSELoss, self).__init__()
         assert reduction in ['mean', 'sum'], " reduction must in ['mean','sum']"
-        self.OHEM_ratio = OHEM_ratio
+        self.Lambda = Lambda
+        self.ratio = ratio
         self.reduction = reduction
+        self.bd_loss = bd_loss
 
-    def forward(self, output, label, training_masks, distance_map):
+    def forward(self, outputs, labels, training_masks, bd_loss_weight=0, dist_maps=None):
+        texts = outputs[:, -1, :, :]
+        kernels = outputs[:, :-1, :, :]
+        gt_texts = labels[:, -1, :, :]
+        gt_kernels = labels[:, :-1, :, :]
 
-        selected_masks = self.ohem_batch(texts, label, training_masks)
-        selected_masks = selected_masks.to(output.device)
+        selected_masks = self.ohem_batch(texts, gt_texts, training_masks)
+        selected_masks = selected_masks.to(outputs.device)
 
         # full text dice loss with OHEM
-        loss_text = self.dice_loss(output, label, selected_masks)
+        loss_text = self.dice_loss(texts, gt_texts, selected_masks)
 
+        loss_kernels = []
+        mask0 = torch.sigmoid(texts).data.cpu().numpy()
+        mask1 = training_masks.data.cpu().numpy()
+        selected_masks = ((mask0 > 0.5) & (mask1 > 0.5)).astype('float32')
+        selected_masks = torch.from_numpy(selected_masks).float()
+        selected_masks = selected_masks.to(outputs.device)
+        kernels_num = gt_kernels.size()[1]
+
+        # text kernals dice loss with OHEM
+        for i in range(kernels_num):
+            kernel_i = kernels[:, i, :, :]
+            gt_kernel_i = gt_kernels[:, i, :, :]
+            loss_kernel_i = self.dice_loss(kernel_i, gt_kernel_i, selected_masks)
+            loss_kernels.append(loss_kernel_i)
+        loss_kernels = torch.stack(loss_kernels).mean(0)
         if self.reduction == 'mean':
             loss_text = loss_text.mean()
+            loss_kernels = loss_kernels.mean()
         elif self.reduction == 'sum':
             loss_text = loss_text.sum()
+            loss_kernels = loss_kernels.sum()
 
-        loss = loss_text
-        return loss_text, loss
+        # boundary loss with OHEM
+        if self.bd_loss:
+            dist_texts = dist_maps[:, -1, :, :]
+            dist_kernals = dist_maps[:, :-1, :, :]
 
+            mask = selected_masks.unsqueeze(dim=1)
+            bd_loss_text = self.boundary_loss_batch(texts.unsqueeze(dim=1), dist_texts.unsqueeze(dim=1))
+            mask = mask.repeat(1, kernels_num, 1, 1)
+            bd_loss_kernals = self.boundary_loss_batch(kernels, dist_kernals)
+
+            # version 4
+            # dice loss不加权重,20轮后开始加bd loss，不加权重
+            # all losses
+            # loss = self.Lambda * (loss_text + bd_loss_weight*bd_loss_text) + \
+            #        (1 - self.Lambda) * (loss_kernels + bd_loss_weight*bd_loss_kernals)
+
+            # version 5         
+            # # 20轮后开始加bd loss，权重变化同v3 
+            # all losses
+            loss = self.Lambda * (bd_loss_weight*loss_text + (1-bd_loss_weight)*bd_loss_text) + \
+                   (1 - self.Lambda) * (bd_loss_weight*loss_kernels + (1-bd_loss_weight)*bd_loss_kernals)
+            
+            # v6
+            # loss = self.Lambda * (loss_text + bd_loss_weight*bd_loss_text) + \
+            #        (1 - self.Lambda) * (loss_kernels + bd_loss_weight*bd_loss_kernals)
+
+            # add BCE
+            # full text dice loss with OHEM
+            # bd_loss_text = self.BCE_Loss(texts, gt_texts, selected_masks)
+            # # kernal text dice loss with OHEM
+            # bce_kernels = []
+            # for i in range(kernels_num):
+            #     kernel_i = kernels[:, i, :, :]
+            #     gt_kernel_i = gt_kernels[:, i, :, :]
+            #     loss_kernel_i = self.BCE_Loss(kernel_i, gt_kernel_i, selected_masks)
+            #     bce_kernels.append(loss_kernel_i)
+            # bce_kernels = torch.stack(bce_kernels).mean(0)
+            # bd_loss_kernals = bce_kernels.mean()
+
+            
+            return loss_text, loss_kernels, bd_loss_text, bd_loss_kernals, loss
+        else:
+            loss = self.Lambda * loss_text + (1 - self.Lambda) * loss_kernels
+            return loss_text, loss_kernels, loss
 
     def dice_loss(self, input, target, mask):
         # mask: 0:文本区域， 1：背景
@@ -114,40 +178,9 @@ class Loss(nn.Module):
         target = target * mask
         return F.binary_cross_entropy(scores, target, reduction='mean')
 
-    def weighted_regression(self, gaussian_map, gaussian_gt, training_mask):
-        """
-        Weighted MSE-loss
-        Args:
-            gaussian_map: gaussian_map from network outputs
-            gaussian_gt: gt for gaussian_map
-            training_mask:
-        """
-        gaussian_map = torch.sigmoid(gaussian_map)
-        text_map = torch.where(gaussian_gt > 0.2, torch.ones_like(gaussian_gt), torch.zeros_like(gaussian_gt))
-        center_map = torch.where(gaussian_gt > 0.7, torch.ones_like(gaussian_gt), torch.zeros_like(gaussian_gt))
-        center_gt = torch.where(gaussian_gt > 0.7, gaussian_gt, torch.zeros_like(gaussian_gt))
-        text_gt = torch.where(gaussian_gt > 0.2, gaussian_gt, torch.zeros_like(gaussian_gt))
-        bg_map = 1. - text_map
-
-        pos_num = torch.sum(text_map)
-        neg_num = torch.sum(bg_map)
-
-        pos_weight = neg_num * 1. / (pos_num + neg_num)
-        neg_weight = 1. - pos_weight
-
-        #     mse_loss = F.mse_loss(gaussian_map, gaussian_gt, reduce='none')
-        mse_loss = F.smooth_l1_loss(gaussian_map, gaussian_gt, reduce='none')
-        weighted_mse_loss = mse_loss * (text_map * pos_weight + bg_map * neg_weight) * training_mask
-
-        center_region_loss = torch.sum(center_gt * mse_loss * training_mask) / center_gt.sum()
-        #     border_loss = torch.sum(border_map * mse_loss * training_mask) / border_map.sum()
-
-        return weighted_mse_loss.mean(), torch.sum(
-            text_gt * mse_loss * training_mask) / text_map.sum(), center_region_loss
-
 
 if __name__ == '__main__':
-    criteria = Loss(0.3)
+    criteria = PSELoss(0.3)
     logits = torch.randn(1, 6, 4, 4)
     label = torch.randint(0, 2, (1, 6, 4, 4))
     print('label: ', label)

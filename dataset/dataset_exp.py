@@ -165,20 +165,20 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     h, w, _ = im.shape
     # 检查越界
     text_polys = check_and_validate_polys(text_polys, (h, w))
-    im, text_polys, = augmentation(im, text_polys, scales, degrees, input_size)
+    #im, text_polys, = augmentation(im, text_polys, scales, degrees, input_size)
 
     h, w, _ = im.shape
     short_edge = min(h, w)
-    if short_edge < input_size:
-        # 保证短边 >= inputsize
-        scale = input_size / short_edge
-        im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
-        text_polys *= scale
+    # if short_edge < input_size:
+    #     # 保证短边 >= inputsize
+    #     scale = input_size / short_edge
+    #     im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
+    #     text_polys *= scale
 
     h, w, _ = im.shape
 
     #####################################
-    #start = time.time()
+    start = time.time()
 
     overlap_map = np.zeros((h, w), dtype=np.uint8)
     for (i, text_poly) in enumerate(text_polys):
@@ -200,7 +200,7 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
             pts.append([int(pt[0]), int(pt[1])])
         cv2.polylines(score_maps_line, np.array([pts]), True, 1, 2, lineType=cv2.LINE_8)
 
-    #mid = time.time()
+    mid = time.time()
     #####################################
 
     # normal images
@@ -220,16 +220,16 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     score_maps = np.array(score_maps, dtype=np.float32)
 
     ##############################
-    #mid2 = time.time() - mid
+    mid2 = time.time() - mid
     distance_map = get_distance_map(score_maps, overlap_map, score_maps_line)
-    #dur = time.time() - start - mid2
+    dur = time.time() - start - mid2
 
 
     ##############################
     imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
 
-    #return im,score_maps,training_mask, distance_map, dur
-    return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2), dur   #im,score_maps,training_mask#
+    return im,score_maps,training_mask, distance_map, dur
+    #return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2), dur   #im,score_maps,training_mask#
 
 
 def get_distance_map_origin(label, overlap_map, score_maps_line):
@@ -311,7 +311,7 @@ class PSEDataset(data.Dataset):
     def __getitem__(self, index):
         # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
-        img, score_maps, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
+        img, score_maps, training_mask, distance_map, dur = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
                                                      n=self.n,
                                                      m=self.m,
                                                      scales = np.array(config.random_scales))
@@ -325,7 +325,7 @@ class PSEDataset(data.Dataset):
             score_maps = self.target_transform(score_maps)
             training_mask = self.target_transform(training_mask)
 
-        return img, score_maps, training_mask, distance_map
+        return img, score_maps, training_mask, distance_map, dur
 
     def load_data(self, data_dir: str) -> list:
         data_list = []
@@ -400,8 +400,7 @@ if __name__ == '__main__':
     # config.bd_loss = False
 
     time_sum = 0
-    dur = 0
-    for i, (img, label, mask, distance_map) in enumerate(train_loader):
+    for i, (img, label, mask, distance_map, dur) in enumerate(train_loader):
         pbar.update(1)
 
         # print(distance_map.shape)  #BWH
@@ -414,7 +413,8 @@ if __name__ == '__main__':
         # print(mask.shape)       #BWH
         # input()
 
-        time_sum = time_sum + dur
+        time_sum = time_sum + dur.item()
+
 
     pbar.close()
     print('all time:', time_sum)

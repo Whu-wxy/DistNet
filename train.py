@@ -78,64 +78,20 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, labels, training_mask, dist_map, distance_map) in enumerate(train_loader):
+    for i, (images, labels, training_mask, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
         images = images.to(device)
 
         # Forward
-        y1 = net(images)
+        outputs = net(images)
 
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
         labels, training_mask = labels.to(device), training_mask.to(device)
         distance_map = distance_map.to(device)
 
-        if config.bd_loss:
-            dist_map = dist_map.to(device)
-            # 没有前景时，距离图要有距离
-            if torch.sum(dist_map) == 0:
-                dist_map = dist_map.add(config.bd_empty_val)
-
-        if config.bd_clip == True:
-            # 限制距离图最大距离
-            dist_map = torch.clamp(dist_map, max=config.clip_value)
-
-        # add boundary loss
-        #version 1
-        # bd_loss_weight = 1 - 0.00165 * epoch  # 600后变成0.01
-        # bd_loss_weight = 0.01 if bd_loss_weight < 0.01 else bd_loss_weight
-
-        # # version 2
-        # bd_loss_weight = 1 - 0.001 * epoch  # 500后变成0.5
-        # bd_loss_weight = 0.5 if bd_loss_weight < 0.5 else bd_loss_weight
-
-        # version 3
-        # bd_loss_weight = 1 - 0.0018 * epoch  # 500后变成0.1
-        # bd_loss_weight = 0.1 if bd_loss_weight < 0.1 else bd_loss_weight
-
-        # version 4
-        # dice loss不加权重,20轮后开始加bd loss，不加权重
-        bd_loss_weight = 1
-        if epoch > 10:
-            bd_loss_weight = 1 - 0.0018 * (epoch-10)  # 500后变成0.1
-            bd_loss_weight = 0.1 if bd_loss_weight < 0.1 else bd_loss_weight
-
-        # version 5
-        # 20轮后开始加bd loss，权重变化同v3  
-        # bd_loss_weight = 1
-        # if epoch > 20:
-        #     bd_loss_weight = 1 - 0.0018 * (epoch-20)  # 500后变成0.1
-        #     bd_loss_weight = 0.1 if bd_loss_weight < 0.1 else bd_loss_weight
-
-        
-        # bd_loss_weight = 0
-        # if epoch > 20:
-        #     bd_loss_weight = 1
-        if config.bd_loss:
-            loss_c, loss_s, bd_loss_c, bd_loss_s, loss = criterion(y1, labels, training_mask, bd_loss_weight, dist_map)
-        else:
-            loss_c, loss_s, loss = criterion(y1, labels, training_mask, bd_loss_weight)
+        loss_c, loss_s, loss = criterion(outputs, labels, training_mask, distance_map)
 
         # Backward
         optimizer.zero_grad()
@@ -145,32 +101,18 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         loss_c = loss_c.item()
         loss_s = loss_s.item()
-        if config.bd_loss:
-            bd_loss_c = bd_loss_c.item()
-            bd_loss_s = bd_loss_s.item()
         loss = loss.item()
         cur_step = epoch * all_step + i
         if loss_c < 100:
             writer.add_scalar(tag='Train/loss_c', scalar_value=loss_c, global_step=cur_step)
             writer.add_scalar(tag='Train/loss_s', scalar_value=loss_s, global_step=cur_step)
             writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
-            if config.bd_loss:
-                writer.add_scalar(tag='Train/bd_loss_c', scalar_value=bd_loss_c, global_step=cur_step)
-                writer.add_scalar(tag='Train/bd_loss_s', scalar_value=bd_loss_s, global_step=cur_step)
         writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
 
         batch_time = time.time() - start
-        if config.bd_loss:
-            logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, batch_loss: {:.4f}, batch_loss_text: {:.4f}, batch_loss_kernal: {:.4f},'
-                'bd_batch_loss_text: {:.4f}, bd_batch_loss_kernal: {:.4f} time:{:.4f}, lr:{}'
-                    .format(epoch, config.epochs, i, all_step, cur_step,
-                            cur_batch / batch_time,
-                            loss, loss_c, loss_s, bd_loss_c, bd_loss_s, batch_time, lr))
-        else:
-            logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, batch_loss: {:.4f}, batch_loss_text: {:.4f}, batch_loss_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
-                    epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, loss_c, loss_s, batch_time, lr))
+        logger.info(
+            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, batch_loss: {:.4f}, batch_loss_text: {:.4f}, batch_loss_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, loss_c, loss_s, batch_time, lr))
         start = time.time()
 
         if cur_step % config.show_images_interval == 0 and  cur_step != 0:
@@ -303,7 +245,7 @@ def main(model, criterion):
     elif config.optim == 'adabound':
         optimizer = AdaBound([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
     elif config.optim == 'RangerLars':
-        optimizer = Over9000([{'params': model.parameters(), 'initial_lr': config.lr}], alpha=0.5, k=6, lr=1e-3)
+        optimizer = Over9000([{'params': model.parameters(), 'initial_lr': config.lr}], alpha=0.5, k=6, lr=config.lr)
     elif config.optim == "lamb":
         optimizer = Lamb([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
     elif config.optim == "lamb_v3":
@@ -446,18 +388,11 @@ if __name__ == '__main__':
 
     #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    #model = dla60up(classes=config.n, scale = config.scale)
-    #model = dla34up(classes=config.n)
 
-    # model = ACCL_CB_FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n,
-    #                             scale=config.scale, checkpoint='../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth')
     # utils.load_part_checkpoint('../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model,
     #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
 
-    # model = CB_FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n, scale=config.scale)
 
     criterion = Loss(Lambda=config.Lambda, ratio=config.OHEM_ratio, reduction='mean', bd_loss=config.bd_loss)
-    # criterion = PSE_Focalloss(Lambda=config.Lambda, reduction='mean', size_average=True)
-    # criterion = PSE_GHMloss(Lambda=config.Lambda, reduction='mean')
 
     main(model, criterion)

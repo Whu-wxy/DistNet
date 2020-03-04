@@ -198,7 +198,7 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
         pts = []
         for pt in text_poly:
             pts.append([int(pt[0]), int(pt[1])])
-        cv2.polylines(score_maps_line, np.array([pts]), True, 1, 2, lineType=cv2.LINE_8)
+        cv2.polylines(score_maps_line, np.array([pts]), True, 1, 1, lineType=cv2.LINE_8)
 
     #mid = time.time()
     #####################################
@@ -229,7 +229,7 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
 
     #return im,score_maps,training_mask, distance_map, dur
-    return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2), dur   #im,score_maps,training_mask#
+    return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2)#, dur   #im,score_maps,training_mask#
 
 
 def get_distance_map_origin(label, overlap_map, score_maps_line):
@@ -273,26 +273,29 @@ def get_distance_map(label, overlap_map, score_maps_line):
     score_maps_line = score_maps_line.astype(np.uint8)
     interMask = masklarge - score_maps_line - overlap_map
 
+    #距离图
     distance_inter_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_C, maskSize=5)
 
-    ####局部归一化
+    #找到所有子区域
     connect_num, connect_img = cv2.connectedComponents(distance_inter_map.astype(np.uint8), connectivity=4)
 
+    #子区域内部0.4-1
     for lab in range(connect_num):
         if lab == 0:
             continue
         lab_img_i = np.where(connect_img == lab, 1, 0)
         cv2.normalize(distance_inter_map, distance_inter_map, 0.4, 1, cv2.NORM_MINMAX, mask=lab_img_i.astype(np.uint8))
 
-    score_maps_line2 = np.where(overlap_map == 1, 0.35, 0)
+    #相交区域
+    score_maps_line2 = np.where(overlap_map == 1, 0.3, 0)
     distance_map = (1 - overlap_map) * distance_inter_map + score_maps_line2
 
     #边界
-    score_maps_line2 = np.where(score_maps_line == 1, 0.25+random.uniform(-0.04, 0.04), 0)
+    score_maps_line2 = np.where(score_maps_line == 1, 0.3, 0)
     distance_map = (1 - score_maps_line) * distance_map + score_maps_line2
 
 
-    # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
+    # np.savetxt('F:\\distance_map_v10.csv', distance_map, delimiter=',', fmt='%F')
     # input()
     return distance_map
 

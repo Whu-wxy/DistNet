@@ -88,10 +88,10 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         outputs = net(images)
 
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
-        labels, training_mask = labels.to(device), training_mask.to(device)
-        distance_map = distance_map.to(device)
+        training_mask = training_mask.to(device)
+        distance_map = distance_map.to(device)   #label
 
-        loss_c, loss_s, loss = criterion(outputs, labels, training_mask, distance_map)
+        dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
 
         # Backward
         optimizer.zero_grad()
@@ -99,14 +99,16 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         optimizer.step()
         train_loss += loss.item()
 
-        loss_c = loss_c.item()
-        loss_s = loss_s.item()
+        dice_center = dice_center.item()
+        dice_region = dice_region.item()
+        weighted_mse_region = weighted_mse_region.item()
         loss = loss.item()
         cur_step = epoch * all_step + i
-        if loss_c < 100:
-            writer.add_scalar(tag='Train/loss_c', scalar_value=loss_c, global_step=cur_step)
-            writer.add_scalar(tag='Train/loss_s', scalar_value=loss_s, global_step=cur_step)
-            writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
+
+        writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
+        writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
+        writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
+        writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
         writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
 
         batch_time = time.time() - start

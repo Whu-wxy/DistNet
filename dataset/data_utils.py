@@ -238,7 +238,7 @@ def get_distance_map_origin(label, overlap_map, score_maps_line):
     score_maps_line = score_maps_line.astype(np.uint8)
     interMask = masklarge - score_maps_line - overlap_map
 
-    distance_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_C, maskSize=5)
+    distance_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_L2, maskSize=5)
 
     cv2.normalize(distance_map, distance_map, 0.4, 1, cv2.NORM_MINMAX, mask=masklarge)
     ####局部归一化
@@ -274,7 +274,7 @@ def get_distance_map(label, overlap_map, score_maps_line):
     interMask = masklarge - score_maps_line - overlap_map
 
     #距离图
-    distance_inter_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_C, maskSize=5)
+    distance_inter_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_L2, maskSize=5)
 
     #找到所有子区域
     connect_num, connect_img = cv2.connectedComponents(distance_inter_map.astype(np.uint8), connectivity=4)
@@ -392,7 +392,7 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = PSEDataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\\', data_shape=config.data_shape, n=1, m=config.m,
+    train_data = PSEDataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\train', data_shape=config.data_shape, n=1, m=config.m,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
@@ -416,6 +416,9 @@ if __name__ == '__main__':
         # # print(label[0][-1].sum())
         # print(mask.shape)       #BWH
         # input()
+        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
         time_sum = time_sum + dur
 

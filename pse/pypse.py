@@ -3,55 +3,50 @@ import cv2
 import queue
 
 
-def pse(kernals, min_area):
-    kernal_num = len(kernals)
-    pred = np.zeros(kernals[0].shape, dtype='int32')
+def pse(region, center,  min_area):
+    pred = np.zeros(center.shape, dtype='int32')
 
-    label_num, label = cv2.connectedComponents(kernals[kernal_num - 1], connectivity=4)
+    label_num, label = cv2.connectedComponents(center.astype(np.uint8), connectivity=4)
 
+    label_values = []
     for label_idx in range(1, label_num):
         if np.sum(label == label_idx) < min_area:
             label[label == label_idx] = 0
+            continue
+        label_values.append(label_idx)
 
-    queue = Queue.Queue(maxsize=0)
-    next_queue = Queue.Queue(maxsize=0)
+    queue_base = queue.Queue(maxsize=0)
+    next_queue = queue.Queue(maxsize=0)
     points = np.array(np.where(label > 0)).transpose((1, 0))
 
     for point_idx in range(points.shape[0]):
         x, y = points[point_idx, 0], points[point_idx, 1]
         l = label[x, y]
-        queue.put((x, y, l))
+        queue_base.put((x, y, l))
         pred[x, y] = l
 
     dx = [-1, 1, 0, 0]
     dy = [0, 0, -1, 1]
-    for kernal_idx in range(kernal_num - 2, -1, -1):
-        kernal = kernals[kernal_idx].copy()
-        while not queue.empty():
-            (x, y, l) = queue.get()
 
-            is_edge = True
-            for j in range(4):
-                tmpx = x + dx[j]
-                tmpy = y + dy[j]
-                if tmpx < 0 or tmpx >= kernal.shape[0] or tmpy < 0 or tmpy >= kernal.shape[1]:
-                    continue
-                if kernal[tmpx, tmpy] == 0 or pred[tmpx, tmpy] > 0:
-                    continue
+    while not queue_base.empty():
+        (x, y, l) = queue_base.get()
 
-                queue.put((tmpx, tmpy, l))
-                pred[tmpx, tmpy] = l
-                is_edge = False
-            if is_edge:
-                next_queue.put((x, y, l))
+        is_edge = True
+        for j in range(4):
+            tmpx = x + dx[j]
+            tmpy = y + dy[j]
+            if tmpx < 0 or tmpx >= region.shape[0] or tmpy < 0 or tmpy >= region.shape[1]:
+                continue
+            if region[tmpx, tmpy] == 0 or pred[tmpx, tmpy] > 0:
+                continue
 
-        # kernal[pred > 0] = 0
-        queue, next_queue = next_queue, queue
+            queue_base.put((tmpx, tmpy, l))
+            pred[tmpx, tmpy] = l
+            is_edge = False
+        if is_edge:
+            next_queue.put((x, y, l))
 
-        # points = np.array(np.where(pred > 0)).transpose((1, 0))
-        # for point_idx in range(points.shape[0]):
-        #     x, y = points[point_idx, 0], points[point_idx, 1]
-        #     l = pred[x, y]
-        #     queue.put((x, y, l))
+    # kernal[pred > 0] = 0
+    queue_base, next_queue = next_queue, queue_base
 
-    return pred
+    return pred, label_values

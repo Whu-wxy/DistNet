@@ -396,6 +396,6 @@ if __name__ == '__main__':
     #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
 
 
-    criterion = Loss(ratio=config.OHEM_ratio, reduction='mean')
+    criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
 
     main(model, criterion)

@@ -91,6 +91,11 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
 
+        print('outputs:', outputs.dtype)
+        print('training_mask:', training_mask.dtype)
+        print('distance_map:', distance_map.dtype)
+        input()
+
         outputs = torch.squeeze(outputs, dim=1)
 
         dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
@@ -208,7 +213,7 @@ def main(model, criterion):
     logger.info(config.print())
 
     torch.manual_seed(config.seed)  # 为CPU设置随机种子
-    torch.set_default_tensor_type(torch.FloatTensor)
+    torch.set_default_tensor_type(torch.DoubleTensor)
     if config.gpu_id is not None and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))

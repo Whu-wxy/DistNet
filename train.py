@@ -41,6 +41,11 @@ from utils.la_lamb import La_Lamb, La_Lamb_v3
 
 from boundary_loss import class2one_hot, one_hot2dist
 
+import keyboard
+
+key_show_img = False
+
+
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight)
@@ -66,6 +71,8 @@ def adjust_learning_rate(optimizer, epoch):
 
 
 def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoch, all_step, writer, logger):
+    global key_show_img
+
     net.train()
     train_loss = 0.
     start = time.time()
@@ -120,16 +127,18 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, batch_time, lr))
         start = time.time()
 
-        if cur_step % config.show_images_interval == 0 and  cur_step != 0:
+        if key_show_img or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
+            key_show_img = False
+            logger.info('Imgs will be shown in next step.')
             # show images on tensorboard
             if config.display_input_images:
                 x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
                 show_label = labels.detach().cpu()
-                b, c, h, w = show_label.size()
-                show_label = show_label.reshape(b * c, h, w)
-                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=config.n, normalize=False, padding=20,
+                b, h, w = show_label.size()
+                show_label = show_label.reshape(b, h, w)
+                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=1, normalize=False, padding=20,
                                               pad_value=1)
                 writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
             if config.display_output_images:
@@ -137,7 +146,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 show_y = y1.detach().cpu()
                 b, c, h, w = show_y.size()
                 show_y = show_y.reshape(b * c, h, w)
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=config.n, normalize=False, padding=20, pad_value=1)
+                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=1, normalize=False, padding=20, pad_value=1)
                 writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
 
     if scheduler!=None:
@@ -196,8 +205,13 @@ def eval(model, save_path, test_path, device):
         result_dict = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     return result_dict['recall'], result_dict['precision'], result_dict['hmean']
 
+def keyshowImg():
+    global key_show_img
+    key_show_img = True
 
 def main(model, criterion):
+    keyboard.add_hotkey('p', keyshowImg)
+
     if config.output_dir is None:
         config.output_dir = 'output'
     if config.restart_training:

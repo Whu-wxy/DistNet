@@ -24,7 +24,7 @@ namespace pse{
             throw std::runtime_error("label map must have a shape of (h>0, w>0)");
         int h = pbuf_region.shape[0];
         int w = pbuf_region.shape[1];
-        if (pbuf_center.ndim != 3 || pbuf_center.shape[0] != c || pbuf_center.shape[1]!=h || pbuf_center.shape[2]!=w)
+        if (pbuf_center.ndim != 3 || pbuf_center.shape[1]!=h || pbuf_center.shape[2]!=w)
             throw std::runtime_error("center must have a shape of (c>0, h>0, w>0)");
 
         std::vector<std::vector<int32_t>> res;
@@ -53,7 +53,6 @@ namespace pse{
         int dy[4] = {0, 0, -1, 1};
         //从上到下扫描式扩张
         // merge from small to large kernel progressively
-        auto p_center = ptr_center + i*h*w;
         while(!q.empty())
         {
             //get each queue menber in q
@@ -69,7 +68,7 @@ namespace pse{
                 int index_x = x + dx[idx];
                 if (index_y<0 || index_y>=h || index_x<0 || index_x>=w)
                     continue;
-                if (!p_center[index_y*w+index_x] || res[index_y][index_x]>0)
+                if (!ptr_center[index_y*w+index_x] || res[index_y][index_x]>0)
                     continue;
                 q.push(std::make_tuple(index_y, index_x, l));
                 res[index_y][index_x]=l;

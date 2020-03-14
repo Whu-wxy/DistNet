@@ -41,10 +41,6 @@ from utils.la_lamb import La_Lamb, La_Lamb_v3
 
 from boundary_loss import class2one_hot, one_hot2dist
 
-import keyboard
-
-key_show_img = False
-
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
@@ -71,7 +67,6 @@ def adjust_learning_rate(optimizer, epoch):
 
 
 def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoch, all_step, writer, logger):
-    global key_show_img
 
     net.train()
     train_loss = 0.
@@ -127,8 +122,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, batch_time, lr))
         start = time.time()
 
-        if key_show_img or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            key_show_img = False
+        if cur_step % config.show_images_interval == 0 and  cur_step != 0:
             logger.info('Imgs will be shown in next step.')
             # show images on tensorboard
             if config.display_input_images:
@@ -205,12 +199,8 @@ def eval(model, save_path, test_path, device):
         result_dict = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     return result_dict['recall'], result_dict['precision'], result_dict['hmean']
 
-def keyshowImg():
-    global key_show_img
-    key_show_img = True
 
 def main(model, criterion):
-    keyboard.add_hotkey('p', keyshowImg)
 
     if config.output_dir is None:
         config.output_dir = 'output'

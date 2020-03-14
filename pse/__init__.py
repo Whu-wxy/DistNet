@@ -52,7 +52,7 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     :return: 最后的输出图和文本框
     """
     preds = torch.sigmoid(preds)
-    if len(preds.shape()) == 3:
+    if len(preds.shape) == 3:
         preds = preds.squeeze(0)
     preds = preds.detach().cpu().numpy()
 

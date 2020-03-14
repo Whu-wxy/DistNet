@@ -210,6 +210,7 @@ def main(model, criterion):
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))
         device = torch.device("cuda:0")
+        np.random.seed(config.seed)
         torch.cuda.manual_seed(config.seed)  # 为当前GPU设置随机种子
         torch.cuda.manual_seed_all(config.seed)  # 为所有GPU设置随机种子
     else:

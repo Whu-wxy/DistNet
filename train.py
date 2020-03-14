@@ -85,7 +85,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         images = images.to(device)
 
         # Forward
-        outputs = net(images)
+        outputs = net(images)   #B1HW
 
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
         training_mask = training_mask.to(device)

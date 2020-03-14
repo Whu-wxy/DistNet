@@ -75,7 +75,6 @@ if len(checkpoint) != 0:
 
 # net config
 backbone = 'resnet50'
-Lambda = 0.7
 n = 1            # result_num
 m = 0.5
 min_threld = 0.25    #选出大图

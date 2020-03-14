@@ -81,5 +81,5 @@ namespace pse{
 }
 
 PYBIND11_MODULE(pse, m){
-    m.def("pse_cpp", &pse::pse, " re-implementation pse algorithm(cpp)", py::arg("region"), py::arg("Sn"), py::arg("c")=6);
+    m.def("pse_cpp", &pse::pse, " re-implementation pse algorithm(cpp)", py::arg("region"), py::arg("center"));
 }

@@ -19,7 +19,7 @@ def pse_warpper(region, center, min_area=5):
     reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
     :return:
     '''
-    from .pypse import pse
+    from .pse import pse_cpp
 
     center = np.array(center)
     label_num, label = cv2.connectedComponents(center.astype(np.uint8), connectivity=4) #C的代码从最小的kernel开始

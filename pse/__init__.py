@@ -8,27 +8,21 @@ import config
 
 from pse.pypse import pse
 
-# BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-#
-# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-#     raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-def pse_warpper(regeion, center, min_area=5, origin_shrink=True):
+if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+    raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
+
+def pse_warpper(region, center, min_area=5):
     '''
     后处理在这里修改
     reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
-    :param kernals:
-    :param min_area:
     :return:
     '''
-    #from .pse import pse_cpp
     from .pypse import pse
 
-    kernal_num = len(kernals)
-    if not kernal_num:
-        return np.array([]), []
-    kernals = np.array(kernals)
-    label_num, label = cv2.connectedComponents(kernals[0].astype(np.uint8), connectivity=4) #C的代码从最小的kernel开始
+    center = np.array(center)
+    label_num, label = cv2.connectedComponents(center.astype(np.uint8), connectivity=4) #C的代码从最小的kernel开始
     label_values = []
     for label_idx in range(1, label_num):
         if np.sum(label == label_idx) < min_area:
@@ -36,11 +30,8 @@ def pse_warpper(regeion, center, min_area=5, origin_shrink=True):
             continue
         label_values.append(label_idx)
 
-    if config.n == 1:                   #FPN baseline不进行pse
-        return kernals, label_values
-    else:
-        pred = pse_cpp(label, kernals)   #, c=kernal_num
-        return np.array(pred), label_values
+    pred = pse_cpp(label, center)
+    return np.array(pred), label_values
 
 
 def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
@@ -56,13 +47,12 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
         preds = preds.squeeze(0)
     preds = preds.detach().cpu().numpy()
 
-
-    regeion = preds > config.min_threld   #按阈值变为2值图
+    region = preds > config.min_threld   #按阈值变为2值图
     center = preds > config.max_threld  # 按阈值变为2值图
     # preds = preds * preds[-1] # 使用最大的kernel作为其他小图的mask,不使用的话效果更好
-    #pred, label_values = pse_warpper(regeion, center, min_area=5, origin_shrink=config.origin_shrink)
+    pred, label_values = pse_warpper(regeion, center, 5)
 
-    pred, label_values = pse(regeion, center, 5)
+    #pred, label_values = pse(region, center, 5)
     bbox_list = []
     for label_value in label_values:
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]

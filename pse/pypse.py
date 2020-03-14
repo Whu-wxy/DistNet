@@ -16,7 +16,6 @@ def pse(region, center,  min_area):
         label_values.append(label_idx)
 
     queue_base = queue.Queue(maxsize=0)
-    next_queue = queue.Queue(maxsize=0)
     points = np.array(np.where(label > 0)).transpose((1, 0))
 
     for point_idx in range(points.shape[0]):
@@ -31,7 +30,6 @@ def pse(region, center,  min_area):
     while not queue_base.empty():
         (x, y, l) = queue_base.get()
 
-        is_edge = True
         for j in range(4):
             tmpx = x + dx[j]
             tmpy = y + dy[j]
@@ -42,11 +40,5 @@ def pse(region, center,  min_area):
 
             queue_base.put((tmpx, tmpy, l))
             pred[tmpx, tmpy] = l
-            is_edge = False
-        if is_edge:
-            next_queue.put((x, y, l))
-
-    # kernal[pred > 0] = 0
-    queue_base, next_queue = next_queue, queue_base
 
     return pred, label_values

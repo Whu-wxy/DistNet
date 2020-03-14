@@ -2,11 +2,6 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from models.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
-from models.mobilenetv3 import MobileNetV3_Large, MobileNetV3_Small
-from models.ShuffleNetV2 import shufflenet_v2_x1_0
-
-from models.res2net import res2net50_26w_6s,res2net50_26w_4s
-from models.res2net_dla import res2net_dla60, res2next_dla60
 from models.multi_head_attention import multi_head_attention
 
 from models.dcn_resnet import load_dcn_resnet
@@ -25,11 +20,6 @@ d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
      'resnet50': {'models': resnet50, 'out': [256, 512, 1024, 2048]},
      'resnet101': {'models': resnet101, 'out': [256, 512, 1024, 2048]},
      'resnet152': {'models': resnet152, 'out': [256, 512, 1024, 2048]},
-     'MobileNetV3_Large': {'models': MobileNetV3_Large, 'out': [24, 40, 160, 160]},
-     'MobileNetV3_Small': {'models': MobileNetV3_Small, 'out': [16, 24, 48, 96]},
-     'shufflenetv2': {'models': shufflenet_v2_x1_0, 'out': [24, 116, 232, 464]},
-     'res2net50_26w_6s': {'models': res2net50_26w_6s, 'out': [256, 512, 1024, 2048]},
-     'res2net_dla60': {'models': res2net_dla60, 'out': [128, 256, 512, 1024]},
      'dcn_resnet50': {'models': load_dcn_resnet, 'out': [256, 512, 1024, 2048]}
      }
 inplace = True

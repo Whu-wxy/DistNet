@@ -88,7 +88,7 @@ class FPN_ResNet(nn.Module):
         x = self.conv(x)
 
         x = self.up_conv(x)
-        x = F.interpolate(x, size=(H//2, W//2), mode='bilinear')
+        x = F.interpolate(x, size=(H//2, W//2), mode='bilinear', align_corners=True)
         x = self.out_conv(x)
 
         if self.train:

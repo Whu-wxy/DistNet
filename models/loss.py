@@ -37,10 +37,6 @@ class Loss(nn.Module):
 
         loss = dice_center + dice_region + weighted_mse_region
 
-        print('dice_center:', dice_center.dtype)
-        print('dice_region:', dice_region.dtype)
-        print('weighted_mse_region:', weighted_mse_region.dtype)
-        print('loss:', loss.dtype)
         return dice_center, dice_region, weighted_mse_region, loss
 
 

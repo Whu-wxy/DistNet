@@ -97,9 +97,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         # Backward
         optimizer.zero_grad()
-        loss = loss.to(torch.double)
-        print('loss:', loss.dtype)
-        input()
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
@@ -211,6 +208,7 @@ def main(model, criterion):
     logger.info(config.print())
 
     torch.manual_seed(config.seed)  # 为CPU设置随机种子
+    torch.set_default_tensor_type(torch.DoubleTensor)
     if config.gpu_id is not None and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))

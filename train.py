@@ -92,11 +92,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
 
-        # print('outputs:', outputs.dtype)
-        # print('training_mask:', training_mask.dtype)
-        # print('distance_map:', distance_map.dtype)
-        # input()
-
         outputs = torch.squeeze(outputs, dim=1)
 
         dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
@@ -121,8 +116,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         batch_time = time.time() - start
         logger.info(
-            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, batch_loss: {:.4f}, batch_loss_text: {:.4f}, batch_loss_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, loss_c, loss_s, batch_time, lr))
+            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center_loss, dice_region_loss, weighted_mse_region_loss, batch_time, lr))
         start = time.time()
 
         if cur_step % config.show_images_interval == 0 and  cur_step != 0:

@@ -98,6 +98,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         # Backward
         optimizer.zero_grad()
         loss = loss.to(torch.double)
+        print('loss:', loss.dtype)
+        input()
         loss.backward()
         optimizer.step()
         train_loss += loss.item()

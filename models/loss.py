@@ -36,6 +36,11 @@ class Loss(nn.Module):
         weighted_mse_region = self.weighted_regression(output, label, selected_masks)
 
         loss = dice_center + dice_region + weighted_mse_region
+
+        print('dice_center:', dice_center.dtype)
+        print('dice_region:', dice_region.dtype)
+        print('weighted_mse_region:', weighted_mse_region.dtype)
+        print('loss:', loss.dtype)
         return dice_center, dice_region, weighted_mse_region, loss
 
 

@@ -208,7 +208,7 @@ def main(model, criterion):
     logger.info(config.print())
 
     torch.manual_seed(config.seed)  # 为CPU设置随机种子
-    torch.set_default_tensor_type(torch.DoubleTensor)
+    torch.set_default_tensor_type(torch.FloatTensor)
     if config.gpu_id is not None and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))

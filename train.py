@@ -91,10 +91,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
 
-        print('outputs:', outputs.shape)
-        print('distance_map:', distance_map.shape)
-        print('training_mask:', training_mask.shape)
-        input()
+        outputs = torch.squeeze(outputs, dim=1)
 
         dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
 

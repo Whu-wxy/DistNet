@@ -90,11 +90,12 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
+        distance_map = distance_map.to(torch.float)
 
-        print('outputs:', outputs.dtype)
-        print('training_mask:', training_mask.dtype)
-        print('distance_map:', distance_map.dtype)
-        input()
+        # print('outputs:', outputs.dtype)
+        # print('training_mask:', training_mask.dtype)
+        # print('distance_map:', distance_map.dtype)
+        # input()
 
         outputs = torch.squeeze(outputs, dim=1)
 

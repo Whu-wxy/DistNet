@@ -22,7 +22,7 @@ epochs = 701   #600
 early_stop=20  #test F1
 
 train_batch_size = 20
-try_test_epoch = [0, 5, 10, 20, 50, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
+try_test_epoch = [50, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 470      #绝对值
 test_inteval = 2
 always_test_threld = 0.67
@@ -75,10 +75,9 @@ if len(checkpoint) != 0:
 
 # net config
 backbone = 'resnet50'
-Lambda = 0.7
 n = 1            # result_num
 m = 0.5
-min_threld = 0.25    #选出大图
+min_threld = 0.2    #选出大图
 max_threld = 0.6     #选出小图
 OHEM_ratio = 3
 scale = 1

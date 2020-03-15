@@ -23,6 +23,7 @@ from models import FPN_ResNet
 from models.loss import Loss
 from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
 from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
+from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
 from pse import decode as pse_decode
@@ -403,7 +404,9 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
-    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+
+    model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

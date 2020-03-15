@@ -122,7 +122,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, batch_time, lr))
         start = time.time()
 
-        if cur_step == 100 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
+        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
             logger.info('Imgs will be shown in next step.')
             # show images on tensorboard
             if config.display_input_images:

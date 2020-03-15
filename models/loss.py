@@ -23,7 +23,7 @@ class Loss(nn.Module):
         selected_masks = selected_masks.to(output.device)
 
         # full text dice loss with OHEM
-        #output = torch.sigmoid(output)
+        output = torch.sigmoid(output)
 
 
         center_gt = torch.where(label > config.max_threld, label,
@@ -44,7 +44,7 @@ class Loss(nn.Module):
         # mask: 0:文本区域， 1：背景
 
         #增大前景部分权重,  越接近target，值越为1
-        # input = torch.sigmoid(input)
+        input = torch.sigmoid(input)
 
         input = input.contiguous().view(input.size()[0], -1)
         target = target.contiguous().view(target.size()[0], -1)
@@ -134,12 +134,12 @@ class Loss(nn.Module):
             distance_gt: gt for distance_map
             training_mask:
         """
-        #distance_map = torch.sigmoid(distance_map)
+        distance_map = torch.sigmoid(distance_map)
         text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
-        center_gt = torch.where(distance_gt > config.max_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
+        #center_gt = torch.where(distance_gt > config.max_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
 
-        text_map = torch.where(distance_gt > config.min_threld, distance_gt, torch.zeros_like(distance_gt))
-        center_map = torch.where(distance_gt > config.max_threld, distance_gt, torch.zeros_like(distance_gt))
+        # text_map = torch.where(distance_gt > config.min_threld, distance_gt, torch.zeros_like(distance_gt))
+        # center_map = torch.where(distance_gt > config.max_threld, distance_gt, torch.zeros_like(distance_gt))
 
         bg_gt = 1. - text_gt
 

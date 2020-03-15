@@ -129,18 +129,24 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
+                ######label
                 show_label = labels.detach().cpu()
-                b, h, w = show_label.size()
-                show_label = show_label.reshape(b, h, w)
-                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=1, normalize=False, padding=20,
+                show_label = show_label[:8, :, :]
+                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
                                               pad_value=1)
                 writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
+                ######label
+                show_distance_map = distance_map.detach().cpu()
+                show_distance_map = show_distance_map[:8, :, :]
+                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
+                                              pad_value=1)
+                writer.add_image(tag='input/distmap', img_tensor=show_distance_map, global_step=cur_step)
+
             if config.display_output_images:
                 outputs = torch.sigmoid(outputs)
                 show_y = outputs.detach().cpu()
-                b, c, h, w = show_y.size()
-                show_y = show_y.reshape(b * c, h, w)
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=1, normalize=False, padding=20, pad_value=1)
+                show_y = show_y[:8, :, :]
+                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
                 writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
 
     if scheduler!=None:

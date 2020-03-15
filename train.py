@@ -126,6 +126,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
             logger.info('Imgs will be shown in next step.')
             # show images on tensorboard
             if config.display_input_images:
+                ######image
                 x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
@@ -135,7 +136,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
                                               pad_value=1)
                 writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
-                ######label
+                ######distance_map
                 show_distance_map = distance_map.detach().cpu()
                 show_distance_map = show_distance_map[:8, :, :]
                 show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
@@ -143,6 +144,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 writer.add_image(tag='input/distmap', img_tensor=show_distance_map, global_step=cur_step)
 
             if config.display_output_images:
+                ######output
                 outputs = torch.sigmoid(outputs)
                 show_y = outputs.detach().cpu()
                 show_y = show_y[:8, :, :]

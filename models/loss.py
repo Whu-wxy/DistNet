@@ -169,12 +169,20 @@ if __name__ == '__main__':
                            [0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
                            [0, 0,     0,    0, 0, 0, 0]]])
 
+    label = torch.tensor([[[0, 1, 1, 1, 1, 1, 0],
+                           [0, 1, 1, 1, 1, 1, 0],
+                           [0, 1, 1, 1, 1, 1, 0],
+                           [0, 0, 0, 0, 0, 0, 0]]])
+
+    logits2 = torch.tensor([[[0, 1, 1, 1, 1, 1, 0],
+                           [0, 1, 1, 1, 1, 1, 0],
+                           [0, 1, 1, 0, 0, 1, 0],
+                           [0, 1, 1, 0, 0, 0, 0]]])
+
     mask = torch.tensor(np.where(label > -1, 1, 0))
-    dice_center, dice_region, weighted_mse_region, loss = criteria(logits, label.to(dtype=torch.float), mask)
+    dice_center, dice_region, weighted_mse_region, loss = criteria(logits2, label.to(dtype=torch.float), mask)
     # dice_center2, dice_region2, weighted_mse_region2, loss2 = criteria(1 - label.to(dtype=torch.float) + 0.1, label, label)
     print('loss1: ', dice_center, dice_region, weighted_mse_region, loss)
 
-    print(dice_center.dtype)
-    print(loss.dtype)
 
     # print("loss2: ", dice_center2, dice_region2, weighted_mse_region2, loss2)

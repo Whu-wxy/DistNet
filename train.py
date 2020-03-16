@@ -132,13 +132,15 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
                 ######label
-                show_label = labels.detach().cpu()
+                show_label = labels*training_mask
+                show_label = show_label.detach().cpu()
                 show_label = show_label[:8, :, :]
                 show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
                                               pad_value=1)
                 writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
                 ######distance_map
-                show_distance_map = distance_map.detach().cpu()
+                show_distance_map = distance_map * training_mask
+                show_distance_map = show_distance_map.detach().cpu()
                 show_distance_map = show_distance_map[:8, :, :]
                 show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
                                               pad_value=1)

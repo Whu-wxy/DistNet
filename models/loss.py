@@ -135,7 +135,7 @@ class Loss(nn.Module):
             distance_gt: gt for distance_map
             training_mask:
         """
-        distance_gt = distance_gt * mask    # ###处为0
+        distance_gt = distance_gt * training_mask    # ###处为0
 
         text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
         #center_gt = torch.where(distance_gt > config.max_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))

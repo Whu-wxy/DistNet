@@ -124,7 +124,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         start = time.time()
 
         if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            logger.info('Imgs will be shown in next step.')
             # show images on tensorboard
             if config.display_input_images:
                 ######image
@@ -132,6 +131,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
                 ######label
+                labels = labels.to(device)
                 show_label = labels*training_mask
                 show_label = show_label.detach().cpu()
                 show_label = show_label[:8, :, :]

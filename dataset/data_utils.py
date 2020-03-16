@@ -86,6 +86,8 @@ def generate_rbox(im_size, text_polys, text_tags, training_mask, i, n, m, origin
         if origin_shrink:
             if n == 1:
                 cv2.fillPoly(score_map, [poly], 1)
+                if tag:
+                    cv2.fillPoly(training_mask, [poly], 0)
             else:
                 r_i = 1 - (1 - m) * (n - i) / (n - 1)
                 # print('r_i:', r_i)

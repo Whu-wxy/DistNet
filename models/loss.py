@@ -33,7 +33,7 @@ class Loss(nn.Module):
 
         dice_region = self.dice_loss(region_map, label, selected_masks)
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
-        weighted_mse_region = self.weighted_regression(output, label, selected_masks)
+        weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
 
         loss = dice_center + dice_region + weighted_mse_region
 
@@ -51,7 +51,7 @@ class Loss(nn.Module):
         mask = mask.contiguous().view(mask.size()[0], -1)
         # N*(C*W*H)
 
-        # mask中1的部分保留(负样本分数较低的不学习)
+        # mask中1的部分保留(负样本分数较低的不学习), ###从label中去除
         input = input * mask
         target = target * mask
 
@@ -68,6 +68,7 @@ class Loss(nn.Module):
         return 1 - dice_loss
 
     def ohem_single(self, score, gt_text, training_mask):
+        # label像素总数-有###的label像素数
         pos_num = (int)(np.sum(gt_text > config.min_threld)) - (int)(np.sum((gt_text > config.min_threld) & (training_mask <= 0.5)))
         # training_mask: 0:黑色,有tag(###)的区域标记为0
         # gt_text：1：白色，文本区域
@@ -78,7 +79,7 @@ class Loss(nn.Module):
             selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
             return selected_mask
 
-        neg_num = (int)(np.sum(gt_text <= config.min_threld))
+        neg_num = (int)(np.sum(gt_text <= config.min_threld))   #背景像素数
         neg_num = (int)(min(pos_num * self.OHEM_ratio, neg_num))    #负样本最多是正样本点数三倍
 
         if neg_num == 0:  # gt_text全白（全是文本区域）
@@ -134,7 +135,8 @@ class Loss(nn.Module):
             distance_gt: gt for distance_map
             training_mask:
         """
-        #distance_map = torch.sigmoid(distance_map)
+        distance_gt = distance_gt * mask    # ###处为0
+
         text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
         #center_gt = torch.where(distance_gt > config.max_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
 
@@ -151,7 +153,7 @@ class Loss(nn.Module):
 
         mse_loss = F.mse_loss(distance_map, distance_gt, reduction='mean')   #均方误差
         #     mse_loss = F.smooth_l1_loss(distance_map, distance_gt, reduction='none')
-        weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight) * training_mask
+        weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
 
         return weighted_mse_loss.mean()
 
@@ -179,8 +181,8 @@ if __name__ == '__main__':
                            [0, 1, 1, 0, 0, 1, 0],
                            [0, 1, 1, 0, 0, 0, 0]]])
 
-    mask = torch.tensor(np.where(label > -1, 1, 0))
-    dice_center, dice_region, weighted_mse_region, loss = criteria(logits2, label.to(dtype=torch.float), mask)
+    mask = torch.tensor(np.where(label > 0, 1, 0))
+    dice_center, dice_region, weighted_mse_region, loss = criteria(logits2.to(dtype=torch.float), label.to(dtype=torch.float), mask)
     # dice_center2, dice_region2, weighted_mse_region2, loss2 = criteria(1 - label.to(dtype=torch.float) + 0.1, label, label)
     print('loss1: ', dice_center, dice_region, weighted_mse_region, loss)
 

@@ -50,7 +50,7 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
-    long_size = 1900     #2240
+    long_size = 1950     #2240
     scale = 1
     model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'
     #../data/PSENet_Resnet_on_ic15/resnet152.pth  #Best_638_r0.584497_p0.829235_f10.685682.pth

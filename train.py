@@ -42,6 +42,8 @@ from utils.la_lamb import La_Lamb, La_Lamb_v3
 
 from boundary_loss import class2one_hot, one_hot2dist
 
+from models.GFF_FPN import GFF_FPN
+
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
@@ -406,6 +408,8 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+
+    model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)

@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #../save/CV/res2net_dla2.0/Best_638_r0.584497_p0.829235_f10.685682.pth
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result2'
+    save_path = '../save/test_result'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     elif config.eval_script == '2013':
         result = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     print(result)
-    print('decode_threld: ', config.decode_threld)
+    #print('decode_threld: ', config.decode_threld)
     print('min_threld: ', config.min_threld)
     print('max_threld: ', config.max_threld)
 

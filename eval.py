@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2018/6/11 15:54
-# @Author  : zhoujun
 import torch
 import shutil
 import numpy as np
@@ -8,8 +5,7 @@ import config
 import os
 import cv2
 from tqdm import tqdm
-from models import FPN_ResNet, ACCL_CB_FPN_ResNet
-from models.dla_up import dla60up
+from models import FPN_ResNet
 from predict import Pytorch_model
 from cal_recall.script import cal_recall_precison_f1
 from cal_recall.script_13 import cal_recall_precison_f1_13
@@ -56,13 +52,13 @@ if __name__ == '__main__':
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 2240     #2240
     scale = 1
-    model_path = '../save/pse_ranger/Best_598_r0.563312_p0.869888_f10.683811.pth'
+    model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'
     #../data/PSENet_Resnet_on_ic15/resnet152.pth  #Best_638_r0.584497_p0.829235_f10.685682.pth
     #res2net50_26w_6s_2.1/train_PSENet_524_loss0.347171.pth
     #../save/CV/res2net_dla2.0/Best_638_r0.584497_p0.829235_f10.685682.pth
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/pse_ranger/test_result'
+    save_path = '../save/test_result'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

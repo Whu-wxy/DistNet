@@ -74,6 +74,7 @@ class FPN_ResNet(nn.Module):
             c2, c3, c4, c5 = res_dict['res2'], res_dict['res3'], res_dict['res4'], res_dict['res5']
         else:
             c2, c3, c4, c5 = self.backbone(input)
+
         # Top-down
         p5 = self.toplayer(c5)
         p4 = self._upsample_add(p5, self.latlayer1(c4))
@@ -124,10 +125,10 @@ if __name__ == '__main__':
     backbone = 'resnet50'
     net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=5, predict=False).to(device)
     net.eval()
-    # x = torch.randn(1, 3, 512, 512).to(device)
-    # start = time.time()
-    # y = net(x)
-    # print(time.time() - start)  # 18->4.5  50->5.8
+    x = torch.randn(1, 3, 512, 512).to(device)
+    start = time.time()
+    y = net(x)
+    print(time.time() - start)  # 18->4.5  50->5.8
     # print(y.shape)   #torch.Size([1, 5, 512, 512])
     # # torch.save(net.state_dict(),f'{backbone}.pth')
 

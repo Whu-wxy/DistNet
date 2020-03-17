@@ -25,9 +25,9 @@ d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
 inplace = True
 
 
-class SA_GFF_FPN(nn.Module):
+class GFF_FPN(nn.Module):
     def __init__(self, backbone, result_num, scale: int = 1, pretrained=False, predict=False):
-        super(SA_GFF_FPN, self).__init__()
+        super(GFF_FPN, self).__init__()
         assert backbone in d, 'backbone must in: {}'.format(d)
         self.scale = scale
         conv_out = 256
@@ -41,33 +41,30 @@ class SA_GFF_FPN(nn.Module):
         self.top_bn = nn.BatchNorm2d(conv_out)
 
         #GFF
-        self.GFF1n = nn.Conv2d(out[0], conv_out, kernel_size=1, stride=1, padding=0)
-        self.GFF1 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
-        self.GFF2n = nn.Conv2d(out[1], conv_out, kernel_size=1, stride=1, padding=0)
+        #self.GFF1n = nn.Conv2d(out[0], conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF2 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
-        self.GFF3n = nn.Conv2d(out[2], conv_out, kernel_size=1, stride=1, padding=0)
+        #self.GFF2n = nn.Conv2d(out[1], conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF3 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
+        #self.GFF3n = nn.Conv2d(out[2], conv_out, kernel_size=1, stride=1, padding=0)
+        self.GFF4 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
+        self.GFF5 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
 
         # Lateral layers
-        # self.latlayer1 = nn.Conv2d(out[2], conv_out, kernel_size=1, stride=1, padding=0)
-        # self.lat_bn1 = nn.BatchNorm2d(conv_out)
-        #
-        # self.latlayer2 = nn.Conv2d(out[1], conv_out, kernel_size=1, stride=1, padding=0)
-        # self.lat_bn2 = nn.BatchNorm2d(conv_out)
-        #
-        # self.latlayer3 = nn.Conv2d(out[0], conv_out, kernel_size=1, stride=1, padding=0)
-        # self.lat_bn3 = nn.BatchNorm2d(conv_out)
+        self.latlayer1 = nn.Conv2d(out[2], conv_out, kernel_size=1, stride=1, padding=0)
+        #self.lat_bn1 = nn.BatchNorm2d(conv_out)
 
-        # after FPN
-        self.up_conv1 = nn.Conv2d(conv_out, conv_out, kernel_size=3, stride=1, padding=1)
-        self.up_bn1 = nn.BatchNorm2d(conv_out)
-        self.up_conv2 = nn.Conv2d(conv_out, 128, kernel_size=1, stride=1, padding=0)
-        self.up_bn2 = nn.BatchNorm2d(128)
-        #### Add Upsamle
-        self.up_conv3 = nn.Conv2d(128, 64, kernel_size=3, stride=1, padding=1)
-        self.up_conv4 = nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1)
+        self.latlayer2 = nn.Conv2d(out[1], conv_out, kernel_size=1, stride=1, padding=0)
+        #self.lat_bn2 = nn.BatchNorm2d(conv_out)
 
-        self.out_conv = nn.Conv2d(32, 1, kernel_size=1, stride=1)
+        self.latlayer3 = nn.Conv2d(out[0], conv_out, kernel_size=1, stride=1, padding=0)
+        #self.lat_bn3 = nn.BatchNorm2d(conv_out)
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(conv_out * 4, conv_out, kernel_size=3, padding=1, stride=1),
+            nn.BatchNorm2d(conv_out),
+            nn.ReLU(inplace=inplace)
+        )
+        self.out_conv = nn.Conv2d(conv_out, 1, kernel_size=1, stride=1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -78,6 +75,7 @@ class SA_GFF_FPN(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
+
     def forward(self, input: torch.Tensor):
         _, _, H, W = input.size()
 
@@ -87,42 +85,43 @@ class SA_GFF_FPN(nn.Module):
         else:
             c2, c3, c4, c5 = self.backbone(input)
 
+        # Top-down
+        c5 = self.toplayer(c5)
+        c5 = self.top_bn(c5)
+        c4 = self.latlayer1(c4)
+        c3 = self.latlayer2(c3)
+        c2 = self.latlayer3(c2)
 
-        c2n = self.GFF1n(c2)
-        G1 = self.GFF1(c2n)
-        G1 = torch.sigmoid(G1)
+        # 5->4
+        c5 = F.interpolate(c5, size=c4.size()[2:], mode='bilinear', align_corners=False)
+        G5 = self.GFF5(c5)
+        G5 = torch.sigmoid(G5)
 
-        c3n = self.GFF2n(c3)
-        G2 = self.GFF2(c3n)
-        G2 = torch.sigmoid(G2)
+        G4 = self.GFF4(c4)
+        G4 = torch.sigmoid(G4)
+        c4 = (1 + G4) * c4 + (1 - G4) * (G5 * c5)
 
-        c4n = self.GFF3n(c4)
-        G3 = self.GFF3(c4n)
+        # 4->3
+        c4 = F.interpolate(c4, size=c3.size()[2:], mode='bilinear', align_corners=False)
+
+        G4 = self.GFF4(c4)
+        G4 = torch.sigmoid(G4)
+
+        G3 = self.GFF3(c3)
+        G3 = torch.sigmoid(G3)
+        c3 = (1 + G4) * c4 + (1 - G4) * (G3 * c3)
+
+        # 3->2
+        c3 = F.interpolate(c3, size=c2.size()[2:], mode='bilinear', align_corners=False)
+        G3 = self.GFF3(c3)
         G3 = torch.sigmoid(G3)
 
-        c2gff = (1 + G1) * c2n + (1 - G1) * (G2 * c3n + G3 * c4n)
-        c3gff = (1 + G2) * c3n + (1 - G2) * (G1 * c2n + G3 * c4n)
-        c4gff = (1 + G3) * c4n + (1 - G3) * (G2 * c3n + G1 * c2n)
+        G2 = self.GFF2(c2)
+        G2 = torch.sigmoid(G2)
+        c2 = (1 + G3) * c3 + (1 - G3) * (G2 * c2)
 
-        # Top-down
-        p5 = self.toplayer(c5)
-        p5 = self.top_bn(p5)
-        p4 = self._upsample_add(p5, c4gff)
-        #p4 = self.lat_bn1(p4)
-        p3 = self._upsample_add(p4, c3gff)
-        #p3 = self.lat_bn2(p3)
-        p2 = self._upsample_add(p3, c2gff)
-        #p2 = self.lat_bn3(p2)
-
-        x = self.up_conv1(p2)
-        x = self.up_bn1(x)
-        x = self.up_conv2(x)
-        x = self.up_bn2(x)
-
-        x = F.interpolate(x, size=(H//2, W//2), mode='bilinear', align_corners=True)
-        x = self.up_conv3(x)
-        x = self.up_conv4(x)
-
+        x = self._upsample_cat(c2, c3, c4, c5)
+        x = self.conv(x)
         x = self.out_conv(x)
 
         if self.train:
@@ -144,7 +143,7 @@ class SA_GFF_FPN(nn.Module):
 
     def _upsample_cat(self, p2, p3, p4, p5):
         h, w = p2.size()[2:]
-        p3 = F.interpolate(p3, size=(h, w), mode='bilinear', align_corners=False)
+        #p3 = F.interpolate(p3, size=(h, w), mode='bilinear', align_corners=False)
         p4 = F.interpolate(p4, size=(h, w), mode='bilinear', align_corners=False)
         p5 = F.interpolate(p5, size=(h, w), mode='bilinear', align_corners=False)
         return torch.cat([p2, p3, p4, p5], dim=1)
@@ -156,7 +155,7 @@ if __name__ == '__main__':
 
     device = torch.device('cpu')  #cuda:0
     backbone = 'resnet50'
-    net = SA_GFF_FPN(backbone=backbone, pretrained=False, result_num=1, predict=False).to(device)
+    net = GFF_FPN(backbone=backbone, pretrained=False, result_num=1, predict=False).to(device)
     net.eval()
     x = torch.randn(1, 3, 512, 512).to(device)
     start = time.time()

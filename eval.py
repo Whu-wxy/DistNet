@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #../save/CV/res2net_dla2.0/Best_638_r0.584497_p0.829235_f10.685682.pth
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result'
+    save_path = '../save/test_result2'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

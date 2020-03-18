@@ -47,9 +47,8 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
         preds = preds.squeeze(0)
     preds = preds.detach().cpu().numpy()
 
-    region = preds > config.min_threld   #按阈值变为2值图
-    center = preds > config.max_threld  # 按阈值变为2值图
-    # preds = preds * preds[-1] # 使用最大的kernel作为其他小图的mask,不使用的话效果更好
+    region = preds >= config.min_threld   #按阈值变为2值图
+    center = preds >= config.max_threld  # 按阈值变为2值图
     pred, label_values = pse_warpper(region, center, 5)
 
     #pred, label_values = pse(region, center, 5)

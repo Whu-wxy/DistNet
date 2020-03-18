@@ -1,9 +1,9 @@
-﻿name = 'dist_v1'
+﻿name = 'dist_mse'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_v1'
+output_dir = '../save/dist_mse'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -15,14 +15,14 @@ random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config
-gpu_id = '7'
+gpu_id = '0'
 workers = 10
 start_epoch = 0
 epochs = 701   #600
 early_stop=20  #test F1
 
 train_batch_size = 20
-try_test_epoch = [50, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
+try_test_epoch = [25, 50, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 470      #绝对值
 test_inteval = 2
 always_test_threld = 0.67
@@ -32,7 +32,7 @@ optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
-lr = 3e-4
+lr = 1e-4
 end_lr = 1e-7
 
 
@@ -77,7 +77,7 @@ if len(checkpoint) != 0:
 backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
-min_threld = 0.41    #选出大图
+min_threld = 0.199    #选出大图
 max_threld = 0.8     #选出小图
 OHEM_ratio = 3
 scale = 1

@@ -52,7 +52,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 1900     #2240
-    scale = 2
+    scale = 1
     model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth

@@ -76,7 +76,7 @@ if __name__ == '__main__':
     elif config.eval_script == '2013':
         result = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     print(result)
-    #print('decode_threld: ', config.decode_threld)
+    print('scale:', scale)
     print('long_size: ', long_size)
     print('min_threld: ', config.min_threld)
     print('max_threld: ', config.max_threld)

@@ -48,6 +48,7 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
 
 
 if __name__ == '__main__':
+    from models.GFF_FPN import GFF_FPN
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 2240     #2240
@@ -62,6 +63,7 @@ if __name__ == '__main__':
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
+    net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
     net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
     # net = ACCL_CB_FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n,
     #                            scale=config.scale,

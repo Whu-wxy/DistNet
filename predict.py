@@ -116,14 +116,11 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
 
-    model_path = 'E:\\PSENet_Resnet_on_ic15\\Best_825_r0.767935_p0.854312_f10.808824.pth'   #psenet.pt
-    # ../save/psenet/result.pth
-#../data/PSENet_Resnet_on_ic15/resnet152.pth
+    model_path = 'F:\zzxs\Experiments\PSE_exp\distNet\\v1_res_fpn\\Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
 
-    # model_path = 'output/psenet_icd2015_new_loss/final.pth'
-    img_id = 10_2
-    img_path = 'E:\PSENet_Resnet_on_ic15\\ranger_80.8\img\img_{}.jpg'.format(img_id)
-    label_path = '../data/IC15/test/gt/gt_img_{}.txt'.format(img_id)
+    img_id = 10
+    img_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\img\img_{}.jpg'.format(img_id)
+    label_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\gt/gt_img_{}.txt'.format(img_id)
   #  label = _get_annotation(label_path)
 
     # 初始化网络
@@ -131,12 +128,13 @@ if __name__ == '__main__':
     model = Pytorch_model(model_path, net=net, scale=1, gpu_id=-1)
     # for i in range(100):
     #     models.predict(img_path)
-    preds, boxes_list,t = model.predict(img_path, 414)
-    #print(boxes_list)
-#     show_img(preds)
-#     img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+    preds, boxes_list,t = model.predict(img_path, 1900)
+    print(boxes_list)
+    show_img(preds)
+
+    img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
 #     # cv2.imwrite('result.jpg', img)
-# #    img = draw_bbox(img, label,color=(0,0,255))
-#     show_img(img, color=True)
-#
-#     plt.show()
+#    img = draw_bbox(img, label,color=(0,0,255))
+    show_img(img, color=True)
+
+    plt.show()

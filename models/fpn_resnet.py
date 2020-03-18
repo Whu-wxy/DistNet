@@ -54,7 +54,8 @@ class FPN_ResNet(nn.Module):
             nn.ReLU(inplace=inplace)
         )
 
-        self.out_conv = nn.Conv2d(conv_out, 1, kernel_size=1, stride=1)
+        self.up_conv = nn.Conv2d(conv_out, 64, kernel_size=3, stride=1, padding=1)
+        self.out_conv = nn.Conv2d(64, 1, kernel_size=1, stride=1)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -87,6 +88,8 @@ class FPN_ResNet(nn.Module):
         x = self._upsample_cat(p2, p3, p4, p5)
         x = self.conv(x)
 
+        x = self.up_conv(x)
+        x = F.interpolate(x, size=(H//2, W//2), mode='bilinear', align_corners=True)
         x = self.out_conv(x)
 
         if self.train:

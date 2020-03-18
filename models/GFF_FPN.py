@@ -41,11 +41,8 @@ class GFF_FPN(nn.Module):
         self.top_bn = nn.BatchNorm2d(conv_out)
 
         #GFF
-        #self.GFF1n = nn.Conv2d(out[0], conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF2 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
-        #self.GFF2n = nn.Conv2d(out[1], conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF3 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
-        #self.GFF3n = nn.Conv2d(out[2], conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF4 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
         self.GFF5 = nn.Conv2d(conv_out, conv_out, kernel_size=1, stride=1, padding=0)
 

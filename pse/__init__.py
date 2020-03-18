@@ -50,9 +50,10 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     region = preds > config.min_threld   #按阈值变为2值图
     center = preds > config.max_threld  # 按阈值变为2值图
     # preds = preds * preds[-1] # 使用最大的kernel作为其他小图的mask,不使用的话效果更好
-    #pred, label_values = pse_warpper(region, center, 5)
+    pred, label_values = pse_warpper(region, center, 5)
 
-    pred, label_values = pse(region, center, 5)
+    #pred, label_values = pse(region, center, 5)
+    
     bbox_list = []
     for label_value in label_values:
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]

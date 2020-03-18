@@ -234,41 +234,6 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2)#, dur   #im,score_maps,training_mask#
 
 
-def get_distance_map_origin(label, overlap_map, score_maps_line):
-    masklarge = label[0].astype(np.uint8)  # .transpose((1, 2, 0))
-    overlap_map = overlap_map.astype(np.uint8)  # .transpose((1, 2, 0))
-    score_maps_line = score_maps_line.astype(np.uint8)
-    interMask = masklarge - score_maps_line - overlap_map
-
-    distance_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_L2, maskSize=5)
-
-    cv2.normalize(distance_map, distance_map, 0.4, 1, cv2.NORM_MINMAX, mask=masklarge)
-    ####局部归一化
-    masklarge_threld = masklarge * np.where(distance_map > config.mid_threld, 1, 0)  # 选出大于阈值的子区域
-    connect_num, connect_img = cv2.connectedComponents(masklarge_threld.astype(np.uint8), connectivity=4)
-    max_value = np.max(distance_map)
-    for lab in range(connect_num):
-        if lab == 0:
-            continue
-        lab_img_i = np.where(connect_img == lab, 1, 0)
-        part_dist_map = distance_map * lab_img_i
-        part_max = np.max(part_dist_map)
-        part_dist_map = part_dist_map * max_value / part_max
-        distance_map = (1 - lab_img_i) * distance_map + part_dist_map
-
-    cv2.normalize(distance_map, distance_map, 0.3, 0.4, cv2.NORM_MINMAX, mask=overlap_map)
-    #cv2.normalize(distance_map, distance_map, 0.3, 0.4, cv2.NORM_MINMAX, mask=score_maps_line)
-
-    #边界设置固定值0.3
-    score_maps_line2 = np.where(score_maps_line == 1, 0.3, 0)
-    distance_map = (1 - score_maps_line) * distance_map + score_maps_line2
-
-
-    # np.savetxt('F:\\distance_map2.csv', distance_map, delimiter=',', fmt='%F')
-    # input()
-    return distance_map
-
-
 def get_distance_map(label, overlap_map, score_maps_line):
     masklarge = label[0].astype(np.uint8)  # .transpose((1, 2, 0))
     overlap_map = overlap_map.astype(np.uint8)  # .transpose((1, 2, 0))

@@ -64,11 +64,7 @@ if __name__ == '__main__':
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
     net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
-    net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
-    # net = ACCL_CB_FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n,
-    #                            scale=config.scale,
-    #                            checkpoint='')
-    # net = dla60up(classes=config.n, scale=config.scale, pretrained_base=False)
+    #net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
 
     save_path = main(net, model_path, backbone, long_size, scale, data_path, save_path, gpu_id=gpu_id)
 
@@ -81,6 +77,7 @@ if __name__ == '__main__':
         result = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     print(result)
     #print('decode_threld: ', config.decode_threld)
+    print('long_size: ', long_size)
     print('min_threld: ', config.min_threld)
     print('max_threld: ', config.max_threld)
 

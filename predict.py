@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
 
-    img_id = 411
+    img_id = 419
     img_path = '../img/img_{}.jpg'.format(img_id)
     label_path = '../gt/gt_img_{}.txt'.format(img_id)
   #  label = _get_annotation(label_path)
@@ -132,16 +132,16 @@ if __name__ == '__main__':
     #print(boxes_list)
     # show_img(preds)
 
-    cv2.imwrite('../img_pred411.jpg', logit*255)
+    cv2.imwrite('../img_pred419.jpg', logit*255)
 
-    center = np.where(logit>config.min_threld, 255, 0)
-    cv2.imwrite('../img_pred_center411.jpg', center)
+    center = np.where(logit>=config.min_threld, 255, 0)
+    cv2.imwrite('../img_pred_center419.jpg', center)
 
-    region = np.where(logit > config.max_threld, 255, 0)
-    cv2.imwrite('../img_pred_region411.jpg', region)
+    region = np.where(logit >= config.max_threld, 255, 0)
+    cv2.imwrite('../img_pred_region419.jpg', region)
 
     img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-    cv2.imwrite('../img_label411.jpg', img)
+    cv2.imwrite('../img_label419.jpg', img)
 #    img = draw_bbox(img, label,color=(0,0,255))
 #     show_img(img, color=True)
 #

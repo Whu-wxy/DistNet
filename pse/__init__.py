@@ -49,6 +49,8 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
     region = preds >= config.min_threld   #按阈值变为2值图
     center = preds >= config.max_threld  # 按阈值变为2值图
+    print('region count:', np.sum(region))
+    print('center count:', np.sum(center))
     pred, label_values = pse_warpper(region, center, 5)
 
     #pred, label_values = pse(region, center, 5)

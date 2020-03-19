@@ -1,4 +1,4 @@
-﻿name = 'dist_region'
+﻿name = 'dist_region,fpn去掉最后的up+conv'
 
 # data config
 trainroot = '../IC15/train'
@@ -78,7 +78,7 @@ backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
 min_threld = 0.2    #选出大图
-max_threld = 0.6     #选出小图
+max_threld = 0.5     #选出小图
 OHEM_ratio = 3
 scale = 1
 scale_model = 'nearest'

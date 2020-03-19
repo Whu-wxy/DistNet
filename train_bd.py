@@ -99,6 +99,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
 
+        dist_map = None
         if config.bd_loss:
             dist_map = dist_loss_map.to(device)
 

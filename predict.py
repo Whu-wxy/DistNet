@@ -124,7 +124,7 @@ if __name__ == '__main__':
   #  label = _get_annotation(label_path)
 
     # 初始化网络
-    net = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=config.n, predict=True)
+    net = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=config.n, predict=False)
     model = Pytorch_model(model_path, net=net, scale=1, gpu_id=0)
     # for i in range(100):
     #     models.predict(img_path)

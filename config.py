@@ -3,7 +3,7 @@
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_region'
+output_dir = '../save/dist_2region'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640

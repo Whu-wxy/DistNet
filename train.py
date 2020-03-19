@@ -100,8 +100,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         outputs = torch.squeeze(outputs, dim=1)
 
-        #dice_center,
-        dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
+        #
+        dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
 
         # Backward
         optimizer.zero_grad()

@@ -116,10 +116,10 @@ if __name__ == '__main__':
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 
-    model_path = '..\\Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
+    model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
 
     img_id = 411
-    img_path = '../img\img_{}.jpg'.format(img_id)
+    img_path = '../img/img_{}.jpg'.format(img_id)
     label_path = '../gt/gt_img_{}.txt'.format(img_id)
   #  label = _get_annotation(label_path)
 

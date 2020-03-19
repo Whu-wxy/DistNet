@@ -132,16 +132,16 @@ if __name__ == '__main__':
     #print(boxes_list)
     # show_img(preds)
 
-    cv2.imwrite('../img_predimg_id.jpg', img)
+    cv2.imwrite('../img_pred411.jpg', preds*255)
 
     center = np.where(preds>config.min_threld, 255, 0)
-    cv2.imwrite('../img_pred_centerimg_id.jpg', center)
+    cv2.imwrite('../img_pred_center411.jpg', center)
 
     region = np.where(preds > config.max_threld, 255, 0)
-    cv2.imwrite('../img_pred_regionimg_id.jpg', region)
+    cv2.imwrite('../img_pred_region411.jpg', region)
 
     img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-    cv2.imwrite('../img_labelimg_id.jpg', img)
+    cv2.imwrite('../img_label411.jpg', img)
 #    img = draw_bbox(img, label,color=(0,0,255))
 #     show_img(img, color=True)
 #

@@ -75,11 +75,11 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             start = time.time()
-            preds = self.net(tensor)
+            logit = self.net(tensor)
             # print(preds)
             # return None, None, None
 
-            preds, boxes_list = pse_decode(preds[0], self.scale)
+            preds, boxes_list = pse_decode(logit[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
             # print(scale)
             # preds, boxes_list = decode(preds,num_pred=-1)
@@ -88,7 +88,7 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start
-        return preds, boxes_list, t
+        return preds, boxes_list, t, logit.numpy()
 
 
 def _get_annotation(label_path):
@@ -128,16 +128,16 @@ if __name__ == '__main__':
     model = Pytorch_model(model_path, net=net, scale=1, gpu_id=0)
     # for i in range(100):
     #     models.predict(img_path)
-    preds, boxes_list,t = model.predict(img_path, 1900)
+    preds, boxes_list,t, logit = model.predict(img_path, 1900)
     #print(boxes_list)
     # show_img(preds)
 
-    cv2.imwrite('../img_pred411.jpg', preds*255)
+    cv2.imwrite('../img_pred411.jpg', logit*255)
 
-    center = np.where(preds>config.min_threld, 255, 0)
+    center = np.where(logit>config.min_threld, 255, 0)
     cv2.imwrite('../img_pred_center411.jpg', center)
 
-    region = np.where(preds > config.max_threld, 255, 0)
+    region = np.where(logit > config.max_threld, 255, 0)
     cv2.imwrite('../img_pred_region411.jpg', region)
 
     img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))

@@ -107,8 +107,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 dist_map = torch.clamp(dist_map, max=config.clip_value)
 
         bd_loss_weight = 0
-        if epoch > 0:
-            bd_loss_weight = 0.002 * (epoch - 0)  # 500后变成0.1
+        if epoch > 10:
+            bd_loss_weight = 0.002 * (epoch - 10)  # 500后变成0.1
             bd_loss_weight = 1.0 if bd_loss_weight >= 1 else bd_loss_weight
 
         outputs = torch.squeeze(outputs, dim=1)

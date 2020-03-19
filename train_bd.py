@@ -18,6 +18,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset.data_utils import PSEDataset
+from dataset.data_utils_bd import PSEDataset_bd
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -253,7 +254,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = PSEDataset(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
+    train_data = PSEDataset_bd(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
                            transform=transforms.ToTensor())
     train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                    num_workers=int(config.workers))

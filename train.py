@@ -43,6 +43,7 @@ from utils.la_lamb import La_Lamb, La_Lamb_v3
 from boundary_loss import class2one_hot, one_hot2dist
 
 from models.GFF_FPN import GFF_FPN
+from models.resnet_FPEM import ResNet_FPEM
 
 
 def weights_init(m):
@@ -108,13 +109,13 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         optimizer.step()
         train_loss += loss.item()
 
-        #dice_center = dice_center.item()
+        dice_center = dice_center.item()
         dice_region = dice_region.item()
         weighted_mse_region = weighted_mse_region.item()
         loss = loss.item()
         cur_step = epoch * all_step + i
 
-        #writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
+        writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
         writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
         writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
         writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
@@ -122,8 +123,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         batch_time = time.time() - start
         logger.info(
-            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_region, weighted_mse_region, batch_time, lr))
+            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, batch_time, lr))
         start = time.time()
 
         if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
@@ -411,7 +412,8 @@ if __name__ == '__main__':
     import utils
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

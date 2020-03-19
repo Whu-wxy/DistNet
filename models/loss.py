@@ -32,12 +32,12 @@ class Loss(nn.Module):
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
 
         dice_region = self.dice_loss(region_map, label, selected_masks)
-        #dice_center = self.dice_loss(center_map, center_gt, selected_masks)
+        dice_center = self.dice_loss(center_map, center_gt, selected_masks)
         weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
 
-        loss = dice_region + weighted_mse_region
+        loss = dice_center + dice_region + weighted_mse_region
 
-        return dice_region, weighted_mse_region, loss
+        return dice_center, dice_region, weighted_mse_region, loss
 
 
     def dice_loss(self, input, target, mask):

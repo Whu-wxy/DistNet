@@ -65,6 +65,7 @@ class ResNet_FPEM(nn.Module):
             c2, c3, c4, c5 = self.backbone(input)
 
         x = self.segmentation_head((c2, c3, c4, c5))
+        print(x.shape)
 
 
         if self.train:
@@ -98,7 +99,7 @@ if __name__ == '__main__':
 
     device = torch.device('cpu')  #cuda:0
     backbone = 'resnet18'
-    net = ResNet_FPEM(backbone=backbone, pretrained=False, result_num=5, predict=False).to(device)
+    net = ResNet_FPEM(backbone=backbone, pretrained=False, result_num=1, predict=False).to(device)
     net.eval()
     x = torch.randn(1, 3, 512, 512).to(device)
     start = time.time()
@@ -109,6 +110,6 @@ if __name__ == '__main__':
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    print_model_parm_flops(net, x)
-    print_model_parm_nums(net)
+    # print_model_parm_flops(net, x)
+    # print_model_parm_nums(net)
     #show_summary(net, 'E:/ResNet_FPEM_summery.xlsx')

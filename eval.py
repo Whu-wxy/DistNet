@@ -53,7 +53,7 @@ if __name__ == '__main__':
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 1900     #2240
     scale = 1
-    model_path = '../save/dist_region/Best_300_r0.618199_p0.581785_f10.599440.pth'
+    model_path = '../save/dist_mse/Best_300_r0.618199_p0.581785_f10.599440.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 

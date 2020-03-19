@@ -38,11 +38,7 @@ class Loss(nn.Module):
         # boundary loss with OHEM
         if config.bd_loss:
             mask = selected_masks.unsqueeze(dim=1)  #bchw
-            print(mask.shape)
-            print(region_map.unsqueeze(dim=1).shape)
-            print(dist_maps.unsqueeze(dim=1).shape)
-            input()
-            bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps.unsqueeze(dim=1), mask)
+            bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
             bd_loss = bd_loss_weight * bd_loss
 
             loss = dice_center + dice_region + weighted_mse_region + bd_loss

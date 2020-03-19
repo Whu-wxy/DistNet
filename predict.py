@@ -114,27 +114,35 @@ if __name__ == '__main__':
     from utils.utils import show_img, draw_bbox
 
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 
-    model_path = 'F:\zzxs\Experiments\PSE_exp\distNet\\v1_res_fpn\\Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
+    model_path = '..\\Best_558_r0.662494_p0.583793_f10.620659.pth'   #psenet.pt
 
-    img_id = 10
-    img_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\img\img_{}.jpg'.format(img_id)
-    label_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\gt/gt_img_{}.txt'.format(img_id)
+    img_id = 411
+    img_path = '../img\img_{}.jpg'.format(img_id)
+    label_path = '../gt/gt_img_{}.txt'.format(img_id)
   #  label = _get_annotation(label_path)
 
     # 初始化网络
     net = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=config.n, predict=True)
-    model = Pytorch_model(model_path, net=net, scale=1, gpu_id=-1)
+    model = Pytorch_model(model_path, net=net, scale=1, gpu_id=0)
     # for i in range(100):
     #     models.predict(img_path)
     preds, boxes_list,t = model.predict(img_path, 1900)
-    print(boxes_list)
-    show_img(preds)
+    #print(boxes_list)
+    # show_img(preds)
+
+    cv2.imwrite('../img_predimg_id.jpg', img)
+
+    center = np.where(preds>config.min_threld, 255, 0)
+    cv2.imwrite('../img_pred_centerimg_id.jpg', center)
+
+    region = np.where(preds > config.max_threld, 255, 0)
+    cv2.imwrite('../img_pred_regionimg_id.jpg', region)
 
     img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-#     # cv2.imwrite('result.jpg', img)
+    cv2.imwrite('../img_labelimg_id.jpg', img)
 #    img = draw_bbox(img, label,color=(0,0,255))
-    show_img(img, color=True)
-
-    plt.show()
+#     show_img(img, color=True)
+#
+#     plt.show()

@@ -85,7 +85,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, labels, training_mask, distance_map) in enumerate(train_loader):
+    for i, (images, labels, training_mask, distance_map, dist_loss_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
@@ -100,7 +100,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         distance_map = distance_map.to(torch.float)
 
         if config.bd_loss:
-            dist_map = dist_map.to(device)
+            dist_map = dist_loss_map.to(device)
 
             if config.bd_clip == True:
                 # 限制距离图最大距离

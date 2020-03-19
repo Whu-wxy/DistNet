@@ -1,9 +1,9 @@
-﻿name = 'dist_FPEM'
+﻿name = 'dist_bd'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_FPEM'
+output_dir = '../save/dist_bd'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -21,7 +21,7 @@ start_epoch = 0
 epochs = 701   #600
 early_stop=20  #test F1
 
-train_batch_size = 9
+train_batch_size = 8
 try_test_epoch = [10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 470      #绝对值
 test_inteval = 2
@@ -81,7 +81,7 @@ min_threld = 0.2    #选出大图
 max_threld = 0.75     #选出小图
 
 bd_loss = True
-bd_clip = False      ###################
+bd_clip = True      ###################
 clip_value = 50
 
 OHEM_ratio = 3

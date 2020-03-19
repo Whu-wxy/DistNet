@@ -65,8 +65,6 @@ class ResNet_FPEM(nn.Module):
             c2, c3, c4, c5 = self.backbone(input)
 
         x = self.segmentation_head((c2, c3, c4, c5))
-        print(x.shape)
-
 
         if self.train:
             if config.scale_model == 'nearest':

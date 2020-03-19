@@ -1,9 +1,9 @@
-﻿name = 'dist_mse'
+﻿name = 'dist_region'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_mse'
+output_dir = '../save/dist_region'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -67,8 +67,8 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = True
-checkpoint = '../save/dist_mse/Best_10_r0.261916_p0.324195_f10.289747.pth'   #full model ckpt
+load_lr = False
+checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 
@@ -78,7 +78,7 @@ backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
 min_threld = 0.2    #选出大图
-max_threld = 0.8     #选出小图
+max_threld = 0.7     #选出小图
 OHEM_ratio = 3
 scale = 1
 scale_model = 'nearest'

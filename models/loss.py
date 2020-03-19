@@ -36,7 +36,7 @@ class Loss(nn.Module):
         weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
 
         # boundary loss with OHEM
-        if config.bd_loss and bd_loss_weight != 0:
+        if config.bd_loss:
             mask = selected_masks.unsqueeze(dim=1)  #bchw
             bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
             bd_loss = bd_loss_weight * bd_loss

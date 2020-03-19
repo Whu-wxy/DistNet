@@ -88,7 +88,7 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start
-        return preds, boxes_list, t, logit
+        return preds, boxes_list, t  #, logit
 
 
 def _get_annotation(label_path):

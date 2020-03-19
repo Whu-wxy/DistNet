@@ -79,6 +79,11 @@ n = 1            # result_num
 m = 0.5
 min_threld = 0.2    #选出大图
 max_threld = 0.75     #选出小图
+
+bd_loss = True
+bd_clip = False      ###################
+clip_value = 50
+
 OHEM_ratio = 3
 scale = 1
 scale_model = 'nearest'

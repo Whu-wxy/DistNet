@@ -73,7 +73,7 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
         else:
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x+w, y+h]])
-    return pred, np.array(bbox_list)
+    return pred, np.array(bbox_list), preds
 
 
 if __name__ == '__main__':

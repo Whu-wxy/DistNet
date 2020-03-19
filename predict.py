@@ -75,11 +75,11 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             start = time.time()
-            logit = self.net(tensor)
+            preds = self.net(tensor)
             # print(preds)
             # return None, None, None
 
-            preds, boxes_list = pse_decode(logit[0], self.scale)
+            preds, boxes_list, logit = pse_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
             # print(scale)
             # preds, boxes_list = decode(preds,num_pred=-1)
@@ -88,7 +88,7 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start
-        return preds, boxes_list, t, logit[0].cpu().numpy()
+        return preds, boxes_list, t, logit
 
 
 def _get_annotation(label_path):

@@ -78,7 +78,7 @@ backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
 min_threld = 0.4    #选出大图   0.2
-max_threld = 0.7     #选出小图   0.7
+max_threld = 0.67     #选出小图   0.7
 
 bd_loss = True
 bd_clip = True      ###################

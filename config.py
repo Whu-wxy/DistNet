@@ -21,9 +21,9 @@ start_epoch = 0
 epochs = 701   #600
 early_stop=20  #test F1
 
-train_batch_size = 8
+train_batch_size = 10
 try_test_epoch = [10, 25, 50, 70, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
-start_test_epoch = 470      #绝对值
+start_test_epoch = 500      #绝对值
 test_inteval = 2
 always_test_threld = 0.67
 

@@ -22,8 +22,8 @@ from dataset.data_utils_bd import PSEDataset_bd
 
 from models import FPN_ResNet
 from models.loss import Loss
-from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
-from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
+# from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
+# from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
 from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger

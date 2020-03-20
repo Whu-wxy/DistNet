@@ -79,7 +79,7 @@ class Pytorch_model:
             # print(preds)
             # return None, None, None
 
-            preds, boxes_list, logit = pse_decode(preds[0], self.scale)
+            preds, boxes_list = pse_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
             # print(scale)
             # preds, boxes_list = decode(preds,num_pred=-1)

@@ -19,8 +19,8 @@ class Loss(nn.Module):
 
     def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
 
-        selected_masks = self.ohem_batch(output, label, training_masks)
-        selected_masks = selected_masks.to(output.device)
+        # selected_masks = self.ohem_batch(output, label, training_masks)
+        # selected_masks = selected_masks.to(output.device)
 
         # full text dice loss with OHEM
         output = torch.sigmoid(output)
@@ -31,13 +31,13 @@ class Loss(nn.Module):
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
 
-        dice_region = self.dice_loss(region_map, label, selected_masks)
-        dice_center = self.dice_loss(center_map, center_gt, selected_masks)
+        dice_region = self.dice_loss(region_map, label, training_masks)
+        dice_center = self.dice_loss(center_map, center_gt, training_masks)
         weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
 
         # boundary loss with OHEM
         if config.bd_loss:
-            mask = selected_masks.unsqueeze(dim=1)  #bchw
+            mask = training_masks.unsqueeze(dim=1)  #bchw
             bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
             bd_loss = bd_loss_weight * bd_loss
 

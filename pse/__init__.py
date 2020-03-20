@@ -8,10 +8,10 @@ import config
 
 from pse.pypse import pse
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
-if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-    raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
+# BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+#
+# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+#     raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
 
 def pse_warpper(region, center, min_area=5):
     '''
@@ -34,6 +34,29 @@ def pse_warpper(region, center, min_area=5):
     return np.array(pred), label_values
 
 
+def dilate_alg(center, min_area=5):
+    center = np.array(center)
+    label_num, label_img = cv2.connectedComponents(center.astype(np.uint8), connectivity=4)
+
+    label_values = []
+    for label_idx in range(1, label_num):
+        if np.sum(label_img == label_idx) < min_area:
+            label_img[label_img == label_idx] = 0
+            continue
+        label_values.append(label_idx)
+
+    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))  # 椭圆结构
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21))  # 椭圆结构
+    for label_idx in range(1, label_num):
+        label_i = np.where(label_img == label_idx, 255, 0)
+        label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
+        bi_label_dilation = np.where(label_dilation == 255, 0, 1)
+        label_dilation = np.where(label_dilation == 255, label_idx, 0)
+        label_img = bi_label_dilation * label_img + label_dilation
+
+    return np.array(label_img), label_values
+
+
 def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
@@ -47,11 +70,35 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
         preds = preds.squeeze(0)
     preds = preds.detach().cpu().numpy()
 
-    region = preds >= config.min_threld   #按阈值变为2值图
-    center = preds >= config.max_threld  # 按阈值变为2值图
-    pred, label_values = pse_warpper(region, center, 5)
+    # region = preds >= 77   #按阈值变为2值图
+    # center = preds >= 160  # 按阈值变为2值图
+    region = preds >= config.min_threld
+    center = preds >= config.max_threld
+    # print(region)
+    # input()
+    #
+    #
+    # plt.imshow(center)
+    # plt.show()
+    # plt.imshow(region)
+    # plt.show()
 
+    pred, label_values = dilate_alg(center)
+    #pred, label_values = pse_warpper(region, center, 5)
     #pred, label_values = pse(region, center, 5)
+
+    # plt.imshow(pred)
+    # plt.show()
+    #
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))  # 椭圆结构
+    # for label_idx in label_values:
+    #     label_i = np.where(pred == label_idx, 255, 0)
+    #     bi_label_i = np.where(label_i == 255, 0, 1)
+    #     label_dilation = cv2.erode(cv2.dilate(label_i.astype(np.uint8), kernel), kernel)
+    #     #label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
+    #
+    #     label_dilation = np.where(label_dilation == 255, label_idx, 0)
+    #     pred = bi_label_i * pred + label_dilation
 
     bbox_list = []
     for label_value in label_values:
@@ -59,7 +106,6 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
         # if points.shape[0] < 800 / (scale * scale):  #text区域点数
         #     continue
-
 
         # score_i = np.mean(score[pred == label_value])   #20200317 TO TEST!
         # if score_i < 0.9:  # 降低是否可以提高召回率？ 0.93
@@ -77,11 +123,28 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
 
 if __name__ == '__main__':
-    logits = torch.tensor([[[0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
-                            [0, 0.3, 0.61, 0.7, 0.61, 0.3, 0],
-                            [0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
-                            [0, 0.5, 0.5, 0, 0, 0, 0]]])
+    # logits = torch.tensor([[[0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
+    #                         [0, 0.3, 0.61, 0.7, 0.61, 0.3, 0],
+    #                         [0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
+    #                         [0, 0.5, 0.5, 0, 0, 0, 0]]])
+    # preds, boxes_list = decode(logits, 1)
+    # print('preds:', preds)
+    # print('boxes_list:', boxes_list)
 
-    preds, boxes_list = decode(logits, 1)
-    print('preds:', preds)
-    print('boxes_list:', boxes_list)
+    import matplotlib.pyplot as plt
+    from utils import draw_bbox
+    img = cv2.imread('F:\\img_pred14.jpg', cv2.IMREAD_GRAYSCALE)
+
+    preds, boxes_list = decode(img, 1)
+    plt.imshow(preds)
+    plt.show()
+    h = 720
+    w = 1280
+    scale = 1900 / max(h, w)
+
+    res = draw_bbox('F:\\img_14.jpg', np.array(boxes_list) / scale)
+    #cv2.imwrite('F:\\img_10_save_charm.jpg', res)
+    plt.imshow(res)
+    plt.show()
+
+

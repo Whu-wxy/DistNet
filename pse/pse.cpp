@@ -1,9 +1,3 @@
-//
-//  pse
-//  reference https://github.com/whai362/PSENet/issues/15
-//  Created by liuheng on 11/3/19.
-//  Copyright © 2019年 liuheng. All rights reserved.
-//
 #include <queue>
 #include "include/pybind11/pybind11.h"
 #include "include/pybind11/numpy.h"

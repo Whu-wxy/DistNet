@@ -49,18 +49,18 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
 
 if __name__ == '__main__':
     from models.GFF_FPN import GFF_FPN
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 1900     #2240
     scale = 1
-    model_path = '../save/dist_mse/Best_300_r0.618199_p0.581785_f10.599440.pth'
+    model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
     save_path = '../save/test_result2'
-    gpu_id = 0
+    gpu_id = -1
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
     #net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
@@ -73,8 +73,10 @@ if __name__ == '__main__':
         print('iou eval.')
     elif config.eval_script == 'deteval':
         result = cal_recall_precison_f1_deteval(gt_path=gt_path, result_path=save_path)
+        print('deteval eval.')
     elif config.eval_script == '2013':
         result = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
+        print('2013 eval.')
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)

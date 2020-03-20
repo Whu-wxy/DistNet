@@ -327,7 +327,7 @@ def main(model, criterion):
         start_epoch += 1
         if config.lr_scheduler == 'MultiStepLR':
             scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, config.lr_decay_step, gamma=config.lr_gamma,
-                                                         last_epoch=-1) #start_epoch   #gai wei chuan optim shiyishi///-1
+                                                         last_epoch=start_epoch) #start_epoch   #gai wei chuan optim shiyishi///-1
         elif config.lr_scheduler == 'CyclicLR':
             scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=config.lr, max_lr=config.max_lr, mode=config.LR_mode,
                                                           step_size_up=config.step_size_up, gamma=config.lr_gamma, cycle_momentum=False, last_epoch=start_epoch)

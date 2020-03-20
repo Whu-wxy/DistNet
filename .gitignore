@@ -128,3 +128,4 @@ dmypy.json
 .idea/workspace.xml
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/Text_Exp.iml
+sh.exe.stackdump

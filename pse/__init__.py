@@ -8,10 +8,10 @@ import config
 
 from pse.pypse import pse
 
-# BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-#
-# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-#     raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+
+if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+    raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
 
 def pse_warpper(region, center, min_area=5):
     '''
@@ -83,8 +83,8 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     # plt.imshow(region)
     # plt.show()
 
-    pred, label_values = dilate_alg(center)
-    #pred, label_values = pse_warpper(region, center, 5)
+    #pred, label_values = dilate_alg(center)
+    pred, label_values = pse_warpper(region, center, 5)
     #pred, label_values = pse(region, center, 5)
 
     # plt.imshow(pred)

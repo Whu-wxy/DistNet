@@ -98,7 +98,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
-        kernel = kernel.to(device)
+        kernel_lab = kernel.to(device)
         kernel_mask = kernel_mask.to(device)
 
         dist_map = None
@@ -119,7 +119,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         output_kernel = outputs[:, 1, :, :]
         #
         #if config.bd_loss:
-        dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, kernel, kernel_mask, training_mask, bd_loss_weight, dist_map)
+        dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, output_kernel, kernel_lab, kernel_mask, training_mask, bd_loss_weight, dist_map)
         # else:
         #     dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
 

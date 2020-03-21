@@ -18,7 +18,7 @@ class Loss(nn.Module):
         self.reduction = reduction
 
 
-    def forward(self, output, label, kernal, kernal_mask, training_masks, bd_loss_weight=0, dist_maps=None):
+    def forward(self, output, label, output_kernel, kernel_lab, kernal_mask, training_masks, bd_loss_weight=0, dist_maps=None):
 
         selected_masks = self.ohem_batch(output, label, training_masks)
         selected_masks = selected_masks.to(output.device)
@@ -28,8 +28,8 @@ class Loss(nn.Module):
         # full text dice loss with OHEM
         output = torch.sigmoid(output)
 
-        kernal = torch.sigmoid(kernal)
-        dice_kernal = self.dice_loss(kernal, label, kernal_mask)
+        output_kernel = torch.sigmoid(output_kernel)
+        dice_kernal = self.dice_loss(output_kernel, kernel_lab, kernal_mask)
 
         center_gt = torch.where(label >= config.max_threld, label,
                                 torch.zeros_like(label))

@@ -155,9 +155,9 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                     epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, bd_loss, batch_time, lr))
         else:
             logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
+                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
                     epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
-                    weighted_mse_region, batch_time, lr))
+                    weighted_mse_region, dice_kernal, batch_time, lr))
 
         start = time.time()
 

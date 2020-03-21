@@ -17,7 +17,43 @@ class Loss(nn.Module):
         self.OHEM_ratio = OHEM_ratio
         self.reduction = reduction
 
-    def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
+
+    def forward(self, output, label, kernal, kernal_mask, training_masks, bd_loss_weight=0, dist_maps=None):
+
+        selected_masks = self.ohem_batch(output, label, training_masks)
+        selected_masks = selected_masks.to(output.device)
+        kernal_mask = self.ohem_batch(output, label, kernal_mask)
+        kernal_mask = kernal_mask.to(output.device)
+
+        # full text dice loss with OHEM
+        output = torch.sigmoid(output)
+
+        kernal = torch.sigmoid(kernal)
+        dice_kernal = self.dice_loss(kernal, label, kernal_mask)
+
+        center_gt = torch.where(label >= config.max_threld, label,
+                                torch.zeros_like(label))
+        region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
+        center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
+
+        dice_region = self.dice_loss(region_map, label, training_masks)
+        dice_center = self.dice_loss(center_map, center_gt, training_masks)
+        weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
+
+        # boundary loss with OHEM
+        if config.bd_loss:
+            mask = training_masks.unsqueeze(dim=1)  #bchw
+            bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
+            bd_loss = bd_loss_weight * bd_loss
+
+            loss = dice_center + dice_region + weighted_mse_region + bd_loss
+            return dice_center, dice_region, weighted_mse_region, bd_loss, loss
+        else:
+            loss = dice_center + dice_region + weighted_mse_region + dice_kernal
+
+            return dice_center, dice_region, weighted_mse_region, dice_kernal, loss
+
+    def forward_no_kernel(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
 
         # selected_masks = self.ohem_batch(output, label, training_masks)
         # selected_masks = selected_masks.to(output.device)

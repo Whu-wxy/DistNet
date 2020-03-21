@@ -221,16 +221,29 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
         score_maps.append(score_map)
     score_maps = np.array(score_maps, dtype=np.float32)
 
+    # cv2.imshow('score', score_maps.transpose((1, 2, 0)))
+
+
+    kernel_mask = np.ones((h, w), dtype=np.uint8)
+    kernel_map, kernel_mask = generate_rbox((h, w), text_polys, text_tags, kernel_mask, 0, 6, 0.5, origin_shrink=True)
+    kernel_map = np.array([kernel_map], dtype=np.float32)
+
+    # cv2.imshow('kernel_map', kernel_map.transpose((1, 2, 0)))
+    # cv2.waitKey()
+
+
     ##############################
     #mid2 = time.time() - mid
     distance_map = get_distance_map(score_maps, overlap_map, score_maps_line)
     #dur = time.time() - start - mid2
 
     ##############################
-    imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    # imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)), kernel_map.transpose((1, 2, 0)), kernel_mask, training_mask
+                                           , np.expand_dims(distance_map, 2)], (input_size, input_size))
 
     #return im,score_maps,training_mask, distance_map, dur
-    return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2)#, dur   #im,score_maps,training_mask#
+    return imgs[0], np.squeeze(imgs[1],2), np.squeeze(imgs[2],2), imgs[3], imgs[4], np.squeeze(imgs[5], 2)   #, dur   #im,score_maps,training_mask#
 
 
 def get_distance_map(label, overlap_map, score_maps_line):
@@ -280,7 +293,7 @@ class PSEDataset_bd(data.Dataset):
     def __getitem__(self, index):
         # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
-        img, score_maps, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
+        img, score_maps, kernal_map, kernal_mask, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
                                                      n=self.n,
                                                      m=self.m,
                                                      scales = np.array(config.random_scales))
@@ -307,7 +320,7 @@ class PSEDataset_bd(data.Dataset):
                 dist_maps_list.append(dist_map)
             dist_loss_map = np.stack(dist_maps_list, axis=0)  # cwh
 
-        return img, score_maps, training_mask, distance_map, dist_loss_map
+        return img, kernal_map, kernal_mask, training_mask, distance_map, dist_loss_map
 
     def load_data(self, data_dir: str) -> list:
         data_list = []
@@ -387,11 +400,18 @@ if __name__ == '__main__':
     #distance_map   torch.Size([1, 1, 640, 640])
     #dist_loss_map  torch.Size([1, 640, 640])
     #mask  torch.Size([1, 640, 640])
-    for i, (img, label, mask, distance_map, dist_loss_map) in enumerate(train_loader):
+    for i, (img, kernel_map, kernal_mask, mask, distance_map, dist_loss_map) in enumerate(train_loader):
+
         pbar.update(1)
         print(dist_loss_map.shape)
         print(distance_map.shape)
         print(mask.shape)
+        print(kernal_mask.shape)
+        print(kernel_map.shape)
+        kernal_mask = kernal_mask.numpy()
+        print(np.sum(kernal_mask))
+        mask = mask.numpy()
+        print(np.sum(mask))
         input()
 
         # print(distance_map.shape)  #BWH
@@ -404,6 +424,8 @@ if __name__ == '__main__':
         # print(mask.shape)       #BWH
         # input()
         cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        cv2.imshow('kernal_mask', kernal_mask.transpose((1, 2, 0))*255)
+        cv2.imshow('mask', mask.transpose((1, 2, 0))*255)
         cv2.waitKey()
         cv2.destroyAllWindows()
 

@@ -1,9 +1,9 @@
-﻿name = 'dist_bd_NO-OHEM'
+﻿name = 'dist_kernel_dist'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_bd'
+output_dir = '../save/dist_kernel_dist'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -75,13 +75,13 @@ if len(checkpoint) != 0:
 
 # net config
 backbone = 'resnet50'
-n = 1            # result_num
+n = 2            # result_num
 m = 0.5
 min_threld = 0.2    #选出大图   0.2
 max_threld = 0.8     #选出小图   0.7
 
-bd_loss = True
-bd_clip = True      ###################
+bd_loss = False
+bd_clip = False      ###################
 clip_value = 50
 
 OHEM_ratio = 3

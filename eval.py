@@ -34,7 +34,7 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, 'res_' + img_name + '.txt')
-        _, boxes_list, t = model.predict(img_path, long_size=long_size)
+        pred, boxes_list, t = model.predict(img_path, long_size=long_size)
         total_frame += 1
         total_time += t
         img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))

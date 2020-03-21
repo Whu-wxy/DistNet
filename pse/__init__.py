@@ -65,15 +65,22 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     :param threshold: sigmoid的阈值
     :return: 最后的输出图和文本框
     """
-    preds = torch.sigmoid(preds)
-    if len(preds.shape) == 3:
-        preds = preds.squeeze(0)
-    preds = preds.detach().cpu().numpy()
+
+    preds_dist = preds[0, :, :]
+    preds_kernel = preds[1, :, :]
+    preds_dist = torch.sigmoid(preds)
+    preds_kernel = torch.sigmoid(preds)
+
+    preds_dist = preds_dist + preds_kernel
+
+    if len(preds_dist.shape) == 3:
+        preds_dist = preds_dist.squeeze(0)
+    preds_dist = preds_dist.detach().cpu().numpy()
 
     # region = preds >= 77   #按阈值变为2值图
     # center = preds >= 160  # 按阈值变为2值图
-    region = preds >= config.min_threld
-    center = preds >= config.max_threld-0.1
+    region = preds_dist >= config.min_threld  + 1      #1.2
+    center = preds_dist >= config.max_threld-0.1 + 1    #1.7
     # print(region)
     # input()
     #
@@ -120,6 +127,73 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x+w, y+h]])
     return pred, np.array(bbox_list)  #, preds
+
+
+def decode_nokerkel(preds, scale, threshold=config.decode_threld):  # origin=0.7311
+    """
+    在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
+    :param preds: 网络输出
+    :param scale: 网络的scale
+    :param threshold: sigmoid的阈值
+    :return: 最后的输出图和文本框
+    """
+
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+    preds = preds.detach().cpu().numpy()
+
+    # region = preds >= 77   #按阈值变为2值图
+    # center = preds >= 160  # 按阈值变为2值图
+    region = preds >= config.min_threld
+    center = preds >= config.max_threld - 0.1
+    # print(region)
+    # input()
+    #
+    #
+    # plt.imshow(center)
+    # plt.show()
+    # plt.imshow(region)
+    # plt.show()
+
+    # pred, label_values = dilate_alg(center)
+    pred, label_values = pse_warpper(region, center, 5)
+    # pred, label_values = pse(region, center, 5)
+
+    # plt.imshow(pred)
+    # plt.show()
+    #
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))  # 椭圆结构
+    # for label_idx in label_values:
+    #     label_i = np.where(pred == label_idx, 255, 0)
+    #     bi_label_i = np.where(label_i == 255, 0, 1)
+    #     label_dilation = cv2.erode(cv2.dilate(label_i.astype(np.uint8), kernel), kernel)
+    #     #label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
+    #
+    #     label_dilation = np.where(label_dilation == 255, label_idx, 0)
+    #     pred = bi_label_i * pred + label_dilation
+
+    bbox_list = []
+    for label_value in label_values:
+        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+
+        # if points.shape[0] < 800 / (scale * scale):  #text区域点数
+        #     continue
+
+        # score_i = np.mean(score[pred == label_value])   #20200317 TO TEST!
+        # if score_i < 0.9:  # 降低是否可以提高召回率？ 0.93
+        #     continue
+
+        if config.save_4_pt_box:
+            rect = cv2.minAreaRect(points)
+            bbox = cv2.boxPoints(rect)
+
+            bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
+        else:
+            x, y, w, h = cv2.boundingRect(points)
+            bbox_list.append([[x, y], [x + w, y + h]])
+    return pred, np.array(bbox_list)  # , preds
 
 
 if __name__ == '__main__':

@@ -85,7 +85,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, labels, training_mask, distance_map, dist_loss_map) in enumerate(train_loader):
+    for i, (images, kernel, kernel_mask, training_mask, distance_map, dist_loss_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
@@ -98,6 +98,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
+        kernel = kernel.to(device)
+        kernel_mask = kernel_mask.to(device)
 
         dist_map = None
         if config.bd_loss:
@@ -112,12 +114,14 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
             bd_loss_weight = 0.002 * (epoch - 10)  # 500后变成0.1
             bd_loss_weight = 0.8 if bd_loss_weight >= 0.8 else bd_loss_weight
 
-        outputs = torch.squeeze(outputs, dim=1)
+        #outputs = torch.squeeze(outputs, dim=1)
+        output_dist = outputs[:, 0, :, :]
+        output_kernel = outputs[:, 1, :, :]
         #
         if config.bd_loss:
-            dice_center, dice_region, weighted_mse_region, bd_loss, loss = criterion(outputs, distance_map, training_mask, bd_loss_weight, dist_map)
+            dice_center, dice_region, weighted_mse_region, bd_loss, loss = criterion(output_dist, distance_map, kernel, kernel_mask, training_mask, bd_loss_weight, dist_map)
         else:
-            dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask, bd_loss_weight, dist_map)
+            dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
 
 
         # Backward
@@ -128,6 +132,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         dice_center = dice_center.item()
         dice_region = dice_region.item()
+        dice_kernal = dice_kernal.item()
         weighted_mse_region = weighted_mse_region.item()
         if config.bd_loss:
             bd_loss = bd_loss.item()
@@ -136,6 +141,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
         writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
+        writer.add_scalar(tag='Train/dice_kernal', scalar_value=dice_kernal, global_step=cur_step)
         writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
         if config.bd_loss:
             writer.add_scalar(tag='Train/bd_loss', scalar_value=bd_loss, global_step=cur_step)
@@ -163,13 +169,13 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
                 ######label
-                labels = labels.to(device)
-                show_label = labels*training_mask
-                show_label = show_label.detach().cpu()
-                show_label = show_label[:8, :, :]
-                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                              pad_value=1)
-                writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
+                # labels = labels.to(device)
+                # show_label = labels*training_mask
+                # show_label = show_label.detach().cpu()
+                # show_label = show_label[:8, :, :]
+                # show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
+                #                               pad_value=1)
+                # writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
                 ######distance_map
                 show_distance_map = distance_map * training_mask
                 show_distance_map = show_distance_map.detach().cpu()
@@ -180,11 +186,18 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
             if config.display_output_images:
                 ######output
-                outputs = torch.sigmoid(outputs)
-                show_y = outputs.detach().cpu()
+                output_dist = torch.sigmoid(output_dist)
+                show_y = output_dist.detach().cpu()
                 show_y = show_y[:8, :, :]
                 show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
+                writer.add_image(tag='output/preds_dist', img_tensor=show_y, global_step=cur_step)
+                ######output
+                output_kernel = torch.sigmoid(output_kernel)
+                show_y = output_kernel.detach().cpu()
+                show_y = show_y[:8, :, :]
+                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
+                writer.add_image(tag='output/preds_kernel', img_tensor=show_y, global_step=cur_step)
+
 
     if scheduler!=None:
         scheduler.step()   #scheduler.step behind optimizer after pytorch1.1

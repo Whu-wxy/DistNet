@@ -285,7 +285,7 @@ def main(model, criterion):
         train_data = PSEDataset_bd(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
                            transform=transforms.ToTensor())
     else:
-        train_data = PSEDataset_bd(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
+        train_data = PSEDataset(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
                                    transform=transforms.ToTensor())
     train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                    num_workers=int(config.workers))

@@ -228,7 +228,9 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
 
     ##############################
     imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
-
+    print(imgs[1].shape)
+    score_maps = np.squeeze(imgs[1], 2)
+    input()
     #return im,score_maps,training_mask, distance_map, dur
     return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2)#, dur   #im,score_maps,training_mask#
 

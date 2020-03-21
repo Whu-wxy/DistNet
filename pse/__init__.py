@@ -22,6 +22,7 @@ def pse_warpper(region, center, min_area=5):
     from .pse import pse_cpp
 
     center = np.array(center)
+    print(center.shape)
     label_num, label = cv2.connectedComponents(center.astype(np.uint8), connectivity=4) #C的代码从最小的kernel开始
     label_values = []
     for label_idx in range(1, label_num):
@@ -89,6 +90,9 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
     # plt.show()
     # plt.imshow(region)
     # plt.show()
+
+    print(center.shape)
+    print(region.shape)
 
     #pred, label_values = dilate_alg(center)
     pred, label_values = pse_warpper(region, center, 5)

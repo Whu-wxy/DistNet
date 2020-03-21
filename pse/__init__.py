@@ -73,8 +73,8 @@ def decode(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
     preds_dist = preds_dist + preds_kernel
 
-    if len(preds_dist.shape) == 3:
-        preds_dist = preds_dist.squeeze(0)
+    # if len(preds_dist.shape) == 3:
+    #     preds_dist = preds_dist.squeeze(0)
     preds_dist = preds_dist.detach().cpu().numpy()
 
     # region = preds >= 77   #按阈值变为2值图

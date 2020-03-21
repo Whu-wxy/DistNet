@@ -243,13 +243,6 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
                                            , np.expand_dims(distance_map, 2)], (input_size, input_size))
 
     #return im,score_maps,training_mask, distance_map, dur
-    print(imgs[1].shape)
-    score_maps = np.squeeze(imgs[1],2)
-    print(imgs[2].shape)
-    score_maps = np.squeeze(imgs[2], 2)
-    print(imgs[5].shape)
-    score_maps = np.squeeze(imgs[5], 2)
-    input()
 
     return imgs[0], np.squeeze(imgs[1],2), np.squeeze(imgs[2],2), imgs[3], imgs[4], np.squeeze(imgs[5], 2)   #, dur   #im,score_maps,training_mask#
 

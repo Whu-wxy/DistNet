@@ -75,7 +75,7 @@ if len(checkpoint) != 0:
 
 # net config
 backbone = 'resnet50'
-n = 2            # result_num
+n = 1            # result_num
 m = 0.5
 min_threld = 0.2    #选出大图   0.2
 max_threld = 0.8     #选出小图   0.7

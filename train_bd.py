@@ -118,10 +118,10 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         output_dist = outputs[:, 0, :, :]
         output_kernel = outputs[:, 1, :, :]
         #
-        if config.bd_loss:
-            dice_center, dice_region, weighted_mse_region, bd_loss, loss = criterion(output_dist, distance_map, kernel, kernel_mask, training_mask, bd_loss_weight, dist_map)
-        else:
-            dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
+        #if config.bd_loss:
+        dice_center, dice_region, weighted_mse_region, bd_loss, loss = criterion(output_dist, distance_map, kernel, kernel_mask, training_mask, bd_loss_weight, dist_map)
+        # else:
+        #     dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
 
 
         # Backward

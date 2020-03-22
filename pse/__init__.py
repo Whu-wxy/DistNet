@@ -147,7 +147,7 @@ def decode_nokerkel(preds, scale, threshold=config.decode_threld):  # origin=0.7
     # region = preds >= 77   #按阈值变为2值图
     # center = preds >= 160  # 按阈值变为2值图
     region = preds >= config.min_threld
-    center = preds >= config.max_threld - 0.1
+    center = preds >= config.max_threld - 0.
     # print(region)
     # input()
     #

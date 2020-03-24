@@ -21,8 +21,8 @@ from dataset.data_utils import PSEDataset
 
 from models import FPN_ResNet
 from models.loss import Loss
-from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
-from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
+# from models.fpn_resnet_atten_v1 import FPN_ResNet_atten_v1
+# from models.fpn_resnet_atten_v2 import FPN_ResNet_atten_v2
 from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
@@ -135,13 +135,13 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
 
                 ######label
-                labels = labels.to(device)
-                show_label = labels*training_mask
-                show_label = show_label.detach().cpu()
-                show_label = show_label[:8, :, :]
-                show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                              pad_value=1)
-                writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
+                # labels = labels.to(device)
+                # show_label = labels*training_mask
+                # show_label = show_label.detach().cpu()
+                # show_label = show_label[:8, :, :]
+                # show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
+                #                               pad_value=1)
+                # writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
                 ######distance_map
                 show_distance_map = distance_map * training_mask
                 show_distance_map = show_distance_map.detach().cpu()
@@ -412,8 +412,8 @@ if __name__ == '__main__':
     import utils
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

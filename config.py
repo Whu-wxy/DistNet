@@ -1,16 +1,16 @@
-﻿name = 'dist_kernel_dist'
+﻿name = 'dist_ohem_mse'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_kernel_dist'
+output_dir = '../save/dist_ohem_mse'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = None  # 2240/None
 img_norm = False
-augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize']
+augment_list = ['flip', 'rotate', 'resize', 'rotate90']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
@@ -77,8 +77,8 @@ if len(checkpoint) != 0:
 backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
-min_threld = 0.4    #选出大图   0.2
-max_threld = 0.9     #选出小图   0.7
+min_threld = 0.2    #选出大图   0.2
+max_threld = 0.7     #选出小图   0.7
 
 bd_loss = False
 bd_clip = False      ###################

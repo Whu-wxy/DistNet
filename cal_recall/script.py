@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from . import rrc_evaluation_funcs
+from cal_recall import rrc_evaluation_funcs
 import Polygon as plg
 import numpy as np
 
@@ -268,6 +268,8 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
 
         numGtCare = (len(gtPols) - len(gtDontCarePolsNum))
         numDetCare = (len(detPols) - len(detDontCarePolsNum))
+        # numGtCare = len(gtPols)
+        # numDetCare = len(detPols)
         if numGtCare == 0:
             recall = float(1)
             precision = float(0) if numDetCare > 0 else float(1)
@@ -322,3 +324,11 @@ def cal_recall_precison_f1(gt_path, result_path, show_result=False):
     result = rrc_evaluation_funcs.main_evaluation(p, default_evaluation_params, validate_data, evaluate_method,
                                                   show_result)
     return result['method']
+
+
+if __name__ == '__main__':
+    gt_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\gt'   # gt_2pts, gt
+    save_path = 'F:\zzxs\Experiments\PSE_exp\distNet\\v1_res_fpn\\result'
+
+    result = cal_recall_precison_f1(gt_path, save_path)
+    print(result)

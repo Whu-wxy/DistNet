@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from . import rrc_evaluation_funcs_deteval
+from cal_recall import rrc_evaluation_funcs_deteval
 import importlib
+
+import math
+import numpy as np
 
 def evaluation_imports():
     """
@@ -40,18 +43,24 @@ def validate_data(gtFilePath, submFilePath,evaluationParams):
 
     # subm = rrc_evaluation_funcs_deteval.load_zip_file(submFilePath, evaluationParams['DET_SAMPLE_NAME_2_ID'], True)
     subm = rrc_evaluation_funcs_deteval.load_folder_file(submFilePath, evaluationParams['DET_SAMPLE_NAME_2_ID'], True)
-    
+
+    print('pass 1')
     #Validate format of GroundTruth
     for k in gt:
-        rrc_evaluation_funcs_deteval.validate_lines_in_file(k,gt[k],evaluationParams['CRLF'],True,True)
+        # 13
+        #rrc_evaluation_funcs_deteval.validate_lines_in_file(k,gt[k],evaluationParams['CRLF'],True,True)
+        #15
+        rrc_evaluation_funcs_deteval.validate_lines_in_file(k, gt[k], evaluationParams['CRLF'], False, True)
 
+    print('pass 2')
     #Validate format of results
     for k in subm:
         if (k in gt) == False :
             raise Exception("The sample %s not present in GT" %k)
-        
-        rrc_evaluation_funcs_deteval.validate_lines_in_file(k,subm[k],evaluationParams['CRLF'],True,False)
-
+        #13
+        #rrc_evaluation_funcs_deteval.validate_lines_in_file(k, subm[k], evaluationParams['CRLF'], True, False)
+        # 15
+        rrc_evaluation_funcs_deteval.validate_lines_in_file(k,subm[k],evaluationParams['CRLF'],False,False)
     
 def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     """
@@ -61,8 +70,8 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         - samples (optional) Per sample metrics. Ex: {'sample1' : { 'Precision':0.8,'Recall':0.9 } , 'sample2' : { 'Precision':0.8,'Recall':0.9 }
     """    
 
-    for module,alias in evaluation_imports().iteritems():
-        globals()[alias] = importlib.import_module(module)
+    # for module,alias in evaluation_imports().iteritems():
+    #     globals()[alias] = importlib.import_module(module)
 
     def one_to_one_match(row, col):
         cont = 0
@@ -169,9 +178,11 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
     Point = namedtuple('Point', 'x y')
     
-    gt = rrc_evaluation_funcs_deteval.load_zip_file(gtFilePath,evaluationParams['GT_SAMPLE_NAME_2_ID'])
-    subm = rrc_evaluation_funcs_deteval.load_zip_file(submFilePath,evaluationParams['DET_SAMPLE_NAME_2_ID'],True)
-   
+    # gt = rrc_evaluation_funcs_deteval.load_zip_file(gtFilePath,evaluationParams['GT_SAMPLE_NAME_2_ID'])
+    # subm = rrc_evaluation_funcs_deteval.load_zip_file(submFilePath,evaluationParams['DET_SAMPLE_NAME_2_ID'],True)
+    gt = rrc_evaluation_funcs_deteval.load_folder_file(gtFilePath, evaluationParams['GT_SAMPLE_NAME_2_ID'])
+    subm = rrc_evaluation_funcs_deteval.load_folder_file(submFilePath, evaluationParams['DET_SAMPLE_NAME_2_ID'], True)
+
     numGt = 0;
     numDet = 0;
    
@@ -194,8 +205,17 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         
         recallMat = np.empty([1,1])
         precisionMat = np.empty([1,1])              
-        
-        pointsList,_,transcriptionsList = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(gtFile,evaluationParams['CRLF'],True,True,False)
+
+        #13
+        #pointsList,_,transcriptionsList = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(gtFile,evaluationParams['CRLF'],True,True,False)
+
+        #15
+        pointsList, _, transcriptionsList = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(gtFile,
+                                                                                                               evaluationParams[
+                                                                                                                   'CRLF'],
+                                                                                                               False,
+                                                                                                               True,
+                                                                                                               False)
         for n in range(len(pointsList)):
             points = pointsList[n]
             transcription = transcriptionsList[n]
@@ -210,7 +230,13 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         
         if resFile in subm:
             detFile = rrc_evaluation_funcs_deteval.decode_utf8(subm[resFile])
-            pointsList,_,_ = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(detFile,evaluationParams['CRLF'],True,False,False)
+            #13
+            #pointsList,_,_ = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(detFile,evaluationParams['CRLF'],True,False,False)
+            #15
+            pointsList, _, _ = rrc_evaluation_funcs_deteval.get_tl_line_values_from_file_contents(detFile,
+                                                                                                  evaluationParams[
+                                                                                                      'CRLF'], True,
+                                                                                                  False, False)
             for n in range(len(pointsList)):
                 points = pointsList[n]            
                 detRect = Rectangle(*points)
@@ -361,3 +387,10 @@ def cal_recall_precison_f1_deteval(gt_path, result_path, show_result=False):
                                                   show_result)
     return result['method']
 
+
+if __name__ == '__main__':
+    gt_path = 'F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test\gt'   # gt_2pts, gt
+    save_path = 'F:\zzxs\Experiments\PSE_exp\distNet\\v1_res_fpn\\result'
+
+    result = cal_recall_precison_f1_deteval(gt_path, save_path)
+    print(result)

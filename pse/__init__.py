@@ -45,8 +45,8 @@ def dilate_alg(center, min_area=5):
             continue
         label_values.append(label_idx)
 
-    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))  # 椭圆结构
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))  # 椭圆结构
+    #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
     for label_idx in range(1, label_num):
         label_i = np.where(label_img == label_idx, 255, 0)
         label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
@@ -146,7 +146,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
 
     # region = preds >= 77   #按阈值变为2值图
     # center = preds >= 160  # 按阈值变为2值图
-    region = preds >= config.min_threld
+    region = preds >= 0.2
     center = preds >= 0.75  #config.max_threld
     # print(region)
     # input()
@@ -177,13 +177,6 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     bbox_list = []
     for label_value in label_values:
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
-
-        # if points.shape[0] < 800 / (scale * scale):  #text区域点数
-        #     continue
-
-        # score_i = np.mean(score[pred == label_value])   #20200317 TO TEST!
-        # if score_i < 0.9:  # 降低是否可以提高召回率？ 0.93
-        #     continue
 
         if config.save_4_pt_box:
             rect = cv2.minAreaRect(points)

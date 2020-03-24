@@ -27,7 +27,7 @@ from albumentations import (
     Compose, RGBShift, RandomBrightness, RandomContrast,
     HueSaturationValue, ChannelShuffle, CLAHE,
     RandomContrast, Blur, ToGray, JpegCompression,
-    CoarseDropout
+    CoarseDropout, RandomRotate90
 )
 
 data_aug = PSEDataAugment()
@@ -141,6 +141,8 @@ def augmentation(im: object, text_polys: object, scales: object, degrees: object
         im, text_polys = data_aug.horizontal_flip(im, text_polys)
     if random.random() < 0.5 and 'rotate' in config.augment_list:
         im, text_polys = data_aug.random_rotate_img_bbox(im, text_polys, degrees)
+    if random.random() < 0.1 and 'rotate90' in config.augment_list:
+        im, text_polys = data_aug.random_rotate90_img_bbox(im, text_polys)
     # 640 × 640 random samples are cropped from the transformed images
     # im, text_polys = data_aug.random_crop_img_bboxes(im, text_polys)
 
@@ -228,10 +230,10 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
 
     ##############################
     imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
-    print(imgs[1].shape)
-    score_maps = np.squeeze(imgs[1], 2)
-    input()
-    #return im,score_maps,training_mask, distance_map, dur
+    #score_maps = np.squeeze(imgs[1], 2)
+
+
+    # img, score_maps, training_mask, distance_map
     return imgs[0], np.squeeze(imgs[1], 2), imgs[2], np.squeeze(imgs[3], 2)#, dur   #im,score_maps,training_mask#
 
 
@@ -374,16 +376,21 @@ if __name__ == '__main__':
     dur = 0
     for i, (img, label, mask, distance_map) in enumerate(train_loader):
         pbar.update(1)
-
-        # print(distance_map.shape)  #BWH
-        #
-        # # print(label[:, 0, :, :].shape)
-        # print(img.shape)        #BCWH
-        # #print(dist_maps.shape)
+        # print(img.shape)  # BCWH
         # print(label.shape)      #BWH
-        # # print(label[0][-1].sum())
         # print(mask.shape)       #BWH
+        #
+        # print(distance_map.shape)  #BWH
+
+        # print(label[:, 0, :, :].shape)
+
+        #print(dist_maps.shape)
+        # print(label[0][-1].sum())
         # input()
+
+        cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
+        cv2.imshow('label', label.numpy().transpose((1, 2, 0)))
+        cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
         cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
         cv2.waitKey()
         cv2.destroyAllWindows()

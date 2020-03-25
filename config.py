@@ -1,9 +1,9 @@
-﻿name = 'dist_region'
+﻿name = 'dist_ranger'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_region2'
+output_dir = '../save/dist_ranger'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -28,7 +28,7 @@ test_inteval = 2
 always_test_threld = 0.67
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
@@ -67,8 +67,8 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = True
-checkpoint = '../save/dist_region/PSENet_50_loss1.923913_r0.000000_p0.000000_f10.000000.pth'   #full model ckpt
+load_lr = False
+checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

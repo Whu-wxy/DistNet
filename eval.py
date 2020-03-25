@@ -54,7 +54,7 @@ if __name__ == '__main__':
     long_size = 1900     #2240
     scale = 1
     eval_script = 'iou'
-    model_path = '../save/dist_region/PSENet_50_loss1.923913_r0.000000_p0.000000_f10.000000.pth'
+    model_path = '../Best_558_r0.662494_p0.583793_f10.620659.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 

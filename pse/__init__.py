@@ -13,7 +13,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
     raise RuntimeError('Cannot compile pse: {}'.format(BASE_DIR))
 
-def pse_warpper(region, center, min_area=5):
+def pse_warpper(region, center, min_area=5, probs=None):
     '''
     后处理在这里修改
     reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
@@ -28,6 +28,11 @@ def pse_warpper(region, center, min_area=5):
         if np.sum(label == label_idx) < min_area:
             label[label == label_idx] = 0
             continue
+
+        score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
+        if score_i < 0.8:
+            continue
+
         label_values.append(label_idx)
 
     pred = pse_cpp(label, region)

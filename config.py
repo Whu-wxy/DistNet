@@ -3,7 +3,7 @@
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_region'
+output_dir = '../save/dist_region2'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -67,8 +67,8 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = False
-checkpoint = ''   #full model ckpt
+load_lr = True
+checkpoint = '../save/dist_region/PSENet_50_loss1.923913_r0.000000_p0.000000_f10.000000.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

@@ -29,10 +29,9 @@ def pse_warpper(region, center, min_area=5, probs=None):
             label[label == label_idx] = 0
             continue
 
-        if probs != None:
-            score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
-            if score_i < 0.85:
-                continue
+        score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
+        if score_i < 0.85:
+            continue
 
         label_values.append(label_idx)
 
@@ -50,10 +49,9 @@ def dilate_alg(center, min_area=5, probs=None):
             label_img[label_img == label_idx] = 0
             continue
 
-        if probs!=None:
-            score_i = np.mean(probs[label == label_idx])  # 测试是否可以过滤难负样本
-            if score_i < 0.85:
-                continue
+        score_i = np.mean(probs[label == label_idx])  # 测试是否可以过滤难负样本
+        if score_i < 0.85:
+            continue
         label_values.append(label_idx)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))  # 椭圆结构
@@ -170,7 +168,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.imshow(region)
     # plt.show()
 
-    pred, label_values = dilate_alg(center, 5, preds)
+    pred, label_values = dilate_alg(center, min_area=5, probs=preds)
     # pred, label_values = pse_warpper(region, center, 5, preds)
     # pred, label_values = pse(region, center, 5)
 

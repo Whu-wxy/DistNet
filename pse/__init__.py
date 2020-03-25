@@ -54,7 +54,7 @@ def dilate_alg(center, min_area=5):
             continue
         label_values.append(label_idx)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))  # 椭圆结构
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))  # 椭圆结构
     #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
     for label_idx in range(1, label_num):
         label_i = np.where(label_img == label_idx, 255, 0)
@@ -168,8 +168,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.imshow(region)
     # plt.show()
 
-    # pred, label_values = dilate_alg(center)
-    pred, label_values = pse_warpper(region, center, 5, preds)
+    pred, label_values = dilate_alg(center)
+    # pred, label_values = pse_warpper(region, center, 5, preds)
     # pred, label_values = pse(region, center, 5)
 
     # plt.imshow(pred)

@@ -70,11 +70,13 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
     preds_region = preds[1, :, :]
     preds_dist = torch.sigmoid(preds_dist)
     preds_region = torch.sigmoid(preds_region)
+    preds_region = preds_region.detach().cpu().numpy()
 
     #preds_dist = preds_dist + preds_region
 
     # if len(preds_dist.shape) == 3:
     #     preds_dist = preds_dist.squeeze(0)
+
     preds_dist = preds_dist.detach().cpu().numpy()
 
     # region = preds >= 77   #按阈值变为2值图
@@ -115,7 +117,7 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
         #     continue
 
         score_i = np.mean(preds_region[pred == label_value])
-        if score_i < 0.93:  # 降低是否可以提高召回率？ 0.93
+        if score_i < 0.9:  # 降低是否可以提高召回率？ 0.93
             continue
 
         if config.save_4_pt_box:

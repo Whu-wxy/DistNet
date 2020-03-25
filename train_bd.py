@@ -116,10 +116,10 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         #outputs = torch.squeeze(outputs, dim=1)
         output_dist = outputs[:, 0, :, :]
-        output_kernel = outputs[:, 1, :, :]
+        output_region = outputs[:, 1, :, :]
         #
         #if config.bd_loss:
-        dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, output_kernel, kernel_lab, kernel_mask, training_mask, bd_loss_weight, dist_map)
+        dice_center, dice_region, weighted_mse_region, dice_full, loss = criterion(output_dist, distance_map, output_region, kernel_lab, kernel_mask, training_mask, bd_loss_weight, dist_map)
         # else:
         #     dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
 
@@ -132,7 +132,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         dice_center = dice_center.item()
         dice_region = dice_region.item()
-        dice_kernal = dice_kernal.item()
+        dice_full = dice_full.item()
         weighted_mse_region = weighted_mse_region.item()
         if config.bd_loss:
             bd_loss = bd_loss.item()
@@ -141,7 +141,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
         writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/dice_kernal', scalar_value=dice_kernal, global_step=cur_step)
+        writer.add_scalar(tag='Train/dice_full', scalar_value=dice_full, global_step=cur_step)
         writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
         if config.bd_loss:
             writer.add_scalar(tag='Train/bd_loss', scalar_value=bd_loss, global_step=cur_step)
@@ -157,7 +157,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
             logger.info(
                 '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
                     epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
-                    weighted_mse_region, dice_kernal, batch_time, lr))
+                    weighted_mse_region, dice_full, batch_time, lr))
 
         start = time.time()
 
@@ -192,8 +192,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
                 writer.add_image(tag='output/preds_dist', img_tensor=show_y, global_step=cur_step)
                 ######output
-                output_kernel = torch.sigmoid(output_kernel)
-                show_y = output_kernel.detach().cpu()
+                output_region = torch.sigmoid(output_region)
+                show_y = output_region.detach().cpu()
                 show_y = show_y[:8, :, :]
                 show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
                 writer.add_image(tag='output/preds_kernel', img_tensor=show_y, global_step=cur_step)

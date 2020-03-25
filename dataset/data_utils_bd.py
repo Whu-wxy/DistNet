@@ -141,6 +141,8 @@ def augmentation(im: object, text_polys: object, scales: object, degrees: object
         im, text_polys = data_aug.horizontal_flip(im, text_polys)
     if random.random() < 0.5 and 'rotate' in config.augment_list:
         im, text_polys = data_aug.random_rotate_img_bbox(im, text_polys, degrees)
+    if random.random() < 0.1 and 'rotate90' in config.augment_list:
+        im, text_polys = data_aug.random_rotate90_img_bbox(im, text_polys)
     # 640 × 640 random samples are cropped from the transformed images
     # im, text_polys = data_aug.random_crop_img_bboxes(im, text_polys)
 
@@ -224,9 +226,13 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
     # cv2.imshow('score', score_maps.transpose((1, 2, 0)))
 
 
-    kernel_mask = np.ones((h, w), dtype=np.uint8)
-    kernel_map, kernel_mask = generate_rbox((h, w), text_polys, text_tags, kernel_mask, 0, 6, 0.5, origin_shrink=True)
-    kernel_map = np.array([kernel_map], dtype=np.float32)
+    # kernel_mask = np.ones((h, w), dtype=np.uint8)
+    # kernel_map, kernel_mask = generate_rbox((h, w), text_polys, text_tags, kernel_mask, 0, 6, 0.5, origin_shrink=True)
+    # kernel_map = np.array([kernel_map], dtype=np.float32)
+
+    region_mask = np.ones((h, w), dtype=np.uint8)
+    region_map, region_mask = generate_rbox((h, w), text_polys, text_tags, region_mask, 0, 6, 0.5, origin_shrink=True)
+    region_map = np.array([region_map], dtype=np.float32)
 
     # cv2.imshow('kernel_map', kernel_map.transpose((1, 2, 0)))
     # cv2.waitKey()
@@ -239,7 +245,7 @@ def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, n: int, m: 
 
     ##############################
     # imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)),training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
-    imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)), kernel_map.transpose((1, 2, 0)), kernel_mask, training_mask
+    imgs = data_aug.random_crop_author([im, score_maps.transpose((1, 2, 0)), region_map.transpose((1, 2, 0)), region_mask, training_mask
                                            , np.expand_dims(distance_map, 2)], (input_size, input_size))
 
     #return im,score_maps,training_mask, distance_map, dur
@@ -294,7 +300,7 @@ class PSEDataset_bd(data.Dataset):
     def __getitem__(self, index):
         # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
-        img, score_maps, kernal_map, kernal_mask, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
+        img, score_maps, region_map, region_mask, training_mask, distance_map = image_label(img_path, text_polys, text_tags, input_size=self.data_shape,
                                                      n=self.n,
                                                      m=self.m,
                                                      scales = np.array(config.random_scales))
@@ -321,7 +327,7 @@ class PSEDataset_bd(data.Dataset):
                 dist_maps_list.append(dist_map)
             dist_loss_map = np.stack(dist_maps_list, axis=0)  # cwh
 
-        return img, kernal_map, kernal_mask, training_mask, distance_map, dist_loss_map
+        return img, region_map, region_mask, training_mask, distance_map, dist_loss_map
 
     def load_data(self, data_dir: str) -> list:
         data_list = []

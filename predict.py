@@ -10,6 +10,7 @@ import numpy as np
 import utils
 
 from pse import decode as pse_decode
+from pse import decode_region as pse_decode_region
 
 
 class Pytorch_model:

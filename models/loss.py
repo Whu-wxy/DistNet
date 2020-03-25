@@ -38,7 +38,7 @@ class Loss(nn.Module):
 
         dice_region = self.dice_loss(region_map, label, selected_masks)
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
-        weighted_mse_region = self.weighted_regression(output, label, selected_masks)  #有加权，不用OHEM的mask
+        weighted_mse_region = self.weighted_regression(output, label, region_mask)  #有加权，不用OHEM的mask
 
         # boundary loss with OHEM
         if config.bd_loss:
@@ -52,6 +52,7 @@ class Loss(nn.Module):
             loss = dice_center + dice_region + weighted_mse_region + dice_full
 
             return dice_center, dice_region, weighted_mse_region, dice_full, loss
+
 
     def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
         selected_masks = self.ohem_batch(output, label, training_masks)
@@ -179,17 +180,17 @@ class Loss(nn.Module):
             distance_gt: gt for distance_map
             training_mask:
         """
-        # distance_gt = distance_gt * training_mask    # ###处为0
+        distance_gt = distance_gt * training_mask    # ###处为0
 
-        text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
-        bg_gt = 1. - text_gt
-
-        pos_num = torch.sum(text_gt)
-        neg_num = torch.sum(bg_gt)
-
-        pos_weight = neg_num * 1. / (pos_num + neg_num)
-        neg_weight = 1. - pos_weight
-
+        # text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
+        # bg_gt = 1. - text_gt
+        #
+        # pos_num = torch.sum(text_gt)
+        # neg_num = torch.sum(bg_gt)
+        #
+        # pos_weight = neg_num * 1. / (pos_num + neg_num)
+        # neg_weight = 1. - pos_weight
+        #
         mse_loss = F.mse_loss(distance_map, distance_gt, reduction='mean')   #均方误差
         # #     mse_loss = F.smooth_l1_loss(distance_map, distance_gt, reduction='none')
         weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask

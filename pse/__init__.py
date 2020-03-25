@@ -81,7 +81,7 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
     # region = preds >= 77   #按阈值变为2值图
     # center = preds >= 160  # 按阈值变为2值图
-    region = preds_dist >= 0.25
+    region = preds_dist >= 0.2
     center = preds_dist >= 0.75    #1.7
     # print(region)
     # input()
@@ -117,7 +117,7 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
         #     continue
 
         score_i = np.mean(preds_region[pred == label_value])
-        if score_i < 0.:  # 降低是否可以提高召回率？ 0.93
+        if score_i < 0.5:  # 降低是否可以提高召回率？ 0.93
             continue
 
         if config.save_4_pt_box:

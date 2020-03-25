@@ -1,16 +1,16 @@
-﻿name = 'dist_ranger'
+﻿name = 'dist_ohem_mse'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_ranger'
+output_dir = '../save/dist_ohem_mse'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = None  # 2240/None
 img_norm = False
-augment_list = ['flip', 'rotate', 'resize', 'rotate90']   # ['flip', 'rotate', 'resize', 'rotate90']
+augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
@@ -28,7 +28,7 @@ test_inteval = 2
 always_test_threld = 0.67
 
 # Learning rate
-optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 

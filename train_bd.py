@@ -239,7 +239,7 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            preds, boxes_list = pse_decode_region(preds[0], config.scale)
+            preds, boxes_list = pse_decode(preds[0], config.scale)
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale

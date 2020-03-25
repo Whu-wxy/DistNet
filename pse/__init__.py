@@ -48,6 +48,10 @@ def dilate_alg(center, min_area=5):
         if np.sum(label_img == label_idx) < min_area:
             label_img[label_img == label_idx] = 0
             continue
+
+        score_i = np.mean(probs[label == label_idx])  # 测试是否可以过滤难负样本
+        if score_i < 0.85:
+            continue
         label_values.append(label_idx)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))  # 椭圆结构

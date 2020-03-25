@@ -28,6 +28,7 @@ from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
 from pse import decode as pse_decode
+from pse import decode_region as pse_decode_region
 
 from cal_recall import cal_recall_precison_f1
 from cal_recall.script_13 import cal_recall_precison_f1_13
@@ -155,7 +156,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                     epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, bd_loss, batch_time, lr))
         else:
             logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_kernal: {:.4f}, time:{:.4f}, lr:{}'.format(
+                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_full: {:.4f}, time:{:.4f}, lr:{}'.format(
                     epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
                     weighted_mse_region, dice_full, batch_time, lr))
 
@@ -238,7 +239,7 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            preds, boxes_list = pse_decode(preds[0], config.scale)
+            preds, boxes_list = pse_decode_region(preds[0], config.scale)
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale

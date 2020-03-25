@@ -67,9 +67,9 @@ class Loss(nn.Module):
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
 
-        dice_region = self.dice_loss(region_map, label, training_masks)
-        dice_center = self.dice_loss(center_map, center_gt, training_masks)
-        weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
+        dice_region = self.dice_loss(region_map, label, selected_masks)
+        dice_center = self.dice_loss(center_map, center_gt, selected_masks)
+        weighted_mse_region = self.weighted_regression(output, label, selected_masks)  #有加权，不用OHEM的mask
 
         # boundary loss with OHEM
         if config.bd_loss:
@@ -193,9 +193,9 @@ class Loss(nn.Module):
         #
         mse_loss = F.mse_loss(distance_map, distance_gt, reduction='mean')   #均方误差
         # #     mse_loss = F.smooth_l1_loss(distance_map, distance_gt, reduction='none')
-        weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
+        # weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
 
-        return weighted_mse_loss.mean()
+        return mse_loss.mean()
 
 
 if __name__ == '__main__':

@@ -165,7 +165,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.show()
 
     # pred, label_values = dilate_alg(center)
-    pred, label_values = pse_warpper(region, center, 5)
+    pred, label_values = pse_warpper(region, center, 5, preds)
     # pred, label_values = pse(region, center, 5)
 
     # plt.imshow(pred)

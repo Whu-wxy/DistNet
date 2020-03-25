@@ -18,7 +18,7 @@ class Loss(nn.Module):
         self.reduction = reduction
 
 
-    def forward(self, output, label, output_region, region_lab, region_mask, training_masks, bd_loss_weight=0, dist_maps=None):
+    def forward_region(self, output, label, output_region, region_lab, region_mask, training_masks, bd_loss_weight=0, dist_maps=None):
 
         selected_masks = self.ohem_batch(output, label, training_masks)
         selected_masks = selected_masks.to(output.device)
@@ -53,7 +53,7 @@ class Loss(nn.Module):
 
             return dice_center, dice_region, weighted_mse_region, dice_full, loss
 
-    def forward_noregion(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
+    def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
         selected_masks = self.ohem_batch(output, label, training_masks)
         selected_masks = selected_masks.to(output.device)
 

@@ -111,13 +111,13 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
     bbox_list = []
     for label_value in label_values:
-        # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
         # if points.shape[0] < 800 / (scale * scale):  #text区域点数
         #     continue
 
         score_i = np.mean(preds_region[pred == label_value])
-        if score_i < 0.7:  # 降低是否可以提高召回率？ 0.93
+        if score_i < 0.:  # 降低是否可以提高召回率？ 0.93
             continue
 
         if config.save_4_pt_box:

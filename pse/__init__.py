@@ -86,8 +86,8 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
 
     # region = preds >= 77   #按阈值变为2值图
     # center = preds >= 160  # 按阈值变为2值图
-    region = preds_dist >= 0.28
-    center = preds_dist >= 0.75    #1.7
+    region = preds_dist >= 0.3
+    center = preds_dist >= 0.8    #1.7
     # print(region)
     # input()
     #

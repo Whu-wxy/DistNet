@@ -58,13 +58,25 @@ class Loss(nn.Module):
         selected_masks = self.ohem_batch(output, label, training_masks)
         selected_masks = selected_masks.to(output.device)
 
-        # full text dice loss with OHEM
+        #
+        output_bi_region = output[:, 1, :, :]
+        output_bi_region = torch.sigmoid(output_bi_region)
+        output = output[:, 0, :, :]
+        #
+
         output = torch.sigmoid(output)
 
         center_gt = torch.where(label >= config.max_threld, label,
                                 torch.zeros_like(label))
+
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
+
+        #
+        bi_region_gt = torch.where(label >= config.min_threld, label,
+                                   torch.zeros_like(label))
+        dice_bi_region = self.dice_loss(output_bi_region, bi_region_gt, selected_masks)
+        #
 
         dice_region = self.dice_loss(region_map, label, selected_masks)
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
@@ -79,9 +91,9 @@ class Loss(nn.Module):
             loss = dice_center + dice_region + weighted_mse_region + bd_loss
             return dice_center, dice_region, weighted_mse_region, bd_loss, loss
         else:
-            loss = dice_center + dice_region + weighted_mse_region
+            loss = dice_center + dice_region + weighted_mse_region + dice_bi_region
 
-            return dice_center, dice_region, weighted_mse_region, loss
+            return dice_center, dice_region, weighted_mse_region, loss, dice_bi_region
 
 
     def dice_loss(self, input, target, mask):

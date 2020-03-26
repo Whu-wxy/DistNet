@@ -30,7 +30,7 @@ def pse_warpper(region, center, min_area=5, probs=None):
             continue
 
         score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
-        if score_i < 0.85:
+        if score_i < 1.85:
             continue
 
         label_values.append(label_idx)
@@ -149,18 +149,28 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     :return: 最后的输出图和文本框
     """
 
+    #
+    bi_region = preds[1, :, :]
+    preds = preds[0, :, :]
+    bi_region = torch.sigmoid(bi_region)
+    if len(bi_region.shape) == 3:
+        bi_region = bi_region.squeeze(0)
+    bi_region = bi_region.detach().cpu().numpy()
+    #
+
     preds = torch.sigmoid(preds)
 
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
     preds = preds.detach().cpu().numpy()
 
-    # region = preds >= 77   #按阈值变为2值图
-    # center = preds >= 160  # 按阈值变为2值图
-    region = preds >= 0.3
-    center = preds >= 0.75  #config.max_threld
-    # print(region)
-    # input()
+    #
+    preds = preds + bi_region
+    #
+
+    region = preds >= 1.3
+    center = preds >= 1.75  #config.max_threld
+
     #
     #
     # plt.imshow(center)

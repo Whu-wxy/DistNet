@@ -55,14 +55,15 @@ class Loss(nn.Module):
 
 
     def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
-        selected_masks = self.ohem_batch(output, label, training_masks)
-        selected_masks = selected_masks.to(output.device)
 
         #
         output_bi_region = output[:, 1, :, :]
         output_bi_region = torch.sigmoid(output_bi_region)
         output = output[:, 0, :, :]
         #
+
+        selected_masks = self.ohem_batch(output, label, training_masks)
+        selected_masks = selected_masks.to(output.device)
 
         output = torch.sigmoid(output)
 

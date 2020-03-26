@@ -98,7 +98,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
 
-        outputs = torch.squeeze(outputs, dim=1)
+        #outputs = torch.squeeze(outputs, dim=1)
 
         #
         dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
@@ -154,6 +154,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
             if config.display_output_images:
                 ######output
+                outputs = outputs[:, 0, :, :]
                 outputs = torch.sigmoid(outputs)
                 show_y = outputs.detach().cpu()
                 show_y = show_y[:8, :, :]

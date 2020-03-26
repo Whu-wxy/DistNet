@@ -254,14 +254,14 @@ def get_distance_map(label, overlap_map, score_maps_line):
         if lab == 0:
             continue
         lab_img_i = np.where(connect_img == lab, 1, 0)
-        cv2.normalize(distance_inter_map, distance_inter_map, 0.3, 1, cv2.NORM_MINMAX, mask=lab_img_i.astype(np.uint8))
+        cv2.normalize(distance_inter_map, distance_inter_map, 0.4, 1, cv2.NORM_MINMAX, mask=lab_img_i.astype(np.uint8))
 
     #相交区域
-    score_maps_line2 = np.where(overlap_map == 1, 0.2, 0)
+    score_maps_line2 = np.where(overlap_map == 1, 0.3, 0)
     distance_map = (1 - overlap_map) * distance_inter_map + score_maps_line2
 
     #边界
-    score_maps_line2 = np.where(score_maps_line == 1, 0.2, 0)
+    score_maps_line2 = np.where(score_maps_line == 1, 0.3, 0)
     distance_map = (1 - score_maps_line) * distance_map + score_maps_line2
 
 

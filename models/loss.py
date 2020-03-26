@@ -61,7 +61,6 @@ class Loss(nn.Module):
         # full text dice loss with OHEM
         output = torch.sigmoid(output)
 
-
         center_gt = torch.where(label >= config.max_threld, label,
                                 torch.zeros_like(label))
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
@@ -180,22 +179,22 @@ class Loss(nn.Module):
             distance_gt: gt for distance_map
             training_mask:
         """
-        distance_gt = distance_gt * training_mask    # ###处为0
+        # distance_gt = distance_gt * training_mask    # ###处为0
 
-        # text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
-        # bg_gt = 1. - text_gt
-        #
-        # pos_num = torch.sum(text_gt)
-        # neg_num = torch.sum(bg_gt)
-        #
-        # pos_weight = neg_num * 1. / (pos_num + neg_num)
-        # neg_weight = 1. - pos_weight
+        text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
+        bg_gt = 1. - text_gt
+
+        pos_num = torch.sum(text_gt)
+        neg_num = torch.sum(bg_gt)
+
+        pos_weight = neg_num * 1. / (pos_num + neg_num)
+        neg_weight = 1. - pos_weight
         #
         mse_loss = F.mse_loss(distance_map, distance_gt, reduction='mean')   #均方误差
         # #     mse_loss = F.smooth_l1_loss(distance_map, distance_gt, reduction='none')
-        # weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
+        weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
 
-        return mse_loss.mean()
+        return weighted_mse_loss.mean()
 
 
 if __name__ == '__main__':

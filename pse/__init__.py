@@ -157,6 +157,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
         bi_region = bi_region.squeeze(0)
     bi_region = bi_region.detach().cpu().numpy()
     #
+    #cv2.imwrite('../save.jpg', bi_region*255)
+    #input()
 
     preds = torch.sigmoid(preds)
 
@@ -168,7 +170,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     preds = preds + bi_region
     #
 
-    region = preds >= 1.2
+
+    region = preds >= 1.25
     center = preds >= 1.7  #config.max_threld
 
     #

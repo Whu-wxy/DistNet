@@ -59,6 +59,7 @@ class Loss(nn.Module):
         #
         output_bi_region = output[:, 1, :, :]
         output_bi_region = torch.sigmoid(output_bi_region)
+       
         output = output[:, 0, :, :]
         #
 

@@ -58,7 +58,7 @@ class Pytorch_model:
         '''
         assert os.path.exists(img), 'file is not exists'
         img = cv2.imread(img)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)   ##### TO TEST!
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 
         if long_size != None:

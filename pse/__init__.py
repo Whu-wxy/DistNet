@@ -29,13 +29,20 @@ def pse_warpper(region, center, min_area=5, probs=None):
             label[label == label_idx] = 0
             continue
 
-        score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
-        if score_i < 0.85:
-            continue
+        # score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
+        # if score_i < 0.85:
+        #     continue
 
         label_values.append(label_idx)
 
     pred = pse_cpp(label, region)
+
+    # for label_idx in range(1, label_num):
+    #     score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
+    #     if score_i < 0.85:
+    #         continue
+
+
     return np.array(pred), label_values
 
 
@@ -181,7 +188,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.show()
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    pred, label_values = pse_warpper(region, center, 5, preds)
+    pred, label_values = pse_warpper(region, center, 5, preds)   #概率图改为传bi_region
     # pred, label_values = pse(region, center, 5)
 
     # plt.imshow(pred)
@@ -200,6 +207,11 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     bbox_list = []
     for label_value in label_values:
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+
+        score_i = np.mean(bi_region[pred == label_value])
+        if score_i < 0.85:
+            continue
+
 
         if config.save_4_pt_box:
             rect = cv2.minAreaRect(points)

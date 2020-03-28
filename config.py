@@ -85,7 +85,7 @@ bd_clip = False      ###################
 clip_value = 50
 
 OHEM_ratio = 3
-scale = 1
+scale = 2
 scale_model = 'nearest'
 # mode:   'nearest' | 'linear'(3D) | 'bilinear' | 'bicubic' | 'trilinear'(5D) | 'area'
 #align_corners:None,   true,          true,          true,      true,            None

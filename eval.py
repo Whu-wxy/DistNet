@@ -52,7 +52,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 2240     #2240
-    scale = 2
+    scale = 1
     eval_script = 'iou'
     model_path = '../save/dist_biregion/Best_460_r0.654309_p0.622253_f10.637878.pth'
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result2'
+    save_path = '../save/test_result'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

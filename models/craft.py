@@ -10,6 +10,8 @@ import torch.nn.functional as F
 
 from models.vgg.vgg16_bn import vgg16_bn, init_weights
 
+import config
+
 class double_conv(nn.Module):
     def __init__(self, in_ch, mid_ch, out_ch):
         super(double_conv, self).__init__()
@@ -56,6 +58,8 @@ class CRAFT(nn.Module):
         init_weights(self.conv_cls.modules())
         
     def forward(self, x):
+        _, _, H, W = x.size()
+
         """ Base network """
         sources = self.basenet(x)
 
@@ -76,6 +80,17 @@ class CRAFT(nn.Module):
         feature = self.upconv4(y)
 
         y = self.conv_cls(feature)
+
+        if self.train:
+            if config.scale_model == 'nearest':
+                y = F.interpolate(y, size=(H, W), mode=config.scale_model)
+            else:
+                y = F.interpolate(y, size=(H, W), mode=config.scale_model, align_corners=True)
+        else:
+            if config.scale_model == 'nearest':
+                y = F.interpolate(y, size=(H // self.scale, W // self.scale), mode=config.scale_model)
+            else:
+                y = F.interpolate(y, size=(H // self.scale, W // self.scale), mode=config.scale_model, align_corners=True)
 
         return y, feature
 

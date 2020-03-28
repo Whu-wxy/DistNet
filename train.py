@@ -415,7 +415,10 @@ if __name__ == '__main__':
     import utils
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+
+    model = CRAFT(num_out=2, pretrained=False).to(device)
+
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)

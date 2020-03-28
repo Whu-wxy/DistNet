@@ -44,7 +44,7 @@ from boundary_loss import class2one_hot, one_hot2dist
 
 from models.GFF_FPN import GFF_FPN
 from models.resnet_FPEM import ResNet_FPEM
-
+from models.craft import CRAFT
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
@@ -414,19 +414,34 @@ def main(model, criterion):
 if __name__ == '__main__':
     import utils
 
-    #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    # #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    # model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    # #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    # 
+    # # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #
+    # #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #
+    #
+    # # utils.load_part_checkpoint('../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model,
+    # #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
+    #
+    #
+    # criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
+    #
+    # main(model, criterion)
 
-    # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    import time
+    device = torch.device('cpu')
+    model = CRAFT(pretrained=False).to(device)
+    model.eval()
+    start = time.time()
+    data = torch.randn(1, 3, 512, 512).to(device)
+    output, _ = model(data)
+    print(time.time() - start)
+    print(output.shape)
 
-    #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-
-    # utils.load_part_checkpoint('../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model,
-    #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
-
-
-    criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
-
-    main(model, criterion)
+    print_model_parm_flops(net, data)
+    print_model_parm_nums(net)

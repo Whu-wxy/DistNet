@@ -417,7 +417,7 @@ if __name__ == '__main__':
     # #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     # model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     # #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    # 
+    #
     # # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     #
     # #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
@@ -443,5 +443,5 @@ if __name__ == '__main__':
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    print_model_parm_flops(net, data)
-    print_model_parm_nums(net)
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)

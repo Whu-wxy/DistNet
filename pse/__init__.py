@@ -170,7 +170,6 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     preds = preds + bi_region
     #
 
-
     region = preds >= 1.25
     center = preds >= 1.7  #config.max_threld
 

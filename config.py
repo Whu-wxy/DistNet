@@ -21,14 +21,14 @@ start_epoch = 0
 epochs = 701   #600
 early_stop=20  #test F1
 
-train_batch_size = 6
+train_batch_size = 8
 try_test_epoch = [10, 25, 50, 70, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 500      #绝对值
 test_inteval = 2
 always_test_threld = 0.67
 
 # Learning rate
-optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 

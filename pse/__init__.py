@@ -163,6 +163,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
     bi_region = bi_region.detach().cpu().numpy()
+
+    #bi_region = bi_region>0.7311
     #
     #cv2.imwrite('../save.jpg', bi_region*255)
     #input()
@@ -203,6 +205,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #
     #     label_dilation = np.where(label_dilation == 255, label_idx, 0)
     #     pred = bi_label_i * pred + label_dilation
+
+    bi_region = bi_region > 0.7311
 
     bbox_list = []
     for label_value in label_values:

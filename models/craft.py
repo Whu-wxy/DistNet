@@ -46,8 +46,8 @@ class CRAFT(nn.Module):
             nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
             nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
             nn.Conv2d(32, 16, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-            nn.Conv2d(16, num_out, kernel_size=1),   #nn.ReLU(inplace=True),
-            #nn.Conv2d(16, num_out, kernel_size=1),
+            nn.Conv2d(16, 16, kernel_size=1), nn.ReLU(inplace=True),
+            nn.Conv2d(16, num_out, kernel_size=1),
         )
 
         init_weights(self.upconv1.modules())

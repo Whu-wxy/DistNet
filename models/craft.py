@@ -92,7 +92,7 @@ class CRAFT(nn.Module):
             else:
                 y = F.interpolate(y, size=(H // self.scale, W // self.scale), mode=config.scale_model, align_corners=True)
 
-        return y, feature
+        return y
 
 if __name__ == '__main__':
     import  time

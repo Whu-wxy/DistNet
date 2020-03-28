@@ -30,7 +30,7 @@ def pse_warpper(region, center, min_area=5, probs=None):
             continue
 
         score_i = np.mean(probs[label == label_idx])   #测试是否可以过滤难负样本
-        if score_i < 0.8:
+        if score_i < 0.82:
             continue
 
         label_values.append(label_idx)
@@ -181,7 +181,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #
 
     region = preds >= 0.3
-    center = preds >= 0.65  #config.max_threld
+    center = preds >= 0.7  #config.max_threld
 
     #
     #
@@ -212,7 +212,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
         score_i = np.mean(bi_region[pred == label_value])
-        if score_i < 0.94:
+        if score_i < 0.95:
             continue
 
 

@@ -77,9 +77,9 @@ class CRAFT(nn.Module):
 
         y = F.interpolate(y, size=sources[4].size()[2:], mode='bilinear', align_corners=False)
         y = torch.cat([y, sources[4]], dim=1)
-        feature = self.upconv4(y)
+        y = self.upconv4(y)
 
-        y = self.conv_cls(feature)
+        y = self.conv_cls(y)
 
         if self.train:
             if config.scale_model == 'nearest':

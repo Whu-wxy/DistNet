@@ -68,7 +68,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
 load_lr = False
-checkpoint = ''   #full model ckpt
+checkpoint = '../vgg16_bn-6c64b313.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

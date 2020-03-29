@@ -129,3 +129,4 @@ dmypy.json
 .idea/inspectionProfiles/profiles_settings.xml
 .idea/Text_Exp.iml
 sh.exe.stackdump
+config.py.bak

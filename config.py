@@ -67,8 +67,8 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = False
-checkpoint = ''   #full model ckpt
+load_lr = True
+checkpoint = '../save/dist_vgg_region/PSENet_10_loss1.529239_r0.388060_p0.708883_f10.501556.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

@@ -22,10 +22,10 @@ epochs = 701   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [10, 25, 50, 70, 100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480]
-start_test_epoch = 500      #绝对值
+try_test_epoch = [10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 420, 440, 460, 470, 480]
+start_test_epoch = 400      #绝对值
 test_inteval = 2
-always_test_threld = 0.67
+always_test_threld = 0.72
 
 # Learning rate
 optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
@@ -68,7 +68,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
 load_lr = True
-checkpoint = '../save/dist_vgg_region/PSENet_10_loss1.529239_r0.388060_p0.708883_f10.501556.pth'   #full model ckpt
+checkpoint = '../save/dist_vgg_region/final.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

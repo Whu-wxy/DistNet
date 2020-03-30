@@ -54,7 +54,7 @@ if __name__ == '__main__':
     long_size = 1900     #2240
     scale = 2
     eval_script = 'iou'
-    model_path = '../save/dist_biregion/Best_460_r0.654309_p0.622253_f10.637878.pth'
+    model_path = '../save/dist_vgg_region/Best_512_r0.740010_p0.829018_f10.781989.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
@@ -65,7 +65,10 @@ if __name__ == '__main__':
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
     #net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
-    net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
+    from models.craft import CRAFT
+
+    net = CRAFT(num_out=2, pretrained=False)
+    #net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
 
     save_path = main(net, model_path, backbone, long_size, scale, data_path, save_path, gpu_id=gpu_id)
 

@@ -81,8 +81,8 @@ class Pytorch_model:
             preds, boxes_list = pse_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
 
-            # if len(boxes_list):
-            #     boxes_list = boxes_list / scale
+            if len(boxes_list):
+                boxes_list = boxes_list / scale
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start

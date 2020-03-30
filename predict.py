@@ -61,9 +61,9 @@ class Pytorch_model:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 
-        if long_size != None:
-            scale = long_size / max(h, w)
-            img = cv2.resize(img, None, fx=scale, fy=scale)
+        # if long_size != None:
+        #     scale = long_size / max(h, w)
+        #     img = cv2.resize(img, None, fx=scale, fy=scale)
 
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)

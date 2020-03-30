@@ -61,9 +61,9 @@ class Pytorch_model:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 
-        if long_size != None:
-            scale = long_size / max(h, w)
-            img = cv2.resize(img, None, fx=scale, fy=scale)
+        # if long_size != None:
+        #     scale = long_size / max(h, w)
+        #     img = cv2.resize(img, None, fx=scale, fy=scale)
 
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)
@@ -81,8 +81,8 @@ class Pytorch_model:
             preds, boxes_list = pse_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
 
-            if len(boxes_list):
-                boxes_list = boxes_list / scale
+            # if len(boxes_list):
+            #     boxes_list = boxes_list / scale
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start

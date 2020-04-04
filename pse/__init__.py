@@ -33,6 +33,8 @@ def pse_warpper(region, center, min_area=5, probs=None):
         if score_i < 0.66:
             continue
 
+        #prob改为bi_region试试
+
         label_values.append(label_idx)
 
     pred = pse_cpp(label, region)

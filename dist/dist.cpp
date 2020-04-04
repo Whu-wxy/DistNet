@@ -1,4 +1,3 @@
-#include <queue>
 #include "include/pybind11/pybind11.h"
 #include "include/pybind11/numpy.h"
 #include "include/pybind11/stl.h"
@@ -34,6 +33,8 @@ namespace dist{
         if (pbuf_region_prob.ndim != 2 || pbuf_region_prob.shape[0]!=h || pbuf_region_prob.shape[1]!=w)
             throw std::runtime_error("bi_region must have a shape of (h>0, w>0)");
 
+
+
         std::vector<std::vector<uint8_t>> res;
         for (size_t i = 0; i<h; i++)
             res.push_back(std::vector<uint8_t>(w, 0));
@@ -41,13 +42,14 @@ namespace dist{
         auto ptr_region = static_cast<uint8_t *>(pbuf_region.ptr);
         auto ptr_region_prob = static_cast<float *>(pbuf_region_prob.ptr);
 
-        Mat matCenter = Mat::zeros(h, w, CV_8UC1)
+        Mat matCenter = Mat::zeros(h, w, CV_8UC1);
         //convert to mat center
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
                 matCenter.at<char>(x, y) = ptr_center[x * w + y];
             }
         }
+
         //convert to connectedComponents mat
         int label_num = connectedComponents(matCenter, matCenter, 4);
 
@@ -66,12 +68,13 @@ namespace dist{
 
         // area average prob
         for (int x = 0; x < label_num + 1; ++x){
-            area_prob[label] = area_prob[label] / area[label];
+            area_prob[x] = area_prob[x] / area[x];
             // filter area that prob less than center_prob_threld
-            if (area_prob[label] < center_prob_threld){
-                area[label] = 0;
+            if (area_prob[x] < center_prob_threld){
+                area[x] = 0;
             }
         }
+
 
         std::queue<std::tuple<int, int, uint8_t>> q, next_q;
 
@@ -79,7 +82,7 @@ namespace dist{
         {
             for(size_t j = 0; j<w; j++)
             {
-                int label = matCenter.at<char>(x, y);
+                int label = matCenter.at<char>(i, j);
                 if (label>0)
                 {
                     if (area[label] < 5) {
@@ -117,26 +120,27 @@ namespace dist{
                 res[index_y][index_x]=l;
             }
         }
-
         // filter region area that prob less than threld
         float region_area_prob[label_num + 1];
         memset(region_area_prob, 0, sizeof(region_area_prob));
         int region_area[label_num + 1];
         memset(region_area, 0, sizeof(region_area));
+        cout<<"1"<<endl;
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
-                int label = res[y][x];
+                int label = res[x][y];
                 if (label == 0) continue;
                 region_area[label] += 1;
                 region_area_prob[label] += ptr_region_prob[x * w + y];
             }
         }
+
         // area average prob
         for (int x = 0; x < label_num + 1; ++x){
-            region_area_prob[label] = region_area_prob[label] / region_area[label];
+            region_area_prob[x] = region_area_prob[x] / region_area[x];
             // filter area that prob less than region_prob_threld
-            if (region_area_prob[label] < region_prob_threld){
-                region_area[label] = 0;
+            if (region_area_prob[x] < region_prob_threld){
+                region_area[x] = 0;
             }
         }
 
@@ -153,9 +157,9 @@ namespace dist{
 
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
-                int label = res[y][x];
+                int label = res[x][y];
                 if (label == 0) continue;
-                res[y][x] = region_area[label];
+                res[x][y] = region_area[label];
             }
         }
 

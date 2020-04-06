@@ -177,7 +177,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #
 
     region = preds >= 0.3
-    center = preds >= 0.6  #config.max_threld
+    center = preds >= 0.65  #config.max_threld
 
     #
     # plt.imshow(center)
@@ -207,7 +207,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
         score_i = np.mean(bi_region[pred == label_value])
-        if score_i < 0.979:
+        if score_i < 0.978:
             continue
 
 

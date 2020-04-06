@@ -18,7 +18,7 @@ def dist_warpper(region, center, probs=None):
     reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
     :return:
     '''
-    from dist import dist_cpp
+    from .dist import dist_cpp
 
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.97, 0.978)
 

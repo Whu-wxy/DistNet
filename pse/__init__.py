@@ -176,8 +176,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     preds = preds + bi_region - 1
     #
 
-    region = preds >= 0.3
-    center = preds >= 0.59  #config.max_threld
+    region = preds >= 0.31
+    center = preds >= 0.58  #config.max_threld
 
     #
     # plt.imshow(center)

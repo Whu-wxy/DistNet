@@ -1,9 +1,9 @@
-﻿name = 'dist_vgg_region'
+﻿name = 'dist_vgg_region_wse'
 
 # data config
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_vgg_region'
+output_dir = '../save/dist_vgg_region_wse'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -22,10 +22,10 @@ epochs = 701   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 420, 440, 460, 470, 480]
-start_test_epoch = 400      #绝对值
+try_test_epoch = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 420, 440, 460, 470, 480]
+start_test_epoch = 450      #绝对值
 test_inteval = 2
-always_test_threld = 0.72
+always_test_threld = 0.75
 
 # Learning rate
 optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
@@ -67,8 +67,8 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = True
-checkpoint = '../save/dist_vgg_region/final.pth'   #full model ckpt
+load_lr = False
+checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 
@@ -85,7 +85,7 @@ bd_clip = False      ###################
 clip_value = 50
 
 OHEM_ratio = 3
-scale = 2
+scale = 4
 scale_model = 'nearest'
 # mode:   'nearest' | 'linear'(3D) | 'bilinear' | 'bicubic' | 'trilinear'(5D) | 'area'
 #align_corners:None,   true,          true,          true,      true,            None

@@ -59,7 +59,7 @@ def dilate_alg(center, min_area=5, probs=None):
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))  # 椭圆结构
     #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
-    for label_idx in range(1, label_num):
+    for label_idx in label_values:
         label_i = np.where(label_img == label_idx, 255, 0)
         label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
         bi_label_dilation = np.where(label_dilation == 255, 0, 1)

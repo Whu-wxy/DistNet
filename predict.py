@@ -11,7 +11,7 @@ import utils
 
 from pse import decode as pse_decode
 from pse import decode_region as pse_decode_region
-#from dist import decode as dist_decode
+from dist import decode as dist_decode
 
 class Pytorch_model:
     def __init__(self, model_path, net, scale, gpu_id=None):
@@ -78,8 +78,8 @@ class Pytorch_model:
             # print(preds)
             # return None, None, None
 
-            preds, boxes_list = pse_decode(preds[0], self.scale)
-            #preds, boxes_list = dist_decode(preds[0], self.scale)
+            #preds, boxes_list = pse_decode(preds[0], self.scale)
+            preds, boxes_list = dist_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
 
             if len(boxes_list):

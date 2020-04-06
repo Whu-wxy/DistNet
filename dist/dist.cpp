@@ -125,7 +125,6 @@ namespace dist{
         memset(region_area_prob, 0, sizeof(region_area_prob));
         int region_area[label_num + 1];
         memset(region_area, 0, sizeof(region_area));
-        cout<<"1"<<endl;
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
                 int label = res[x][y];

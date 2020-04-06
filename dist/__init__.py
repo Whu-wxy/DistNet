@@ -95,7 +95,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.show()
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    pred = dist_warpper(region, center, preds)   #概率图改为传bi_region
+    pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
 
     # plt.imshow(pred)
     # plt.show()

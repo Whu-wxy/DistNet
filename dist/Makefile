@@ -1,4 +1,4 @@
-CXXFLAGS = -I include  -std=c++11 -O3 -I/home/wxy/miniconda3/include/python3.7m
+CXXFLAGS = -I include  -std=c++11 -O3 -I/root/anaconda3/envs/python367/include/python3.6m
 LDFLAGS = $(shell python3-config --ldflags)
 
 DEPS = $(shell find include -xtype f)

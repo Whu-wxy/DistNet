@@ -53,7 +53,7 @@ def dilate_alg(center, min_area=5, probs=None):
             continue
 
         score_i = np.mean(probs[label_img == label_idx])  # 测试是否可以过滤难负样本
-        if score_i < 0.85:
+        if score_i < 0.66:
             continue
         label_values.append(label_idx)
 
@@ -185,8 +185,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     # plt.imshow(region)
     # plt.show()
 
-    # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    pred, label_values = pse_warpper(region, center, 5, preds)   #概率图改为传bi_region
+    pred, label_values = dilate_alg(center, min_area=5, probs=preds)
+    #pred, label_values = pse_warpper(region, center, 5, preds)   #概率图改为传bi_region
     # pred, label_values = pse(region, center, 5)
 
     # plt.imshow(pred)

@@ -34,7 +34,6 @@ namespace dist{
             throw std::runtime_error("bi_region must have a shape of (h>0, w>0)");
 
 
-
         std::vector<std::vector<uint8_t>> res;
         for (size_t i = 0; i<h; i++)
             res.push_back(std::vector<uint8_t>(w, 0));
@@ -46,20 +45,24 @@ namespace dist{
         //convert to mat center
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
-                matCenter.at<char>(x, y) = ptr_center[x * w + y];
+                matCenter.at<uchar>(x, y) = ptr_center[x * w + y];
             }
         }
 
         //convert to connectedComponents mat
-        int label_num = connectedComponents(matCenter, matCenter, 4);
+        int label_num = connectedComponents(matCenter, matCenter, 4, CV_16U);
 
         int area[label_num + 1];
         memset(area, 0, sizeof(area));
         float area_prob[label_num + 1];
         memset(area_prob, 0, sizeof(area_prob));
+
+        // compute center area size and center area_average_prob
+        ushort * pImg = NULL;
         for (int x = 0; x < matCenter.rows; ++x) {
+            pImg = matCenter.ptr<ushort>(x);
             for (int y = 0; y < matCenter.cols; ++y) {
-                int label = matCenter.at<char>(x, y);
+                ushort label = pImg[y];
                 if (label == 0) continue;
                 area[label] += 1;
                 area_prob[label] += ptr_region_prob[x * w + y];
@@ -76,13 +79,15 @@ namespace dist{
         }
 
 
+        // get text center area
         std::queue<std::tuple<int, int, uint8_t>> q, next_q;
-
+        pImg = NULL;
         for (size_t i = 0; i<h; i++)
         {
+            pImg = matCenter.ptr<ushort>(i);
             for(size_t j = 0; j<w; j++)
             {
-                int label = matCenter.at<char>(i, j);
+                ushort label = pImg[j];
                 if (label>0)
                 {
                     if (area[label] < 5) {
@@ -93,7 +98,9 @@ namespace dist{
                 }
             }
         }
+        //
 
+        // pse Alg
         int dx[4] = {-1, 1, 0, 0};
         int dy[4] = {0, 0, -1, 1};
         //从上到下扫描式扩张
@@ -120,11 +127,14 @@ namespace dist{
                 res[index_y][index_x]=l;
             }
         }
-        // filter region area that prob less than threld
+        //pse end
+
+        // compute region area size and region area_average_prob
         float region_area_prob[label_num + 1];
         memset(region_area_prob, 0, sizeof(region_area_prob));
         int region_area[label_num + 1];
         memset(region_area, 0, sizeof(region_area));
+        //cout<<"1"<<endl;
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
                 int label = res[x][y];
@@ -134,7 +144,7 @@ namespace dist{
             }
         }
 
-        // area average prob
+        // filter region that average prob less than region_prob_threld
         for (int x = 0; x < label_num + 1; ++x){
             region_area_prob[x] = region_area_prob[x] / region_area[x];
             // filter area that prob less than region_prob_threld
@@ -143,6 +153,7 @@ namespace dist{
             }
         }
 
+        // remove filtered labels
         // [10,0,3,0,5,0]--->[10,1,1,3,2]
         int mark = 1;
         for (int x = 1; x < label_num + 1; ++x){
@@ -153,7 +164,7 @@ namespace dist{
             region_area[x] = mark;
             mark += 1;
         }
-
+        // cleam labels
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
                 int label = res[x][y];

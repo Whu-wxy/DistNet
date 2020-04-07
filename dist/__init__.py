@@ -113,6 +113,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     bbox_list = []
     label_values = np.max(pred)
     for label_value in range(label_values+1):
+        if label_value == 0:
+            continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
         # score_i = np.mean(bi_region[pred == label_value])   #在c代码中完成

@@ -164,7 +164,7 @@ namespace dist{
             region_area[x] = mark;
             mark += 1;
         }
-        // cleam labels
+        // clean labels
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
                 int label = res[x][y];

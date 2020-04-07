@@ -64,7 +64,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #
     bi_region = preds[1, :, :]
     preds = preds[0, :, :]
-    #bi_region = torch.sigmoid(bi_region)
+    bi_region = torch.sigmoid(bi_region)
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
     bi_region = bi_region.detach().cpu().numpy()
@@ -75,7 +75,7 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #cv2.imwrite('../save.jpg', bi_region*255)
     #input()
 
-    #preds = torch.sigmoid(preds)
+    preds = torch.sigmoid(preds)
 
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)

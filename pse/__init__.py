@@ -206,6 +206,9 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     for label_value in label_values:
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
+        if points.shape[0] < 800 / (scale * scale):
+            continue
+
         score_i = np.mean(bi_region[pred == label_value])
         if score_i < 0.978:
             continue

@@ -20,7 +20,7 @@ def dist_warpper(region, center, probs=None):
     '''
     from .dist import dist_cpp
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.98, 0.99)  #0.97, 0.978
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.985, 0.989)  #0.97, 0.978
 
     return np.array(pred)
 

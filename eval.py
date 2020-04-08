@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result2'
+    save_path = '../save/test_result'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

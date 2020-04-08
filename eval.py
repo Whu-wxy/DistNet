@@ -54,13 +54,13 @@ if __name__ == '__main__':
     long_size = 2240     #2240
     scale = 4
     eval_script = 'iou'
-    model_path = '../save/dist_vgg_region_fixwse/PSENet_564_loss1.203316_r0.708714_p0.857809_f10.776167.pth'
+    model_path = '../save/dist_vgg_region_fixwse/Best_536_r0.743861_p0.834684_f10.786660.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result'
+    save_path = '../save/test_result2'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

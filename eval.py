@@ -8,8 +8,6 @@ from tqdm import tqdm
 from models import FPN_ResNet
 from predict import Pytorch_model
 from cal_recall.script import cal_recall_precison_f1
-from cal_recall.script_13 import cal_recall_precison_f1_13
-from cal_recall.script_deteval import cal_recall_precison_f1_deteval
 from utils import draw_bbox
 
 torch.backends.cudnn.benchmark = True
@@ -75,12 +73,6 @@ if __name__ == '__main__':
     if eval_script == 'iou':
         result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
         print('iou eval.')
-    elif eval_script == 'deteval':
-        result = cal_recall_precison_f1_deteval(gt_path=gt_path, result_path=save_path)
-        print('deteval eval.')
-    elif eval_script == '2013':
-        result = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
-        print('2013 eval.')
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)

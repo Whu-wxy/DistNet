@@ -31,8 +31,6 @@ from pse import decode as pse_decode
 from pse import decode_region as pse_decode_region
 
 from cal_recall import cal_recall_precison_f1
-from cal_recall.script_13 import cal_recall_precison_f1_13
-from cal_recall.script_deteval import cal_recall_precison_f1_deteval
 
 from utils.radam import RAdam
 from utils.ranger import Ranger
@@ -250,10 +248,6 @@ def eval(model, save_path, test_path, device):
     # 开始计算 recall precision f1
     if config.eval_script == 'iou':
         result_dict = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
-    elif config.eval_script == 'deteval':
-        result_dict = cal_recall_precison_f1_deteval(gt_path=gt_path, result_path=save_path)
-    elif config.eval_script == '2013':
-        result_dict = cal_recall_precison_f1_13(gt_path=gt_path, result_path=save_path)
     return result_dict['recall'], result_dict['precision'], result_dict['hmean']
 
 

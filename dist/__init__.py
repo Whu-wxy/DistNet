@@ -52,15 +52,13 @@ def dilate_alg(center, min_area=5, probs=None):
     return np.array(label_img), label_values
 
 
-def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
+def decode(preds, scale):  # origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
     :param scale: 网络的scale
-    :param threshold: sigmoid的阈值
     :return: 最后的输出图和文本框
     """
-
     #
     bi_region = preds[1, :, :]
     preds = preds[0, :, :]
@@ -70,7 +68,6 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     bi_region = bi_region.detach().cpu().numpy()
 
     #bi_region = bi_region>0.7311
-
     #
     #cv2.imwrite('../save.jpg', bi_region*255)
     #input()
@@ -84,10 +81,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
     #
     preds = preds + bi_region - 1
     #
-
     region = preds >= 0.295
     center = preds >= 0.58  #config.max_threld
-
     #
     # plt.imshow(center)
     # plt.show()
@@ -99,16 +94,6 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
 
     # plt.imshow(pred)
     # plt.show()
-    #
-    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))  # 椭圆结构
-    # for label_idx in label_values:
-    #     label_i = np.where(pred == label_idx, 255, 0)
-    #     bi_label_i = np.where(label_i == 255, 0, 1)
-    #     label_dilation = cv2.erode(cv2.dilate(label_i.astype(np.uint8), kernel), kernel)
-    #     #label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
-    #
-    #     label_dilation = np.where(label_dilation == 255, label_idx, 0)
-    #     pred = bi_label_i * pred + label_dilation
 
     bbox_list = []
     label_values = np.max(pred)
@@ -117,9 +102,8 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        # score_i = np.mean(bi_region[pred == label_value])   #在c代码中完成
-        # if score_i < 0.95:
-        #     continue
+        if points.shape[0] < 300 / (scale * scale):  #面积过滤
+            continue
 
         if config.save_4_pt_box:
             rect = cv2.minAreaRect(points)
@@ -130,6 +114,85 @@ def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x + w, y + h]])
     return pred, np.array(bbox_list)  # , preds
+
+
+
+def decode_curve(preds, scale):  # origin=0.7311
+    """
+    在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
+    :param preds: 网络输出
+    :param scale: 网络的scale
+    :return: 最后的输出图和文本框
+    """
+    #
+    bi_region = preds[1, :, :]
+    preds = preds[0, :, :]
+    bi_region = torch.sigmoid(bi_region)
+    if len(bi_region.shape) == 3:
+        bi_region = bi_region.squeeze(0)
+    bi_region = bi_region.detach().cpu().numpy()
+
+    #bi_region = bi_region>0.7311
+    #
+    #cv2.imwrite('../save.jpg', bi_region*255)
+    #input()
+
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+    preds = preds.detach().cpu().numpy()
+
+    #
+    preds = preds + bi_region - 1
+    #
+    region = preds >= 0.295
+    center = preds >= 0.58  #config.max_threld
+    #
+    # plt.imshow(center)
+    # plt.show()
+    # plt.imshow(region)
+    # plt.show()
+
+    # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
+    pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+
+    # plt.imshow(pred)
+    # plt.show()
+
+    bbox_list = []
+    label_values = np.max(pred)
+    for label_value in range(label_values+1):
+        if label_value == 0:
+            continue
+        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+
+        if points.shape[0] < 300 / (scale * scale):  #面积过滤
+            continue
+
+        binary = np.zeros(pred.shape, dtype='uint8')
+        binary[pred == i] = 1
+
+        _, contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contour = contours[0]
+        bbox = contour
+
+        if bbox.shape[0] <= 2:
+            continue
+
+        bbox = bbox.astype('int32')
+        bbox_list.append(bbox.reshape(-1))
+
+        # if config.save_4_pt_box:
+        #     rect = cv2.minAreaRect(points)
+        #     bbox = cv2.boxPoints(rect)
+        #
+        #     bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
+        # else:
+        #     x, y, w, h = cv2.boundingRect(points)
+        #     bbox_list.append([[x, y], [x + w, y + h]])
+    return pred, np.array(bbox_list)  # , preds
+
 
 
 if __name__ == '__main__':

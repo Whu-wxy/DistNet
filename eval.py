@@ -76,8 +76,6 @@ if __name__ == '__main__':
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)
-    print('min_threld: ', config.min_threld)
-    print('max_threld: ', config.max_threld)
 
     ############################################
     import time

@@ -117,11 +117,16 @@ class PSEDataAugment():
         # 获取原始bbox的四个中点，然后将这四个点转换到旋转后的坐标系下
         rot_text_polys = list()
         for bbox in text_polys:
-            point1 = np.dot(rot_mat, np.array([bbox[0, 0], bbox[0, 1], 1]))
-            point2 = np.dot(rot_mat, np.array([bbox[1, 0], bbox[1, 1], 1]))
-            point3 = np.dot(rot_mat, np.array([bbox[2, 0], bbox[2, 1], 1]))
-            point4 = np.dot(rot_mat, np.array([bbox[3, 0], bbox[3, 1], 1]))
-            rot_text_polys.append([point1, point2, point3, point4])
+            box_list = []
+            for i in range(len(bbox)):
+                point = np.dot(rot_mat, np.array([bbox[i, 0], bbox[i, 1], 1]))
+                box_list.append(point)
+            rot_text_polys.append(box_list)
+            # point1 = np.dot(rot_mat, np.array([bbox[0, 0], bbox[0, 1], 1]))
+            # point2 = np.dot(rot_mat, np.array([bbox[1, 0], bbox[1, 1], 1]))
+            # point3 = np.dot(rot_mat, np.array([bbox[2, 0], bbox[2, 1], 1]))
+            # point4 = np.dot(rot_mat, np.array([bbox[3, 0], bbox[3, 1], 1]))
+            # rot_text_polys.append([point1, point2, point3, point4])
         return rot_img, np.array(rot_text_polys, dtype=np.float32)
 
 
@@ -173,6 +178,7 @@ class PSEDataAugment():
             rot_text_polys.append([point1, point2, point3, point4])
         return rot_img, np.array(rot_text_polys, dtype=np.float32)
 
+    # like east
     def random_crop_img_bboxes(self, im: np.ndarray, text_polys: np.ndarray, max_tries=50) -> tuple:
         """
         从图片中裁剪出 cropsize大小的图片和对应区域的文本框
@@ -285,18 +291,20 @@ class PSEDataAugment():
         return im, text_polys
 
     def random_crop_author(self,imgs, img_size):
+        #return imgs   #测试中加这个，不使用crop
+
         h, w = imgs[0].shape[0:2]
         th, tw = img_size
         if w == tw and h == th:
             return imgs
 
         # label中存在文本实例，并且按照概率进行裁剪
-        if np.max(imgs[1][:,:,-1]) > 0 and random.random() > 3.0 / 8.0:
+        if np.max(imgs[2][:,:,-1]) > 0 and random.random() > 3.0 / 8.0:
             # 文本实例的top left点
-            tl = np.min(np.where(imgs[1][:,:,-1] > 0), axis=1) - img_size
+            tl = np.min(np.where(imgs[2][:,:,-1] > 0), axis=1) - img_size
             tl[tl < 0] = 0
             # 文本实例的 bottom right 点
-            br = np.max(np.where(imgs[1][:,:,-1] > 0), axis=1) - img_size
+            br = np.max(np.where(imgs[2][:,:,-1] > 0), axis=1) - img_size
             br[br < 0] = 0
             # 保证选到右下角点是，有足够的距离进行crop
             br[0] = min(br[0], h - th)
@@ -305,7 +313,7 @@ class PSEDataAugment():
                 i = random.randint(tl[0], br[0])
                 j = random.randint(tl[1], br[1])
                 # 保证最小的图有文本
-                if imgs[1][:,:,0][i:i + th, j:j + tw].sum() <= 0:
+                if imgs[2][:,:,-1][i:i + th, j:j + tw].sum() <= 0:
                     continue
                 else:
                     break

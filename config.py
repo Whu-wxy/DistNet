@@ -1,9 +1,11 @@
-﻿name = 'dist_vgg_region_fixwse'
+﻿name = 'dist_v2_vgg_region_wse'
 
 # data config
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
+
 trainroot = '../IC15/train'
 testroot = '../IC15/test'
-output_dir = '../save/dist_vgg_region_fixwse'
+output_dir = '../save/dist_v2_vgg_region_wse'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -18,7 +20,7 @@ uniform_scales = False
 gpu_id = '0'
 workers = 10
 start_epoch = 0
-epochs = 701   #600
+epochs = 601   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
@@ -68,7 +70,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
 load_lr = True
-checkpoint = '../save/dist_vgg_region_fixwse/Best_430_r0.735195_p0.845047_f10.786303.pth'   #full model ckpt
+checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 
@@ -89,7 +91,6 @@ scale = 4
 scale_model = 'nearest'
 # mode:   'nearest' | 'linear'(3D) | 'bilinear' | 'bicubic' | 'trilinear'(5D) | 'area'
 #align_corners:None,   true,          true,          true,      true,            None
-# random seed
 seed = 2
 decode_threld = 0.7311    # 0.58
 origin_shrink = True

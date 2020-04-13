@@ -17,7 +17,8 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset.data_utils import PSEDataset
+from dataset.data_utils import IC15Dataset
+from dataset.CurveDataset import CurveDataset
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -26,9 +27,9 @@ from models.loss import Loss
 from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
-from pse import decode as pse_decode
+from dist import decode_curve as dist_decode_curve
 
-from cal_recall import cal_recall_precison_f1
+from cal_recall import curve_cal_recall_precison_f1
 
 from utils.radam import RAdam
 from utils.ranger import Ranger
@@ -82,7 +83,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, labels, training_mask, distance_map) in enumerate(train_loader):
+    for i, (images, training_mask, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
@@ -133,15 +134,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 ######image
                 x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
-
-                ######label
-                # labels = labels.to(device)
-                # show_label = labels*training_mask
-                # show_label = show_label.detach().cpu()
-                # show_label = show_label[:8, :, :]
-                # show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                #                               pad_value=1)
-                # writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
                 ######distance_map
                 show_distance_map = distance_map * training_mask
                 show_distance_map = show_distance_map.detach().cpu()
@@ -198,18 +190,17 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            preds, boxes_list = pse_decode(preds[0], config.scale)
+            #preds, boxes_list = pse_decode(preds[0], config.scale)
+            preds, boxes_list = dist_decode_curve(preds[0], config.scale)
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale
-        if config.save_4_pt_box:
-            np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
-        else:
-            np.savetxt(save_name, boxes_list.reshape(-1, 4), delimiter=',', fmt='%d')
+        np.savetxt(save_name, boxes_list.reshape(-1, boxes_list.shape[-1] * boxes_list.shape[-2]), delimiter=',',
+                   fmt='%d')
+
     # 开始计算 recall precision f1
-    if config.eval_script == 'iou':
-        result_dict = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
-    return result_dict['recall'], result_dict['precision'], result_dict['hmean']
+    result_dict = curve_cal_recall_precison_f1(type=config.dataset_type, gt_path=gt_path, result_path=save_path)
+    return result_dict['iouMethod'], result_dict['tiouMethod']
 
 
 def main(model, criterion):
@@ -237,8 +228,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = PSEDataset(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
-                           transform=transforms.ToTensor())
+    train_data = CurveDataset(config.trainroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor())
     train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                    num_workers=int(config.workers))
 
@@ -272,13 +262,13 @@ def main(model, criterion):
     elif config.optim == "lamb":
         optimizer = Lamb([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
     elif config.optim == "lamb_v3":
-        optimizer = Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)    
+        optimizer = Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
     elif config.optim == "la_lamb_v3":
         optimizer = La_Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay
-                                , alpha=0.5, k=6)   
+                                , alpha=0.5, k=6)
     elif config.optim == "la_lamb":
         optimizer = La_Lamb([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay
-                                , alpha=0.5, k=6) 
+                                , alpha=0.5, k=6)
     else:
         raise ValueError('Chech optimizer setting.')
 

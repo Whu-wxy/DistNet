@@ -69,7 +69,7 @@ def dilate_alg(center, min_area=5, probs=None):
     return np.array(label_img), label_values
 
 
-def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
+def decode_region(preds, scale): #origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
@@ -143,7 +143,7 @@ def decode_region(preds, scale, threshold=config.decode_threld): #origin=0.7311
     return pred, np.array(bbox_list)  #, preds
 
 #_nokerkel
-def decode(preds, scale, threshold=config.decode_threld):  # origin=0.7311
+def decode(preds, scale):  # origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出

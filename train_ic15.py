@@ -18,7 +18,6 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset.data_utils import IC15Dataset
-from dataset.data_utils_bd import IC15Dataset_bd
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -28,7 +27,7 @@ from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
 from pse import decode as pse_decode
-from pse import decode_region as pse_decode_region
+from dist import decode as dist_decode
 
 from cal_recall import cal_recall_precison_f1
 
@@ -44,7 +43,7 @@ from boundary_loss import class2one_hot, one_hot2dist
 
 from models.GFF_FPN import GFF_FPN
 from models.resnet_FPEM import ResNet_FPEM
-
+from models.craft import CRAFT
 
 def weights_init(m):
     if isinstance(m, nn.Conv2d):
@@ -84,7 +83,7 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     if config.if_warm_up:
         lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, kernel, kernel_mask, training_mask, distance_map, dist_loss_map) in enumerate(train_loader):
+    for i, (images, training_mask, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
@@ -97,31 +96,11 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         training_mask = training_mask.to(device)
         distance_map = distance_map.to(device)   #label
         distance_map = distance_map.to(torch.float)
-        kernel_lab = kernel.to(device)
-        kernel_mask = kernel_mask.to(device)
-
-        dist_map = None
-        if config.bd_loss:
-            dist_map = dist_loss_map.to(device)
-
-            if config.bd_clip == True:
-                # 限制距离图最大距离
-                dist_map = torch.clamp(dist_map, max=config.clip_value)
-
-        bd_loss_weight = 0
-        if epoch > 10:
-            bd_loss_weight = 0.002 * (epoch - 10)  # 500后变成0.1
-            bd_loss_weight = 0.8 if bd_loss_weight >= 0.8 else bd_loss_weight
 
         #outputs = torch.squeeze(outputs, dim=1)
-        output_dist = outputs[:, 0, :, :]
-        output_region = outputs[:, 1, :, :]
-        #
-        #if config.bd_loss:
-        dice_center, dice_region, weighted_mse_region, dice_full, loss = criterion(output_dist, distance_map, output_region, kernel_lab, kernel_mask, training_mask, bd_loss_weight, dist_map)
-        # else:
-        #     dice_center, dice_region, weighted_mse_region, dice_kernal, loss = criterion(output_dist, distance_map, training_mask, bd_loss_weight, dist_map)
 
+        #
+        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
 
         # Backward
         optimizer.zero_grad()
@@ -131,33 +110,22 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
         dice_center = dice_center.item()
         dice_region = dice_region.item()
-        dice_full = dice_full.item()
         weighted_mse_region = weighted_mse_region.item()
-        if config.bd_loss:
-            bd_loss = bd_loss.item()
+        dice_bi_region = dice_bi_region.item()
         loss = loss.item()
         cur_step = epoch * all_step + i
 
         writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
         writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/dice_full', scalar_value=dice_full, global_step=cur_step)
+        writer.add_scalar(tag='Train/dice_bi_region', scalar_value=dice_bi_region, global_step=cur_step)
         writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
-        if config.bd_loss:
-            writer.add_scalar(tag='Train/bd_loss', scalar_value=bd_loss, global_step=cur_step)
         writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
         writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
 
         batch_time = time.time() - start
-        if config.bd_loss:
-            logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, bd_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
-                    epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, bd_loss, batch_time, lr))
-        else:
-            logger.info(
-                '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_full: {:.4f}, time:{:.4f}, lr:{}'.format(
-                    epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
-                    weighted_mse_region, dice_full, batch_time, lr))
-
+        logger.info(
+            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}, lr:{}'.format(
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time, lr))
         start = time.time()
 
         if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
@@ -166,15 +134,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
                 ######image
                 x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
                 writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
-
-                ######label
-                # labels = labels.to(device)
-                # show_label = labels*training_mask
-                # show_label = show_label.detach().cpu()
-                # show_label = show_label[:8, :, :]
-                # show_label = vutils.make_grid(show_label.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                #                               pad_value=1)
-                # writer.add_image(tag='input/label', img_tensor=show_label, global_step=cur_step)
                 ######distance_map
                 show_distance_map = distance_map * training_mask
                 show_distance_map = show_distance_map.detach().cpu()
@@ -185,18 +144,12 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
             if config.display_output_images:
                 ######output
-                output_dist = torch.sigmoid(output_dist)
-                show_y = output_dist.detach().cpu()
+                outputs = outputs[:, 0, :, :]
+                outputs = torch.sigmoid(outputs)
+                show_y = outputs.detach().cpu()
                 show_y = show_y[:8, :, :]
                 show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='output/preds_dist', img_tensor=show_y, global_step=cur_step)
-                ######output
-                output_region = torch.sigmoid(output_region)
-                show_y = output_region.detach().cpu()
-                show_y = show_y[:8, :, :]
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='output/preds_kernel', img_tensor=show_y, global_step=cur_step)
-
+                writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
 
     if scheduler!=None:
         scheduler.step()   #scheduler.step behind optimizer after pytorch1.1
@@ -237,7 +190,8 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            preds, boxes_list = pse_decode(preds[0], config.scale)
+            #preds, boxes_list = pse_decode(preds[0], config.scale)
+            preds, boxes_list = dist_decode(preds[0], config.scale)
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale
@@ -276,12 +230,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    if config.bd_loss:
-        train_data = IC15Dataset_bd(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
-                           transform=transforms.ToTensor())
-    else:
-        train_data = IC15Dataset_bd(config.trainroot, data_shape=config.data_shape, n=config.n, m=config.m,
-                                   transform=transforms.ToTensor())
+    train_data = IC15Dataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor())
     train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                    num_workers=int(config.workers))
 
@@ -315,13 +264,13 @@ def main(model, criterion):
     elif config.optim == "lamb":
         optimizer = Lamb([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
     elif config.optim == "lamb_v3":
-        optimizer = Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)
+        optimizer = Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay)    
     elif config.optim == "la_lamb_v3":
         optimizer = La_Lamb_v3([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay
-                                , alpha=0.5, k=6)
+                                , alpha=0.5, k=6)   
     elif config.optim == "la_lamb":
         optimizer = La_Lamb([{'params': model.parameters(), 'initial_lr': config.lr}], lr=config.lr, weight_decay=config.weight_decay
-                                , alpha=0.5, k=6)
+                                , alpha=0.5, k=6) 
     else:
         raise ValueError('Chech optimizer setting.')
 
@@ -335,7 +284,7 @@ def main(model, criterion):
         start_epoch += 1
         if config.lr_scheduler == 'MultiStepLR':
             scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, config.lr_decay_step, gamma=config.lr_gamma,
-                                                         last_epoch=start_epoch) #start_epoch   #gai wei chuan optim shiyishi///-1
+                                                         last_epoch=-1) #start_epoch   #gai wei chuan optim shiyishi///-1
         elif config.lr_scheduler == 'CyclicLR':
             scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=config.lr, max_lr=config.max_lr, mode=config.LR_mode,
                                                           step_size_up=config.step_size_up, gamma=config.lr_gamma, cycle_momentum=False, last_epoch=start_epoch)
@@ -452,7 +401,10 @@ if __name__ == '__main__':
     import utils
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+
+    model = CRAFT(num_out=2, pretrained=True)
+
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
@@ -465,5 +417,19 @@ if __name__ == '__main__':
 
 
     criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
-
     main(model, criterion)
+
+    # import time
+    # device = torch.device('cpu')
+    # model = CRAFT(pretrained=False).to(device)
+    # model.eval()
+    # start = time.time()
+    # data = torch.randn(1, 3, 512, 512).to(device)
+    # output, _ = model(data)
+    # print(time.time() - start)
+    # print(output.shape)
+    #
+    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+    #
+    # print_model_parm_flops(model, data)
+    # print_model_parm_nums(model)

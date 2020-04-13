@@ -18,11 +18,11 @@ class Loss(nn.Module):
         self.reduction = reduction
 
 
-    def forward_region(self, output, label, output_region, region_lab, region_mask, training_masks, bd_loss_weight=0, dist_maps=None):
+    def forward_region(self, output, dist_label, output_region, region_lab, region_mask, training_masks, bd_loss_weight=0, dist_maps=None):
 
-        selected_masks = self.ohem_batch(output, label, training_masks)
+        selected_masks = self.ohem_batch(output, dist_label, training_masks)
         selected_masks = selected_masks.to(output.device)
-        region_mask = self.ohem_batch(output_region, label, region_mask)
+        region_mask = self.ohem_batch(output_region, dist_label, region_mask)
         region_mask = region_mask.to(output.device)
 
         # full text dice loss with OHEM
@@ -31,14 +31,14 @@ class Loss(nn.Module):
         output_region = torch.sigmoid(output_region)
         dice_full = self.dice_loss(output_region, region_lab, region_mask)
 
-        center_gt = torch.where(label >= config.max_threld, label,
-                                torch.zeros_like(label))
+        center_gt = torch.where(dist_label >= config.max_threld, dist_label,
+                                torch.zeros_like(dist_label))
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
 
-        dice_region = self.dice_loss(region_map, label, selected_masks)
+        dice_region = self.dice_loss(region_map, dist_label, selected_masks)
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
-        weighted_mse_region = self.weighted_regression(output, label, region_mask)  #有加权，不用OHEM的mask
+        weighted_mse_region = self.weighted_regression(output, dist_label, region_mask)  #有加权，不用OHEM的mask
 
         # boundary loss with OHEM
         if config.bd_loss:
@@ -54,26 +54,23 @@ class Loss(nn.Module):
             return dice_center, dice_region, weighted_mse_region, dice_full, loss
 
 
-    def forward(self, output, label, training_masks, bd_loss_weight=0, dist_maps=None):
-
+    def forward(self, output, dist_label, training_masks):
         #
-        output_bi_region = output[:, 1, :, :]
+        output_bi_region = output[:, 1, :, :]   # bi_region
         output_bi_region = torch.sigmoid(output_bi_region)
        
-        output = output[:, 0, :, :]
-        #
-
+        output = output[:, 0, :, :]     # dist_map
         output = torch.sigmoid(output)
-
-        center_gt = torch.where(label >= config.max_threld, label,
-                                torch.zeros_like(label))
+        #
+        center_gt = torch.where(dist_label >= config.max_threld, dist_label,
+                                torch.zeros_like(dist_label))
 
         region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
         center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
 
         #
-        bi_region_gt = torch.where(label >= config.min_threld, torch.ones_like(label),
-                                   torch.zeros_like(label))
+        bi_region_gt = torch.where(dist_label >= config.min_threld, torch.ones_like(dist_label),
+                                   torch.zeros_like(dist_label))
 
         selected_masks = self.ohem_batch(output, bi_region_gt, training_masks)
         selected_masks = selected_masks.to(output.device)
@@ -82,23 +79,12 @@ class Loss(nn.Module):
 
         dice_bi_region = self.dice_loss(output_bi_region, bi_region_gt, bir_selected_masks)
         #
-
-        dice_region = self.dice_loss(region_map, label, selected_masks)
+        dice_region = self.dice_loss(region_map, dist_label, selected_masks)
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
-        weighted_mse_region = self.weighted_regression(output, label, training_masks)  #有加权，不用OHEM的mask
+        weighted_mse_region = self.weighted_regression(output, dist_label, training_masks)
 
-        # boundary loss with OHEM
-        if config.bd_loss:
-            mask = training_masks.unsqueeze(dim=1)  #bchw
-            bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
-            bd_loss = bd_loss_weight * bd_loss
-
-            loss = dice_center + dice_region + weighted_mse_region + bd_loss
-            return dice_center, dice_region, weighted_mse_region, bd_loss, loss
-        else:
-            loss = dice_center + dice_region + weighted_mse_region + dice_bi_region
-
-            return dice_center, dice_region, weighted_mse_region, loss, dice_bi_region
+        loss = dice_center + dice_region + weighted_mse_region + dice_bi_region
+        return dice_center, dice_region, weighted_mse_region, loss, dice_bi_region
 
 
     def dice_loss(self, input, target, mask):
@@ -130,7 +116,7 @@ class Loss(nn.Module):
 
     def ohem_single(self, score, gt_text, training_mask):
         # label像素总数-有###的label像素数
-        pos_num = (int)(np.sum(gt_text > config.min_threld)) - (int)(np.sum((gt_text > config.min_threld) & (training_mask <= 0.5)))
+        pos_num = (int)(np.sum(gt_text >= config.min_threld)) - (int)(np.sum((gt_text >= config.min_threld) & (training_mask <= 0.5)))
         # training_mask: 0:黑色,有tag(###)的区域标记为0
         # gt_text：1：白色，文本区域
 
@@ -140,7 +126,7 @@ class Loss(nn.Module):
             selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
             return selected_mask
 
-        neg_num = (int)(np.sum(gt_text <= config.min_threld))   #背景像素数
+        neg_num = (int)(np.sum(gt_text < config.min_threld))   #背景像素数
         neg_num = (int)(min(pos_num * self.OHEM_ratio, neg_num))    #负样本最多是正样本点数三倍
 
         if neg_num == 0:  # gt_text全白（全是文本区域）
@@ -149,11 +135,11 @@ class Loss(nn.Module):
             return selected_mask
 
         # kernal图，gt_text白色区域缩小
-        neg_score = score[gt_text <= config.min_threld]               #背景
+        neg_score = score[gt_text < config.min_threld]               #背景
         neg_score_sorted = np.sort(-neg_score)          # 将负样本得分从高到低排序
         threshold = -neg_score_sorted[neg_num - 1]      #找出负样本分数最大的若干个像素
                         # 选出 得分高的 负样本 和正样本 的 mask
-        selected_mask = ((score >= threshold) | (gt_text > config.min_threld)) & (training_mask > 0.5)
+        selected_mask = ((score >= threshold) | (gt_text >= config.min_threld)) & (training_mask > 0.5)
         selected_mask = selected_mask.reshape(1, selected_mask.shape[0], selected_mask.shape[1]).astype('float32')
         return selected_mask
 
@@ -198,7 +184,7 @@ class Loss(nn.Module):
         """
         distance_gt = distance_gt * training_mask    # ###处为0
 
-        text_gt = torch.where(distance_gt > config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
+        text_gt = torch.where(distance_gt >= config.min_threld, torch.ones_like(distance_gt), torch.zeros_like(distance_gt))
         bg_gt = 1. - text_gt
 
         pos_num = torch.sum(text_gt)

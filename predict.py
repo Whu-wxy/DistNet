@@ -9,9 +9,10 @@ import time
 import numpy as np
 import utils
 
-from pse import decode as pse_decode
-from pse import decode_region as pse_decode_region
+# from pse import decode as pse_decode
+# from pse import decode_region as pse_decode_region
 from dist import decode as dist_decode
+from dist import decode_curve as dist_decode_curve
 
 class Pytorch_model:
     def __init__(self, model_path, net, scale, gpu_id=None):

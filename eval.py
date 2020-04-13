@@ -51,14 +51,13 @@ if __name__ == '__main__':
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 2240     #2240
     scale = 4
-    eval_script = 'iou'
-    model_path = '../save/dist_vgg_region_fixwse/Best_536_r0.743861_p0.834684_f10.786660.pth'
+    model_path = '../Best_536_r0.743861_p0.834684_f10.786660.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../save/test_result2'
+    save_path = '../test_result2'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 
@@ -70,9 +69,7 @@ if __name__ == '__main__':
 
     save_path = main(net, model_path, backbone, long_size, scale, data_path, save_path, gpu_id=gpu_id)
 
-    if eval_script == 'iou':
-        result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
-        print('iou eval.')
+    result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)

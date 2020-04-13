@@ -1,42 +1,44 @@
-name = 'dist_gff'
+name = 'distv2_ctw'
 
 # data config
-trainroot = '../IC15/train'
-testroot = '../IC15/test'
-output_dir = '../save/dist_gff'
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
+
+trainroot = '../ctw_tiny/train_tiny'
+testroot = '../ctw_tiny/test_tiny'
+output_dir = '../save/distv2_ctw'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = None  # 2240/None
-img_norm = False
-augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize']
+img_norm = True
+augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 10
+workers = 3     # 6
 start_epoch = 0
-epochs = 701   #600
+epochs = 601   #600
 early_stop=20  #test F1
 
-train_batch_size = 8
-try_test_epoch = [50, 100, 150, 200, 250, 300, 350, 400, 440, 460, 470, 480, 500]
-start_test_epoch = 500      #绝对值
+train_batch_size = 6
+try_test_epoch = [3, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 420, 440, 460, 470, 480]
+start_test_epoch = 450      #绝对值
 test_inteval = 2
-always_test_threld = 0.67
+always_test_threld = 0.75
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
-lr = 1e-4
+lr = 1e-3
 end_lr = 1e-7
 
 
-lr_scheduler='MultiStepLR'
+lr_scheduler=''
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
     lr_gamma = 0.1
@@ -67,7 +69,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = False
+load_lr = True
 checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
@@ -77,14 +79,18 @@ if len(checkpoint) != 0:
 backbone = 'resnet50'
 n = 1            # result_num
 m = 0.5
-min_threld = 0.25    #选出大图
-max_threld = 0.6     #选出小图
+min_threld = 0.3    #选出大图   0.2
+max_threld = 0.7     #选出小图   0.7
+
+bd_loss = False
+bd_clip = False      ###################
+clip_value = 50
+
 OHEM_ratio = 3
-scale = 1
+scale = 4
 scale_model = 'nearest'
 # mode:   'nearest' | 'linear'(3D) | 'bilinear' | 'bicubic' | 'trilinear'(5D) | 'area'
 #align_corners:None,   true,          true,          true,      true,            None
-# random seed
 seed = 2
 decode_threld = 0.7311    # 0.58
 origin_shrink = True

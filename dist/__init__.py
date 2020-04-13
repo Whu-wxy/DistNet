@@ -20,7 +20,7 @@ def dist_warpper(region, center, probs=None):
     '''
     from .dist import dist_cpp
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.98, 0.9861)  #0.97, 0.978
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.98, 0.9861)   #0.98, 0.9861
 
     return np.array(pred)
 
@@ -102,8 +102,8 @@ def decode(preds, scale):  # origin=0.7311
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        if points.shape[0] < 300 / (scale * scale):  #面积过滤
-            continue
+        # if points.shape[0] < 300 / (scale * scale):  #面积过滤
+        #     continue
 
         if config.save_4_pt_box:
             rect = cv2.minAreaRect(points)
@@ -146,8 +146,8 @@ def decode_curve(preds, scale):  # origin=0.7311
     #
     preds = preds + bi_region - 1
     #
-    region = preds >= 0.295
-    center = preds >= 0.58  #config.max_threld
+    region = preds >= 0.2     #0.295
+    center = preds >= 0.58      #0.58
     #
     # plt.imshow(center)
     # plt.show()
@@ -167,11 +167,11 @@ def decode_curve(preds, scale):  # origin=0.7311
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        if points.shape[0] < 300 / (scale * scale):  #面积过滤
-            continue
+        # if points.shape[0] < 300 / (scale * scale):  #面积过滤
+        #     continue
 
         binary = np.zeros(pred.shape, dtype='uint8')
-        binary[pred == i] = 1
+        binary[pred == label_value] = 1
 
         _, contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contour = contours[0]
@@ -180,18 +180,11 @@ def decode_curve(preds, scale):  # origin=0.7311
         if bbox.shape[0] <= 2:
             continue
 
+        bbox = bbox*1.0 / scale
         bbox = bbox.astype('int32')
-        bbox_list.append(bbox.reshape(-1))
 
-        # if config.save_4_pt_box:
-        #     rect = cv2.minAreaRect(points)
-        #     bbox = cv2.boxPoints(rect)
-        #
-        #     bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
-        # else:
-        #     x, y, w, h = cv2.boundingRect(points)
-        #     bbox_list.append([[x, y], [x + w, y + h]])
-    return pred, np.array(bbox_list)  # , preds
+        bbox_list.append(bbox.reshape(-1))
+    return pred, bbox_list  # , preds
 
 
 

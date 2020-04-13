@@ -81,7 +81,7 @@ class CurveDataset(data.Dataset):
                 params = line.split(',')
                 try:
                     if self.dataset_type == 'ctw1500':
-                        text_tags.append(True)  # True
+                        text_tags.append(False)
                         xmin, ymin, w, h = list(map(float, params[:4]))
                         box = []
                         x = 0
@@ -104,7 +104,7 @@ class CurveDataset(data.Dataset):
                                 text_tags.append(False)
                             params.pop(-1)
                         else:
-                            text_tags.append(True)
+                            text_tags.append(False)
                         for i, val in enumerate(params):
                             if i % 2 == 0:
                                 x = int(val)

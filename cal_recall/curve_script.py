@@ -60,6 +60,7 @@ def validate_data(gtFilePath, submFilePath, evaluationParams):
     #
     # subm = load_zip_file(submFilePath,evaluationParams['DET_SAMPLE_NAME_2_ID'],True)
 
+
     gt = curve_rrc_evaluation_funcs.load_folder_file(gtFilePath, evaluationParams['GT_SAMPLE_NAME_2_ID'])
 
     subm = curve_rrc_evaluation_funcs.load_folder_file(submFilePath, evaluationParams['DET_SAMPLE_NAME_2_ID'], True)
@@ -74,7 +75,6 @@ def validate_data(gtFilePath, submFilePath, evaluationParams):
             raise Exception("The sample %s not present in GT" % k)
         validate_lines_in_file(k, subm[k], evaluationParams['CRLF'], evaluationParams['LTRB'], False,
                                evaluationParams['CONFIDENCES'])
-
 
 def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     """
@@ -251,7 +251,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     totalNumGtPols = 0
     totalNumDetPols = 0
 
-    fper_ = open('per_sample_result.txt', 'w')
+    #fper_ = open('per_sample_result.txt', 'w')
 
     for resFile in gt:
         gtFile = decode_utf8(gt[resFile])
@@ -450,7 +450,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
             totalNumDetPols += len(detPols)
         except Exception as e:
             raise e
-    fper_.close()
+    #fper_.close()
 
     # Compute MAP and MAR
     AP = 0
@@ -506,8 +506,8 @@ def curve_cal_recall_precison_f1(type, gt_path, result_path, show_result=False):
 
 if __name__ == '__main__':
     type = 'ctw1500'
-    gt_path = 'F:\zzxs\Experiments\dl-data\ctw1500-gt'  # gt_2pts, gt
-    save_path = 'F:\zzxs\Experiments\dl-data\det_ctw1500'
+    gt_path = 'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\test\gt'  # gt_2pts, gt
+    save_path = 'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\test\gt'
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)

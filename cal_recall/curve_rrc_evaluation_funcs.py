@@ -12,7 +12,7 @@ import codecs
 import importlib
 from io import StringIO
 
-from shapely.geometry import *
+#from shapely.geometry import *
 
 
 def print_help():
@@ -141,6 +141,7 @@ def validate_lines_in_file(fileName, file_contents, CRLF=True, LTRB=True, withTr
             try:
                 validate_tl_line(line, LTRB, withTranscription, withConfidence, imWidth, imHeight)
             except Exception as e:
+                print(e)
                 assert (0), (e, ("Line in sample not valid. Sample: %s Line: %s Error: %s" % (
                 fileName, line, str(e))).encode('utf-8', 'replace'))
 

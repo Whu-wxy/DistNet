@@ -80,8 +80,8 @@ namespace dist{
 
 
         // get text center area
-        int dx[4] = {-1, 1, 0, 0};
-        int dy[4] = {0, 0, -1, 1};
+//        int dx1[8] = {-1, 1, 0, 0, -1, 1, -1, 1};
+//        int dy1[8] = {0, 0, -1, 1, -1, -1, 1, 1};
         std::queue<std::tuple<int, int, uint8_t>> q, next_q;
         pImg = NULL;
         for (size_t i = 0; i<h; i++)
@@ -95,25 +95,27 @@ namespace dist{
                     if (area[label] < 5) {
                         continue;
                     }
-                    for (int idx=0; idx<4; idx++)
-                    {
-                        int index_y = i + dy[idx];
-                        int index_x = j + dx[idx];
-                        if (index_y<0 || index_y>=h || index_x<0 || index_x>=w)
-                            continue;
-                        if (pImg[index_y*w+index_x])  //区域内部的不放到队列
-                        {
+//                    for (int idx=0; idx<8; idx++)
+//                    {
+//                        int index_y = i + dy1[idx];
+//                        int index_x = j + dx1[idx];
+//                        if (index_y<0 || index_y>=h || index_x<0 || index_x>=w)
+//                            continue;
+//                        if (!pImg[index_y*w+index_x])  //区域内部的不放到队列
+//                        {
                             q.push(std::make_tuple(i, j, label));
                             res[i][j] = label;
-                            break;
-                        }
-                    }
+//                            break;
+//                        }
+//                    }
 
                 }
             }
         }
         //
 
+        int dx[4] = {-1, 1, 0, 0};
+        int dy[4] = {0, 0, -1, 1};
         // pse Alg
         //逐像素四邻域向外扩张
         // merge from small to large kernel progressively

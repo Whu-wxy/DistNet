@@ -17,8 +17,8 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset.data_utils import IC15Dataset
 from dataset.CurveDataset import CurveDataset
+from eval_curve import write_result_as_txt
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -85,7 +85,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
     for i, (images, training_mask, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
-
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
         images = images.to(device)
 
@@ -192,15 +191,12 @@ def eval(model, save_path, test_path, device):
             preds = model(tensor)
             #preds, boxes_list = pse_decode(preds[0], config.scale)
             preds, boxes_list = dist_decode_curve(preds[0], config.scale)
-            scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
-            if len(boxes_list):
-                boxes_list = boxes_list / scale
-        np.savetxt(save_name, boxes_list.reshape(-1, boxes_list.shape[-1] * boxes_list.shape[-2]), delimiter=',',
-                   fmt='%d')
+
+        write_result_as_txt(save_name, boxes_list)
 
     # 开始计算 recall precision f1
     result_dict = curve_cal_recall_precison_f1(type=config.dataset_type, gt_path=gt_path, result_path=save_path)
-    return result_dict['iouMethod'], result_dict['tiouMethod']
+    return result_dict
 
 
 def main(model, criterion):
@@ -340,9 +336,15 @@ def main(model, criterion):
             if bTest:
             # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
             #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
-                recall, precision, f1 = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
+                result_dict = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
+                recall = result_dict['recall']
+                precision = result_dict['precision']
+                f1 = result_dict['hmean']
+                # {'iouPrecision': methodPrecision_iou, 'iouRecall': methodRecall_iou, 'iouHmean': iouMethodHmean}
+                # {'tiouPrecision': methodPrecision_tiouDt, 'tiouRecall': methodRecall_tiouGt,
+            #                          'tiouHmean': tiouMethodHmean}
 
-                logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
+                logger.info('IoU test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
 
                 net_save_path = '{}/PSENet_{}_loss{:.6f}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
                                                                                               train_loss,

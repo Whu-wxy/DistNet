@@ -280,6 +280,7 @@ def image_label_v2(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
 
 def get_distance_map_v2(text_polys, h, w):
     dist_map = np.zeros((h, w), dtype=np.float)
+
     for (i, text_poly) in enumerate(text_polys, start=1):
         temp_map = np.zeros((h, w), dtype=np.float)
         pts = []
@@ -324,6 +325,142 @@ def get_distance_map_v2(text_polys, h, w):
     return dist_map
 
 
+def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
+                degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
+    '''
+    get image's corresponding matrix and ground truth
+    return
+    images [512, 512, 3]
+    score  [128, 128, 1]
+    geo    [128, 128, 5]
+    mask   [128, 128, 1]
+    '''
+
+    im = cv2.imread(im_fn)
+    im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
+    h, w, _ = im.shape
+    intersection_threld = 1
+    # 检查越界
+    text_polys = check_and_validate_polys(text_polys, (h, w))
+    im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
+
+    intersection_threld *= im.shape[0] / h
+    h, w, _ = im.shape
+    short_edge = min(h, w)
+    if short_edge < input_size:
+        # 保证短边 >= inputsize
+        scale = input_size / short_edge
+        im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
+        text_polys *= scale
+
+    intersection_threld *= im.shape[0] / h
+    h, w, _ = im.shape
+
+    # normal images
+    if config.img_norm:
+        im = im.astype(np.float32)
+        im /= 255.0
+        im -= np.array((0.485, 0.456, 0.406))
+        im /= np.array((0.229, 0.224, 0.225))
+
+    h, w, _ = im.shape
+    training_mask = np.ones((h, w), dtype=np.uint8)
+    for poly, tag in zip(text_polys, text_tags):
+        poly = poly.astype(np.int)
+        if tag:
+            cv2.fillPoly(training_mask, [poly], 0)
+
+    #####################################
+    # start = time.time()
+    distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
+    # global dur
+    # dur += time.time() - start
+
+    ##############################
+    imgs = data_aug.random_crop_author([im,training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
+
+    #return im, training_mask, distance_map
+    return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#
+
+
+def get_distance_map_v3(text_polys, h, w, intersection_threld):
+    dist_map = np.zeros((h, w), dtype=np.float)
+    #print('th: ', intersection_threld)
+    inter_area_threld = 30 * intersection_threld
+   # print('val: ', inter_area_threld)
+
+    undraw_list = []
+    for (i, text_poly) in enumerate(text_polys, start=1):
+        if i in undraw_list:
+            continue
+        text_poly = text_poly.astype(np.int)
+        p = Polygon.Polygon(text_poly)
+        bOverlap = False
+        for j, tempPoly in enumerate(text_polys, start=1):
+            if j == i:
+                continue
+            p2 = Polygon.Polygon(tempPoly)
+            if p.overlaps(p2):
+                overlapP = p & p2
+                if overlapP.area() > inter_area_threld:
+                    undraw_list.append(j)
+                    bOverlap = True
+                    break
+        if bOverlap:
+            undraw_list.append(i)
+        else:
+            cv2.fillPoly(dist_map, [text_poly], i)
+
+
+    for (idx, text_poly) in enumerate(text_polys, start=1):
+        if not idx in undraw_list:
+            continue
+        temp_map = np.zeros((h, w), dtype=np.float)
+        pts = []
+        for pt in text_poly:
+            pts.append([int(pt[0]), int(pt[1])])
+        cv2.fillPoly(temp_map, np.array([pts]), idx)
+
+        Intersection = np.where((dist_map > 0.01) & (temp_map > 0.01), 1, 0)
+        Inter_count = np.sum(Intersection)
+
+        if Inter_count < inter_area_threld:
+            dist_map[temp_map == idx] = idx
+            continue
+
+        for j in undraw_list:
+            inter = np.where((dist_map == j) & (temp_map > 0.01), 1, 0)
+            inter_sum = np.sum(inter)
+            if inter_sum == 0:       # 找出已绘制box中和当前box有交集的
+                continue
+
+            inter_region = np.where(dist_map==j, 1, 0)
+            inter_region_sum = np.sum(inter_region)
+            temp_map_sum = np.sum(temp_map)
+            rate_temp = float(inter_sum) / temp_map_sum
+            rate_inter_region = float(inter_sum) / inter_region_sum
+            if rate_temp > rate_inter_region:
+                dist_map[temp_map==idx] = idx
+            else:
+                dist_map[(temp_map==idx)&(inter!=1)] = idx
+            if inter_sum == Inter_count:  # 当前box只与这个box相交
+                break
+
+    for (i, text_poly) in enumerate(text_polys, start=1):
+        text_i = np.where(dist_map == i, 1, 0)
+        text_i = text_i.astype(np.uint8)
+        # 距离图
+        distance_map_i = cv2.distanceTransform(text_i, distanceType=cv2.DIST_L2, maskSize=5)
+        cv2.normalize(distance_map_i, distance_map_i, 0.3, 1, cv2.NORM_MINMAX, mask=text_i.astype(np.uint8))
+        #dist_map[distance_map_i>0.1] = distance_map_i
+        dist_map = np.where(distance_map_i>0.1, distance_map_i, dist_map)
+
+        #dist_map = dist_map * (1 - text_i) + distance_map_i
+    #
+    # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
+    # input()
+    return dist_map
+
 
 
 #############################################################################
@@ -338,7 +475,7 @@ class IC15Dataset(data.Dataset):
 
     def __getitem__(self, index):
         img_path, text_polys, text_tags = self.data_list[index]
-        img, training_mask, distance_map = image_label_v2(img_path, text_polys, text_tags,
+        img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
                                                                    scales = np.array(config.random_scales))
 
@@ -438,10 +575,10 @@ if __name__ == '__main__':
         # input()
 
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
         cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
         cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
         cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
         cv2.waitKey()
         cv2.destroyAllWindows()

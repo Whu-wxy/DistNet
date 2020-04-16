@@ -18,7 +18,7 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 6
+workers = 10
 start_epoch = 0
 epochs = 601   #600
 early_stop=20  #test F1
@@ -70,7 +70,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
 load_lr = True
-checkpoint = ''   #full model ckpt
+checkpoint = '../save/distv2_IC15/final.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

@@ -18,6 +18,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset.CurveDataset import CurveDataset
+from dataset.data_utils import DataLoaderX
 from eval_curve import write_result_as_txt
 
 from models import FPN_ResNet
@@ -225,8 +226,11 @@ def main(model, criterion):
         device = torch.device("cpu")
 
     train_data = CurveDataset(config.trainroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor())
-    train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
-                                   num_workers=int(config.workers))
+    # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
+    #                                num_workers=int(config.workers))
+
+    train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
+                               num_workers=int(config.workers))
 
     writer = SummaryWriter(config.output_dir)
 

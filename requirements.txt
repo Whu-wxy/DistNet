@@ -10,3 +10,4 @@ scikit_image>=0.15.0
 Polygon3>=3.0.0
 albumentations>=0.4.5
 tensorboard>=2.2.0
+prefetch_generator>=1.0.1

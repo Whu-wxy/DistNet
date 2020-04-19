@@ -51,13 +51,13 @@ if __name__ == '__main__':
     backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 2240     #2240
     scale = 4
-    model_path = '../Best_536_r0.743861_p0.834684_f10.786660.pth'
+    model_path = '../save/distv2_IC15/Best_528_r0.679345_p0.865113_f10.761057.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../test_result2'
+    save_path = '../test_result3'
     gpu_id = 0
     print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
 

@@ -386,7 +386,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
 def get_distance_map_v3(text_polys, h, w, intersection_threld):
     dist_map = np.zeros((h, w), dtype=np.float)
     #print('th: ', intersection_threld)
-    inter_area_threld = 30 * intersection_threld
+    inter_area_threld = 100 * intersection_threld
    # print('val: ', inter_area_threld)
 
     undraw_list = []
@@ -535,6 +535,14 @@ class IC15Dataset(data.Dataset):
         cv2.imwrite(save_path, img)
         return img
 
+
+
+from torch.utils.data import DataLoader
+from prefetch_generator import BackgroundGenerator
+
+class DataLoaderX(DataLoader):
+    def __iter__(self):
+        return BackgroundGenerator(super().__iter__())
 
 
 

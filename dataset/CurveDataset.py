@@ -181,14 +181,15 @@ if __name__ == '__main__':
         #print(dist_maps.shape)
         # input()
 
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
-        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
-        cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
-        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
+        # #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        # cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
+        # #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        # cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
+
         # cv2.imwrite('F:\zzxs\Experiments\dl-data\CTW\\' + str(i) + 'dist.jpg', distance_map.numpy().transpose((1, 2, 0))*255)
 
     pbar.close()

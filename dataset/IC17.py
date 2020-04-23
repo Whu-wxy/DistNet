@@ -24,9 +24,8 @@ data_aug = PSEDataAugment()
 
 time_sum = 0
 
-class CurveDataset(data.Dataset):
-    def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None, target_transform=None):
-        self.dataset_type = dataset_type
+class IC17Dataset(data.Dataset):
+    def __init__(self, data_dir, data_shape: int = 640, transform=None, target_transform=None):
         self.data_list = self.load_data(data_dir)
         self.data_shape = data_shape
         self.transform = transform
@@ -35,14 +34,10 @@ class CurveDataset(data.Dataset):
         #self.aug = augument()  #20200302增加新augument方式
 
     def __getitem__(self, index):
-        # print(self.image_list[index])
         img_path, text_polys, text_tags = self.data_list[index]
         img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
                                                                    scales = np.array(config.random_scales))
-
-        # global time_sum
-        # time_sum += dur
 
         #img = draw_bbox(img,text_polys)
         #img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
@@ -56,18 +51,15 @@ class CurveDataset(data.Dataset):
 
     def load_data(self, data_dir: str) -> list:
         data_list = []
-
-        for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
+        img_list = os.listdir(data_dir + '/img')   # jpg and png
+        for x in img_list:
+        #for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
             d = pathlib.Path(x)
-            if self.dataset_type == 'ctw1500':
-                label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
-            elif self.dataset_type == 'total':
-                label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
-            else:
-                raise Exception('数据集类型必须是ctw1500或total！')
+            label_path = os.path.join(data_dir, 'gt', ('gt_' + str(d.stem) + '.txt'))
             bboxs, text = self._get_annotation(label_path)
             if len(bboxs) > 0:
-                data_list.append((x, bboxs, text))
+                x_path = os.path.join(data_dir, 'img', x)
+                data_list.append((x_path, bboxs, text))
             else:
                 print('there is no suit bbox on {}'.format(label_path))
         return data_list
@@ -77,69 +69,26 @@ class CurveDataset(data.Dataset):
         text_tags = []
         with open(label_path, encoding='utf-8', mode='r') as f:
             for line in f.readlines():
-                line = line.strip().replace('\n', '').strip('\ufeff').strip('\xef\xbb\xbf')
-                params = line.split(',')
+                if ',' in line:
+                    params = line.strip().strip('\ufeff').strip('\xef\xbb\xbf').split(',')
+                else:
+                    params = line.strip().strip('\ufeff').strip('\xef\xbb\xbf').split(' ')
                 try:
-                    if self.dataset_type == 'ctw1500':
-                        text_tags.append(False)
-                        xmin, ymin, w, h = list(map(float, params[:4]))
-                        box = []
-                        x = 0
-                        y = 0
-                        for i, val in enumerate(params[4:]):
-                            if i % 2 == 0:
-                                x = xmin + int(val)
-                            elif i % 2 == 1:
-                                y = ymin + int(val)
-                                box.append([x, y])
-                        boxes.append(box)
-                    elif self.dataset_type == 'total':
-                        box = []
-                        x = 0
-                        y = 0
-                        if not params[-1].isdigit():
-                            if not line.endswith('#'):
-                                text_tags.append(True)
-                            else:
-                                text_tags.append(False)
-                            params.pop(-1)
+                    if len(params) >= 8:
+                        label = params[-1]
+                        if label == '*' or label == '###':   #在loss中用mask去掉
+                            text_tags.append(True)  # True
                         else:
-                            text_tags.append(False)
-                        for i, val in enumerate(params):
-                            if i % 2 == 0:
-                                x = int(val)
-                            elif i % 2 == 1:
-                                y = int(val)
-                                box.append([x, y])
-                        boxes.append(box)
-
+                            text_tags.append(False)  # False
+                        # text_tags.append(False)
+                        x1, y1, x2, y2, x3, y3, x4, y4 = list(map(float, params[:8]))
+                    boxes.append([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
                 except:
                     print('load label failed on {}'.format(label_path))
-
-        if self.dataset_type == 'total':
-            pt_count = 0
-            for box in boxes:
-                if len(box) > pt_count:
-                    pt_count = len(box)
-            for i, box in enumerate(boxes):
-                if len(box) < pt_count:
-                    box2 = box
-                    for j in range(len(box), pt_count):
-                        box2.append(box[-1])
-                    boxes[i] = box2
-
         return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
 
     def __len__(self):
         return len(self.data_list)
-
-    def save_label(self, img_path, label):
-        save_path = img_path.replace('img', 'save')
-        if not os.path.exists(os.path.split(save_path)[0]):
-            os.makedirs(os.path.split(save_path)[0])
-        img = draw_bbox(img_path, label)
-        cv2.imwrite(save_path, img)
-        return img
 
 
 
@@ -164,7 +113,7 @@ if __name__ == '__main__':
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
     # F:\zzxs\Experiments\dl-data\TotalText\\train
-    train_data = CurveDataset('F:\zzxs\Experiments\dl-data\CTW\exp', data_shape=config.data_shape,
+    train_data = IC17Dataset('F:\zzxs\Experiments\dl-data\CTW\exp', data_shape=config.data_shape,
                             dataset_type='ctw1500', transform=transforms.ToTensor())
     train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 

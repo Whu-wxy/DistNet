@@ -20,7 +20,7 @@ def dist_warpper(region, center, probs=None):
     '''
     from .dist import dist_cpp
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.98, 0.9861)   #0.98, 0.9861
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.95, 0.988)   #0.98, 0.9861
 
     return np.array(pred)
 
@@ -82,7 +82,7 @@ def decode(preds, scale):  # origin=0.7311
     preds = preds + bi_region - 1
     #
     region = preds >= 0.295
-    center = preds >= 0.58  #config.max_threld
+    center = preds >= 0.56  #config.max_threld
     #
     # plt.imshow(center)
     # plt.show()

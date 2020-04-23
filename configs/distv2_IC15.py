@@ -11,21 +11,21 @@ eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = None  # 2240/None
-img_norm = True
+img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 6
+workers = 10
 start_epoch = 0
 epochs = 601   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 420, 440, 460, 470, 480]
-start_test_epoch = 450      #绝对值
+try_test_epoch = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 420, 440, 460, 470, 480]
+start_test_epoch = 470      #绝对值
 test_inteval = 2
 always_test_threld = 0.75
 
@@ -69,7 +69,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 # check points
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
-load_lr = True
+load_lr = False
 checkpoint = ''   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False

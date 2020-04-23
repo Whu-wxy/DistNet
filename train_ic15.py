@@ -26,7 +26,6 @@ from models.loss import Loss
 from models.SA_FPN import SA_FPN
 
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
-from pse import decode as pse_decode
 from dist import decode as dist_decode
 
 from cal_recall import cal_recall_precison_f1
@@ -190,7 +189,6 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            #preds, boxes_list = pse_decode(preds[0], config.scale)
             preds, boxes_list = dist_decode(preds[0], config.scale)
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):

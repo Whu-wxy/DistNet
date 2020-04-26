@@ -84,16 +84,19 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
     for i, (images, training_mask, distance_map) in enumerate(train_loader):
         cur_batch = images.size()[0]
+        non_blocking = False
+        if config.pin_memory and config.workers > 1:
+            non_blocking = True
 
         #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
-        images = images.to(device)
+        images = images.to(device, non_blocking=non_blocking)
 
         # Forward
         outputs = net(images)   #B1HW
 
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
-        training_mask = training_mask.to(device)
-        distance_map = distance_map.to(device)   #label
+        training_mask = training_mask.to(device, non_blocking=non_blocking)
+        distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
         distance_map = distance_map.to(torch.float)
 
         #outputs = torch.squeeze(outputs, dim=1)
@@ -233,7 +236,7 @@ def main(model, criterion):
     #                                num_workers=int(config.workers))
 
     train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
-                                   num_workers=int(config.workers))
+                               num_workers=int(config.workers), pin_memory=config.pin_memory)
 
     writer = SummaryWriter(config.output_dir)
 

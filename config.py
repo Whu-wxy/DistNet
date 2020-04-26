@@ -19,6 +19,7 @@ uniform_scales = False
 # train config
 gpu_id = '0'
 workers = 10
+pin_memory = True
 start_epoch = 0
 epochs = 601   #600
 early_stop=20  #test F1

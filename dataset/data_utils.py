@@ -342,11 +342,13 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     '''
 
     #start = time.time()
-    in_file = open(im_fn, 'rb')
-    im = jpeg.decode(in_file.read())
-    in_file.close()
-    #im = jpeg.JPEG(im_fn).decode()
-    im2 = cv2.imread(im_fn)
+    if im_fn.endswith('jpg'):
+        in_file = open(im_fn, 'rb')
+        im = jpeg.decode(in_file.read())
+        in_file.close()
+        #im = jpeg.JPEG(im_fn).decode()
+    else:
+        im = cv2.imread(im_fn)
     # global dur
     # dur += time.time() - start
     # return im, 0, 0

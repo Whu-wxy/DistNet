@@ -22,7 +22,7 @@ gpu_id = '0'
 workers = 15
 pin_memory = True
 start_epoch = 0
-epochs = 601   #600
+epochs = 301   #600
 early_stop=20  #test F1
 
 train_batch_size = 6

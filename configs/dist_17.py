@@ -3,8 +3,9 @@ name = 'distv2_IC15'
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
 
-trainroot = '../IC15/train'
-testroot = '../IC15/test'
+trainroot = '../../IC17/train'
+validroot = '../../IC17/validation'
+testroot = '../../IC17/test'
 output_dir = '../save/distv2_IC15'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
@@ -18,7 +19,7 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 10
+workers = 15
 pin_memory = True
 start_epoch = 0
 epochs = 601   #600

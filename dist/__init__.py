@@ -96,12 +96,16 @@ def decode(preds, scale):  # origin=0.7311
     # plt.show()
 
     bbox_list = []
+    scores_list = []
     label_values = np.max(pred)
     for label_value in range(label_values+1):
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
+        score = np.where(pred == label_value, preds, 0)
+        score = np.mean(score)
+        scores_list.append(score)
         # if points.shape[0] < 300 / (scale * scale):  #面积过滤
         #     continue
 
@@ -113,7 +117,7 @@ def decode(preds, scale):  # origin=0.7311
         else:
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x + w, y + h]])
-    return pred, np.array(bbox_list)  # , preds
+    return pred, np.array(bbox_list), scores_list  # , preds
 
 
 
@@ -160,7 +164,7 @@ def decode_curve(preds, scale):  # origin=0.7311
     # plt.imshow(pred)
     # plt.show()
 
-    bbox_list = []
+    scores_list = []
     label_values = np.max(pred)
     for label_value in range(label_values+1):
         if label_value == 0:
@@ -173,7 +177,7 @@ def decode_curve(preds, scale):  # origin=0.7311
         binary = np.zeros(pred.shape, dtype='uint8')
         binary[pred == label_value] = 1
 
-        _, contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        _, contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contour = contours[0]
         bbox = contour
 

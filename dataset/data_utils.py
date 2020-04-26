@@ -33,6 +33,9 @@ data_aug = PSEDataAugment()
 
 dur = 0
 
+from turbojpeg import TurboJPEG
+jpeg = TurboJPEG()
+
 # def augument():
 #     augm = Compose([
 #         RGBShift(),
@@ -325,6 +328,8 @@ def get_distance_map_v2(text_polys, h, w):
     return dist_map
 
 
+#import jpeg4py as jpeg
+
 def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
                 degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
     '''
@@ -336,10 +341,15 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     mask   [128, 128, 1]
     '''
 
-    start = time.time()
-    im = cv2.imread(im_fn)
-    global dur
-    dur += time.time() - start
+    #start = time.time()
+    in_file = open(im_fn, 'rb')
+    im = jpeg.decode(in_file.read())
+    in_file.close()
+    #im = jpeg.JPEG(im_fn).decode()
+    im2 = cv2.imread(im_fn)
+    # global dur
+    # dur += time.time() - start
+    # return im, 0, 0
 
     im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
     h, w, _ = im.shape
@@ -567,7 +577,7 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\test', data_shape=config.data_shape,
+    train_data = IC15Dataset('../../data/IC15/test', data_shape=config.data_shape,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
@@ -590,16 +600,16 @@ if __name__ == '__main__':
         # print(label[0][-1].sum())
         # input()
 
-        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        # #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
-        # cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
-        # cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        # #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
-        # cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
+        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
+        cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
+        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
-        time_sum = time_sum + dur
+        #time_sum = time_sum + dur
 
     pbar.close()
     print('all time:', dur)

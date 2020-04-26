@@ -336,7 +336,11 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     mask   [128, 128, 1]
     '''
 
+    start = time.time()
     im = cv2.imread(im_fn)
+    global dur
+    dur += time.time() - start
+
     im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
     h, w, _ = im.shape
     intersection_threld = 1
@@ -586,16 +590,16 @@ if __name__ == '__main__':
         # print(label[0][-1].sum())
         # input()
 
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
-        cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
-        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
+        # cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
+        # #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        # cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
 
-        #time_sum = time_sum + dur
+        time_sum = time_sum + dur
 
     pbar.close()
     print('all time:', dur)

@@ -25,8 +25,9 @@ data_aug = PSEDataAugment()
 time_sum = 0
 
 class IC17Dataset(data.Dataset):
-    def __init__(self, data_dir, data_shape: int = 640, transform=None, target_transform=None):
+    def __init__(self, data_dir, validation_dir, data_shape: int = 640, transform=None, target_transform=None):
         self.data_list = self.load_data(data_dir)
+        self.data_list.extend(self.load_data(validation_dir))
         self.data_shape = data_shape
         self.transform = transform
         self.target_transform = target_transform

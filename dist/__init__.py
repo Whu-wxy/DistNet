@@ -59,7 +59,7 @@ def decode(preds, scale):  # origin=0.7311
     :param scale: 网络的scale
     :return: 最后的输出图和文本框
     """
-    #
+    
     bi_region = preds[1, :, :]
     preds = preds[0, :, :]
     bi_region = torch.sigmoid(bi_region)

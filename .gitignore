@@ -129,3 +129,4 @@ dmypy.json
 .idea/Text_Exp.iml
 sh.exe.stackdump
 config.py.bak
+dist/__init__.py.bak

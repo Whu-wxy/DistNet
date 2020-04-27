@@ -8,6 +8,8 @@ import cv2
 import time
 import numpy as np
 import utils
+from turbojpeg import TurboJPEG
+jpeg = TurboJPEG()
 
 from dist import decode as dist_decode
 from dist import decode_curve as dist_decode_curve
@@ -56,7 +58,13 @@ class Pytorch_model:
         :return:
         '''
         assert os.path.exists(img), 'file is not exists'
-        img = cv2.imread(img)
+        if img.endswith('jpg'):
+            in_file = open(img, 'rb')
+            img = jpeg.decode(in_file.read())
+            in_file.close()
+            # im = jpeg.JPEG(im_fn).decode()
+        else:
+            img = cv2.imread(img)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 

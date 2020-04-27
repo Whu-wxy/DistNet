@@ -96,7 +96,8 @@ class Pytorch_model_curve:
             # return None, None, None
 
             #preds, boxes_list = pse_decode(preds[0], self.scale)
-            scale = (preds.shape[1] / w, preds.shape[0] / h)
+
+            scale = (preds.shape[-1] / w, preds.shape[-2] / h)
             preds, boxes_list = dist_decode_curve(preds[0], scale)
 
             if torch.cuda.is_available():
@@ -131,8 +132,9 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id):
         text_box = None
         if isinstance(img_path, str):
             text_box = cv2.imread(img_path)
+
         for bbox in boxes_list:
-            cv2.drawContours(text_box, [bbox.reshape(bbox.shape[0] / 2, 2)], -1, (0, 255, 0), 2)
+            cv2.drawContours(text_box, [bbox.reshape(bbox.shape[0] // 2, 2)], -1, (0, 255, 0), 2)
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
         write_result_as_txt(save_name, boxes_list)
 
@@ -145,14 +147,14 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 1280
     scale = 4
-    data_type = 'ctw1500'   # ctw1500/total
-    model_path = '../save/distv2_ctw/final.pth'
+    data_type = 'total'   # ctw1500/total
+    model_path = '../Best_340_r0.773712_p0.847574_f10.808960.pth'
 
     #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
-    data_path = '../ctw_tiny/test_tiny/img'
-    gt_path = '../ctw_tiny/test_tiny/gt'   # gt_2pts, gt
-    save_path = '../test_result'   #../test_result
+    data_path = '../data/totaltext/test/img'
+    gt_path = '../data/totaltext/test/gt'   # gt_2pts, gt
+    save_path = '../test_result2'   #../test_result
 
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
@@ -160,13 +162,14 @@ if __name__ == '__main__':
     #net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
     from models.craft import CRAFT
 
-    net = CRAFT(num_out=2, pretrained=False)
-
-    save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id)
+    # net = CRAFT(num_out=2, pretrained=False)
+    #
+    # save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id)
 
 
     # ctw1500/total
-    result = curve_cal_recall_precison_f1(type=data_type,gt_path=gt_path, result_path=save_path)
+    save_path = os.path.join(save_path, 'result')
+    result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)

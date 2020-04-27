@@ -139,14 +139,14 @@ def validate_lines_in_file(fileName, file_contents, CRLF=True, LTRB=True, withTr
         line = line.replace("\r", "").replace("\n", "")
         if (line != ""):
             try:
-                validate_tl_line(line, LTRB, withTranscription, withConfidence, imWidth, imHeight)
+                validate_tl_line(line, LTRB, withTranscription, withConfidence, imWidth, imHeight, fileName)
             except Exception as e:
                 print(e)
                 assert (0), (e, ("Line in sample not valid. Sample: %s Line: %s Error: %s" % (
                 fileName, line, str(e))).encode('utf-8', 'replace'))
 
 
-def validate_tl_line(line, LTRB=True, withTranscription=True, withConfidence=True, imWidth=0, imHeight=0):
+def validate_tl_line(line, LTRB=True, withTranscription=True, withConfidence=True, imWidth=0, imHeight=0, fileName=''):
     """
     Validate the format of the line. If the line is not valid an exception will be raised.
     If maxWidth and maxHeight are specified, all points must be inside the imgage bounds.
@@ -154,10 +154,10 @@ def validate_tl_line(line, LTRB=True, withTranscription=True, withConfidence=Tru
     LTRB=True: xmin,ymin,xmax,ymax[,confidence][,transcription]
     LTRB=False: x1,y1,x2,y2,x3,y3,x4,y4[,confidence][,transcription]
     """
-    get_tl_line_values(line, LTRB, withTranscription, withConfidence, imWidth, imHeight)
+    get_tl_line_values(line, LTRB, withTranscription, withConfidence, imWidth, imHeight, fileName)
 
 
-def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=False, imWidth=0, imHeight=0):
+def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=False, imWidth=0, imHeight=0, fileName=''):
     """
     Validate the format of the line. If the line is not valid an exception will be raised.
     If maxWidth and maxHeight are specified, all points must be inside the imgage bounds.
@@ -177,28 +177,31 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
     else:
         if withTranscription and withConfidence:
             cors = line.split(',')
-            assert (len(cors) % 2 - 2 == 0), 'num cors should be even.'
+            assert (len(cors) % 2 - 2 == 0), 'num cors should be even.1'
             try:
                 points = [float(ic) for ic in cors[:-2]]
             except Exception as e:
                 raise (e)
         elif withConfidence:
             cors = line.split(',')
-            assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'
+            assert (len(cors) % 2 - 1 == 0), 'num cors should be even.2'
             try:
                 points = [float(ic) for ic in cors[:-1]]
             except Exception as e:
                 raise (e)
         elif withTranscription:
             cors = line.split(',')
-            assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'
+            if len(cors) % 2 == 0:
+                cors.pop(-1)
+
+            assert (len(cors) % 2 - 1 == 0), ','.join(cors)+'##'+str(fileName)    #'num cors should be even.3'
             try:
                 points = [float(ic) for ic in cors[:-1]]
             except Exception as e:
                 raise (e)
         else:
             cors = line.split(',')
-            assert (len(cors) % 2 == 0), 'num cors should be even.'
+            assert (len(cors) % 2 == 0), 'num cors should be even.4'
             try:
                 points = [float(ic) for ic in cors[:]]
             except Exception as e:

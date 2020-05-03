@@ -29,12 +29,17 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
     model = Pytorch_model(model_path, net=net, scale=scale, gpu_id=gpu_id)
     total_frame = 0.0
     total_time = 0.0
+    model_total_time = 0.0
+    decode_total_time = 0.0
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, 'res_' + img_name + '.txt')
-        pred, boxes_list, t = model.predict(img_path, long_size=long_size)
+        #pred, boxes_list, t = model.predict(img_path, long_size=long_size)
+        pred, boxes_list, t, model_time, decode_time = model.predict_speed(img_path, long_size=long_size)
         total_frame += 1
         total_time += t
+        model_total_time += model_time
+        decode_total_time += decode_time
         img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         if config.save_4_pt_box:
@@ -42,6 +47,8 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
         else:
             np.savetxt(save_name, boxes_list.reshape(-1, 4), delimiter=',', fmt='%d')
     print('fps:{}'.format(total_frame / total_time))
+    print('average model time:{}'.format(model_total_time/total_frame))
+    print('average decode time:{}'.format(decode_total_time / total_frame))
     return save_txt_folder
 
 

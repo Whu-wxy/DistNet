@@ -96,6 +96,58 @@ class Pytorch_model:
             t = time.time() - start
         return preds, boxes_list, t  #, logit
 
+    def predict_speed(self, img: str, long_size: int = 2240):
+        '''
+        对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
+        :param img: 图像地址
+        :param is_numpy:
+        :return:
+        '''
+        assert os.path.exists(img), 'file is not exists'
+        if img.endswith('jpg'):
+            in_file = open(img, 'rb')
+            img = jpeg.decode(in_file.read())
+            in_file.close()
+            # im = jpeg.JPEG(im_fn).decode()
+        else:
+            img = cv2.imread(img)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        h, w = img.shape[:2]
+
+        if long_size != None:
+            scale = long_size / max(h, w)
+            img = cv2.resize(img, None, fx=scale, fy=scale)
+
+        # 将图片由(w,h)变为(1,img_channel,h,w)
+        tensor = transforms.ToTensor()(img)
+        tensor = tensor.unsqueeze_(0)
+
+        tensor = tensor.to(self.device)
+        with torch.no_grad():
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            start = time.time()
+
+            preds = self.net(tensor)
+            model_end = time.time()
+            model_time = model_end - start
+
+            # print(preds)
+            # return None, None, None
+
+            #preds, boxes_list = pse_decode(preds[0], self.scale)
+            preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = time.time() - model_end
+
+            scale = (preds.shape[1] / w, preds.shape[0] / h)
+
+            if len(boxes_list):
+                boxes_list = boxes_list / scale
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            t = time.time() - start
+        return preds, boxes_list, t, model_time, decode_time  #, logit
+
 
 def _get_annotation(label_path):
     boxes = []

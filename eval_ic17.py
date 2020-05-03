@@ -94,18 +94,22 @@ class Pytorch_model_curve:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             start = time.time()
+
             preds = self.net(tensor)
+            model_end = time.time()
+            model_time = model_end - start
             # print(preds)
             # return None, None, None
 
             #preds, boxes_list = pse_decode(preds[0], self.scale)
             scale = (preds.shape[1] / w, preds.shape[0] / h)
             preds, boxes_list, scores_list = dist_decode(preds[0], scale)
+            decode_time = time.time() - model_end
 
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
             t = time.time() - start
-        return preds, boxes_list, t, scores_list  #, logit
+        return preds, boxes_list, t, scores_list, model_time, decode_time  #, logit
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id):
@@ -124,12 +128,16 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id):
     model = Pytorch_model_curve(model_path, net=net, scale=scale, gpu_id=gpu_id)
     total_frame = 0.0
     total_time = 0.0
+    model_total_time = 0.0
+    decode_total_time = 0.0
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, img_name + '.txt')
-        pred, boxes_list, t, scores_list = model.predict(img_path, long_size=long_size)
+        pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size)
         total_frame += 1
         total_time += t
+        model_total_time += model_time
+        decode_total_time += decode_time
 
         text_box = None
         if isinstance(img_path, str):
@@ -140,6 +148,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id):
         write_result_as_txt(save_name, boxes_list, scores_list)
 
     print('fps:{}'.format(total_frame / total_time))
+    print('average model time:{}'.format(model_total_time / total_frame))
+    print('average decode time:{}'.format(decode_total_time / total_frame))
     return save_txt_folder
 
 

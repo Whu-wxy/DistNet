@@ -31,15 +31,17 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
     total_time = 0.0
     model_total_time = 0.0
     decode_total_time = 0.0
+    pred_time12_total = 0.0
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, 'res_' + img_name + '.txt')
         #pred, boxes_list, t = model.predict(img_path, long_size=long_size)
-        pred, boxes_list, t, model_time, decode_time = model.predict_speed(img_path, long_size=long_size)
+        pred, boxes_list, t, model_time, decode_time, pred_time12 = model.predict(img_path, long_size=long_size)
         total_frame += 1
         total_time += t
         model_total_time += model_time
         decode_total_time += decode_time
+        pred_time12_total += pred_time12
         img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         if config.save_4_pt_box:
@@ -49,6 +51,7 @@ def main(net, model_path, backbone, long_size, scale, path, save_path, gpu_id):
     print('fps:{}'.format(total_frame / total_time))
     print('average model time:{}'.format(model_total_time/total_frame))
     print('average decode time:{}'.format(decode_total_time / total_frame))
+    print('average transfer time:{}'.format(pred_time12_total / total_frame))
     return save_txt_folder
 
 

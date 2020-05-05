@@ -10,6 +10,8 @@ from predict_ic15 import Pytorch_model
 from cal_recall.script import cal_recall_precison_f1
 from utils import draw_bbox
 from dist import decode as dist_decode
+from turbojpeg import TurboJPEG
+jpeg = TurboJPEG()
 
 torch.backends.cudnn.benchmark = True
 
@@ -77,7 +79,13 @@ class Pytorch_model_curve:
         :return:
         '''
         assert os.path.exists(img), 'file is not exists'
-        img = cv2.imread(img)
+        if img.endswith('jpg'):
+            in_file = open(img, 'rb')
+            img = jpeg.decode(in_file.read())
+            in_file.close()
+            # im = jpeg.JPEG(im_fn).decode()
+        else:
+            img = cv2.imread(img)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 

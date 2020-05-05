@@ -3,6 +3,8 @@ import os
 import numpy as np
 import cv2
 import torch
+import timeit
+import matplotlib.pyplot as plt
 
 import config
 
@@ -11,6 +13,7 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
     raise RuntimeError('Cannot compile dis: {}'.format(BASE_DIR))
 
+from .dist import dist_cpp
 
 def dist_warpper(region, center, probs=None):
     '''
@@ -18,9 +21,14 @@ def dist_warpper(region, center, probs=None):
     reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
     :return:
     '''
-    from .dist import dist_cpp
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.95, 0.988)   #0.98, 0.9861
+
+    start = time.time()
+
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.95, 0.988, 200)   #0.98, 0.9861
+    pred_time = time.time()
+    pred_time2 = pred_time - start
+    print('to0: ', pred_time2)
 
     return np.array(pred)
 
@@ -59,39 +67,85 @@ def decode(preds, scale):  # origin=0.7311
     :param scale: 网络的scale
     :return: 最后的输出图和文本框
     """
-    
+
     bi_region = preds[1, :, :]
     preds = preds[0, :, :]
+
+
     bi_region = torch.sigmoid(bi_region)
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
-    bi_region = bi_region.detach().cpu().numpy()
-
-    #bi_region = bi_region>0.7311
-    #
-    #cv2.imwrite('../save.jpg', bi_region*255)
-    #input()
 
     preds = torch.sigmoid(preds)
 
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
-    preds = preds.detach().cpu().numpy()
 
     #
-    preds = preds + bi_region - 1
-    #
-    region = preds >= 0.295
-    center = preds >= 0.56  #config.max_threld
-    #
-    # plt.imshow(center)
-    # plt.show()
-    # plt.imshow(region)
-    # plt.show()
+    preds = torch.add(preds, bi_region)
+    preds = torch.add(preds, -1)
+    #preds = preds + bi_region - 1
 
-    # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+    # region = preds >= 0.295
+    # center = preds >= 0.56
+    ones_tensor = torch.ones_like(preds, dtype=torch.float32)
+    zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
 
+
+    # stack_tensor = torch.stack([center, region, bi_region])
+    # stack_tensor = stack_tensor.cpu().numpy()
+    # center = stack_tensor[0, :, :]
+    # region = stack_tensor[1, :, :]
+    # bi_region = stack_tensor[2, :, :]
+
+    start = timeit.default_timer()
+
+    # region = region.cpu().numpy()
+    # center = center.cpu().numpy()
+    # bi_region = bi_region.cpu().numpy()
+
+    region = region.to(device='cpu', non_blocking=True).numpy()
+    center = center.to(device='cpu', non_blocking=True).numpy()
+    bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
+
+    # stack_tensor = torch.stack([center, region, bi_region])
+    # stack_tensor = stack_tensor.cpu().numpy()
+    # center = stack_tensor[0, :, :]
+    # region = stack_tensor[1, :, :]
+    # bi_region = stack_tensor[2, :, :]
+
+
+    pred_time01 = timeit.default_timer()
+    pred_time12 = pred_time01 - start
+    # print('time:', pred_time12)
+    # input()
+
+
+
+
+    #
+    # preds2 = preds > 0.8
+    # cv2.imwrite('../save_dist_10_8.jpg', preds2 * 255)
+    # preds2 = preds > 0.7
+    # cv2.imwrite('../save_dist_10_7.jpg', preds2 * 255)
+    # preds2 = preds > 0.56
+    # cv2.imwrite('../save_dist_10_56.jpg', preds2 * 255)
+    # preds2 = preds > 0.295
+    # cv2.imwrite('../save_dist_10_29.jpg', preds2 * 255)
+    # bi_region2 = bi_region > 0.9
+    # cv2.imwrite('../save_bi_10.jpg', bi_region2 * 255)
+
+    # pred2 = np.where((preds>=0.295) & (preds<=0.56), 1, 0)
+    # cv2.imwrite('../save_dist_10_29_56.jpg', pred2 * 255)
+    # print('finish')
+    # input()
+    #
+
+
+    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   #0.98, 0.9861
     # plt.imshow(pred)
     # plt.show()
 
@@ -103,12 +157,10 @@ def decode(preds, scale):  # origin=0.7311
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        if points.shape[0] < 200 :  #面积过滤   / (scale * scale)
-            continue
 
-        score = np.where(pred == label_value, preds, 0)
-        score = np.mean(score)
-        scores_list.append(score)
+        # score = np.where(pred == label_value, preds, 0)
+        # score = np.mean(score)
+        scores_list.append(1)
 
 
         if config.save_4_pt_box:
@@ -126,7 +178,11 @@ def decode(preds, scale):  # origin=0.7311
         else:
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x + w, y + h]])
-    return pred, np.array(bbox_list), scores_list  # , preds
+
+    # end = time.time() - pred_time01
+    # print('t1: ', end)
+    # #input()
+    return pred, np.array(bbox_list), scores_list, pred_time12  # , preds
 
 
 
@@ -169,6 +225,7 @@ def decode_curve(preds, scale):  # origin=0.7311
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
     pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+
 
     # plt.imshow(pred)
     # plt.show()

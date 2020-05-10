@@ -82,32 +82,25 @@ class Pytorch_model:
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
 
-            start = timeit.default_timer()
+            model_time = timeit.default_timer()
             preds = self.net(tensor)
-            model_end = timeit.default_timer()
-            model_time = model_end - start
-            #print('model time', model_time)
+            model_time = (timeit.default_timer() - model_time)
 
-            # print(preds)
-            # return None, None, None
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
 
-            #preds, boxes_list = pse_decode(preds[0], self.scale)
-            preds, boxes_list, scores_list, pred_time12 = dist_decode(preds[0], self.scale)
-            decode_time = timeit.default_timer() - model_end
-            # print('decode time: ', decode_time)
-            # input()
-            t = timeit.default_timer() - start
-            # print('all:', t)
-            # input()
+            decode_time = timeit.default_timer()
+            for i in range(50):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = (timeit.default_timer() - decode_time) / 50.0
 
-            scale = (preds.shape[1] / w, preds.shape[0] / h)
+            t = model_time + decode_time
+
+            scale = (res_preds.shape[1] / w, res_preds.shape[0] / h)
 
             if len(boxes_list):
                 boxes_list = boxes_list / scale
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
 
-        return preds, boxes_list, t, model_time, decode_time, pred_time12  #, logit
+        return res_preds, boxes_list, t, model_time, decode_time  #, logit
 
 
 def _get_annotation(label_path):

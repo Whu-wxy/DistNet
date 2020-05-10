@@ -1,11 +1,11 @@
-﻿name = 'distv2_IC15'
+﻿name = 'dist_IC15_adam'
 
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
 
-trainroot = '../IC15/train'
-testroot = '../IC15/test'
-output_dir = '../save/distv2_IC15'
+trainroot = '../data/IC15/train'
+testroot = '../data/IC15/test'
+output_dir = '../save/dist_IC15_adam'
 save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
@@ -31,7 +31,7 @@ test_inteval = 2
 always_test_threld = 0.75
 
 # Learning rate
-optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 

@@ -10,6 +10,8 @@ from predict_ic15 import Pytorch_model
 from cal_recall.script import cal_recall_precison_f1
 from utils import draw_bbox
 from dist import decode as dist_decode
+import timeit
+
 from turbojpeg import TurboJPEG
 jpeg = TurboJPEG()
 
@@ -101,23 +103,20 @@ class Pytorch_model_curve:
         with torch.no_grad():
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            start = time.time()
 
+            model_time = timeit.default_timer()
             preds = self.net(tensor)
-            model_end = time.time()
-            model_time = model_end - start
-            # print(preds)
-            # return None, None, None
+            model_time = (timeit.default_timer() - model_time)
 
-            #preds, boxes_list = pse_decode(preds[0], self.scale)
-            scale = (preds.shape[1] / w, preds.shape[0] / h)
-            preds, boxes_list, scores_list = dist_decode(preds[0], scale)
-            decode_time = time.time() - model_end
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
 
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
-            t = time.time() - start
-        return preds, boxes_list, t, scores_list, model_time, decode_time  #, logit
+            decode_time = timeit.default_timer()
+            for i in range(50):      # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = (timeit.default_timer() - decode_time) / 50.0
+
+            t = model_time + decode_time
+        return res_preds, boxes_list, t, scores_list, model_time, decode_time  #, logit
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id):

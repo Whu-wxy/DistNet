@@ -99,22 +99,20 @@ class Pytorch_model_curve:
         with torch.no_grad():
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            start = time.time()
 
+            model_time = timeit.default_timer()
             preds = self.net(tensor)
-            model_end = time.time()
-            model_time = model_end - start
-            # print(preds)
-            # return None, None, None
+            model_time = (timeit.default_timer() - model_time)
 
-            #preds, boxes_list = pse_decode(preds[0], self.scale)
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
 
-            scale = (preds.shape[-1] / w, preds.shape[-2] / h)
-            preds, boxes_list = dist_decode_curve(preds[0], scale)
-            decode_time = time.time() - model_end
+            decode_time = timeit.default_timer()
+            for i in range(50):     # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = (timeit.default_timer() - decode_time) / 50.0
 
-            if torch.cuda.is_available():
-                torch.cuda.synchronize()
+            t = model_time + decode_time
+
             t = time.time() - start
         return preds, boxes_list, t, model_time, decode_time  #, logit
 

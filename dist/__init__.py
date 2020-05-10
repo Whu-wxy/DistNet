@@ -93,35 +93,9 @@ def decode(preds, scale):  # origin=0.7311
     region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
     center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
 
-
-    # stack_tensor = torch.stack([center, region, bi_region])
-    # stack_tensor = stack_tensor.cpu().numpy()
-    # center = stack_tensor[0, :, :]
-    # region = stack_tensor[1, :, :]
-    # bi_region = stack_tensor[2, :, :]
-
-    start = timeit.default_timer()
-
-    # region = region.cpu().numpy()
-    # center = center.cpu().numpy()
-    # bi_region = bi_region.cpu().numpy()
-
     region = region.to(device='cpu', non_blocking=True).numpy()
     center = center.to(device='cpu', non_blocking=True).numpy()
     bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
-
-    # stack_tensor = torch.stack([center, region, bi_region])
-    # stack_tensor = stack_tensor.cpu().numpy()
-    # center = stack_tensor[0, :, :]
-    # region = stack_tensor[1, :, :]
-    # bi_region = stack_tensor[2, :, :]
-
-
-    pred_time01 = timeit.default_timer()
-    pred_time12 = pred_time01 - start
-    # print('time:', pred_time12)
-    # input()
-
 
 
 
@@ -179,10 +153,7 @@ def decode(preds, scale):  # origin=0.7311
             x, y, w, h = cv2.boundingRect(points)
             bbox_list.append([[x, y], [x + w, y + h]])
 
-    # end = time.time() - pred_time01
-    # print('t1: ', end)
-    # #input()
-    return pred, np.array(bbox_list), scores_list, pred_time12  # , preds
+    return pred, np.array(bbox_list), scores_list  # , preds
 
 
 
@@ -199,7 +170,6 @@ def decode_curve(preds, scale):  # origin=0.7311
     bi_region = torch.sigmoid(bi_region)
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
-    bi_region = bi_region.detach().cpu().numpy()
 
     #bi_region = bi_region>0.7311
     #
@@ -210,21 +180,27 @@ def decode_curve(preds, scale):  # origin=0.7311
 
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
-    preds = preds.detach().cpu().numpy()
 
     #
-    preds = preds + bi_region - 1
-    #
-    region = preds >= 0.2     #0.295
-    center = preds >= 0.58      #0.58
-    #
-    # plt.imshow(center)
-    # plt.show()
-    # plt.imshow(region)
-    # plt.show()
+    preds = torch.add(preds, bi_region)
+    preds = torch.add(preds, -1)
+    # preds = preds + bi_region - 1
+
+    # region = preds >= 0.295
+    # center = preds >= 0.56
+    ones_tensor = torch.ones_like(preds, dtype=torch.float32)
+    zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+
+    region = region.to(device='cpu', non_blocking=True).numpy()
+    center = center.to(device='cpu', non_blocking=True).numpy()
+    bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   #0.98, 0.9861
+
 
 
     # plt.imshow(pred)

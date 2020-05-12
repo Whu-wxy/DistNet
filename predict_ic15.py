@@ -51,7 +51,7 @@ class Pytorch_model:
         self.net.eval()
 
 
-    def predict(self, img: str, long_size: int = 2240):
+    def predict(self, img: str, long_size: int = 2240, fast_test=True):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
         :param img: 图像地址
@@ -86,12 +86,15 @@ class Pytorch_model:
             preds = self.net(tensor)
             model_time = (timeit.default_timer() - model_time)
 
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
-
             decode_time = timeit.default_timer()
-            for i in range(50):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
-            decode_time = (timeit.default_timer() - decode_time) / 50.0
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = (timeit.default_timer() - decode_time)
+
+            if not fast_test:
+                decode_time = timeit.default_timer()
+                for i in range(50):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                    preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+                decode_time = (timeit.default_timer() - decode_time) / 50.0
 
             t = model_time + decode_time
 

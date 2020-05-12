@@ -119,7 +119,7 @@ def decode(preds, scale):  # origin=0.7311
 
 
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   #0.98, 0.9861
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   # 0.95, 0.988, 200
     # plt.imshow(pred)
     # plt.show()
 

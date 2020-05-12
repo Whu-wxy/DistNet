@@ -73,7 +73,7 @@ class Pytorch_model_curve:
             print('load models')
         self.net.eval()
 
-    def predict(self, img: str, long_size: int = 2240):
+    def predict(self, img: str, long_size: int = 2240, fast_test=True):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
         :param img: 图像地址
@@ -108,18 +108,21 @@ class Pytorch_model_curve:
             preds = self.net(tensor)
             model_time = (timeit.default_timer() - model_time)
 
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
-
             decode_time = timeit.default_timer()
-            for i in range(50):      # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
-            decode_time = (timeit.default_timer() - decode_time) / 50.0
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            decode_time = (timeit.default_timer() - decode_time)
+
+            if not fast_test:
+                decode_time = timeit.default_timer()
+                for i in range(50):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                    preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+                decode_time = (timeit.default_timer() - decode_time) / 50.0
 
             t = model_time + decode_time
         return res_preds, boxes_list, t, scores_list, model_time, decode_time  #, logit
 
 
-def main(net, model_path, long_size, scale, path, save_path, gpu_id):
+def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
     if os.path.exists(save_path):
         shutil.rmtree(save_path, ignore_errors=True)
     if not os.path.exists(save_path):
@@ -140,7 +143,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id):
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, img_name + '.txt')
-        pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size)
+        pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
         total_frame += 1
         total_time += t
         model_total_time += model_time
@@ -161,28 +164,24 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id):
 
 
 if __name__ == '__main__':
-    from models.GFF_FPN import GFF_FPN
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    backbone = 'resnet50'  #res2net50_26w_6s   res2net_dla60
     long_size = 1800     #2240
     scale = 4
     model_path = '../save/distv2_IC15/Best_340_r0.773712_p0.847574_f10.808960.pth'
-
-    #../ save / dist_gff / Best_624_r0.636976_p0.580518_f10.607438.pth
 
     data_path = '../IC15/test/img'
     gt_path = '../IC15/test/gt'   # gt_2pts, gt
     save_path = '../test_best'
     gpu_id = 0
-    print('backbone:{},scale:{},model_path:{}'.format(backbone,scale,model_path))
+    print('scale:{},model_path:{}'.format(scale,model_path))
 
-    #net = GFF_FPN(backbone=backbone, pretrained=False, result_num=config.n)
+    fast_test=True
+
     from models.craft import CRAFT
 
     net = CRAFT(num_out=2, pretrained=False)
-    #net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=config.n)
 
-    save_path = main(net, model_path, backbone, long_size, scale, data_path, save_path, gpu_id=gpu_id)
+    save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
     result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
     print(result)

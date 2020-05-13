@@ -43,10 +43,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         decode_total_time += decode_time
         img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
-        if config.save_4_pt_box:
-            np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
-        else:
-            np.savetxt(save_name, boxes_list.reshape(-1, 4), delimiter=',', fmt='%d')
+        np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
+
     print('fps:{}'.format(total_frame / total_time))
     print('average model time:{}'.format(model_total_time/total_frame))
     print('average decode time:{}'.format(decode_total_time / total_frame))

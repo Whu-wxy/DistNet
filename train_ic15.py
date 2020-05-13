@@ -196,10 +196,7 @@ def eval(model, save_path, test_path, device):
             scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale
-        if config.save_4_pt_box:
-            np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
-        else:
-            np.savetxt(save_name, boxes_list.reshape(-1, 4), delimiter=',', fmt='%d')
+        np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
     # 开始计算 recall precision f1
     if config.eval_script == 'iou':
         result_dict = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)

@@ -329,6 +329,7 @@ def get_distance_map_v2(text_polys, h, w):
 
 
 #import jpeg4py as jpeg
+import timeit
 
 def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
                 degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
@@ -343,10 +344,14 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
 
     #start = time.time()
     if im_fn.endswith('jpg'):
-        in_file = open(im_fn, 'rb')
-        im = jpeg.decode(in_file.read())
-        in_file.close()
-        #im = jpeg.JPEG(im_fn).decode()
+        try:
+            in_file = open(im_fn, 'rb')
+            im = jpeg.decode(in_file.read())
+            in_file.close()
+            #im = jpeg.JPEG(im_fn).decode()
+            #im = cv2.imread(im_fn)
+        except:
+            im = cv2.imread(im_fn)
     else:
         im = cv2.imread(im_fn)
     # global dur
@@ -357,6 +362,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     h, w, _ = im.shape
     intersection_threld = 1
     # 检查越界
+
     text_polys = check_and_validate_polys(text_polys, (h, w))
     im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
 
@@ -402,7 +408,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
 def get_distance_map_v3(text_polys, h, w, intersection_threld):
     dist_map = np.zeros((h, w), dtype=np.float)
     #print('th: ', intersection_threld)
-    inter_area_threld = 100 * intersection_threld
+    inter_area_threld = 50 * intersection_threld
    # print('val: ', inter_area_threld)
 
     undraw_list = []

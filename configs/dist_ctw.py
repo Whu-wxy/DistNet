@@ -1,12 +1,11 @@
 name = 'distv2_ctw'
 
 # data config
-dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
 trainroot = '../ctw_tiny/train_tiny'
 testroot = '../ctw_tiny/test_tiny'
 output_dir = '../save/distv2_ctw'
-save_4_pt_box = True
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 

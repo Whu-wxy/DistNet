@@ -8,11 +8,11 @@ import cv2
 from tqdm import tqdm
 from models import FPN_ResNet
 import utils
-import time
+import timeit
 
 from cal_recall.curve_script import curve_cal_recall_precison_f1
 from utils import draw_bbox
-from dist import decode_curve as dist_decode_curve
+from dist import decode_curve
 
 from turbojpeg import TurboJPEG
 jpeg = TurboJPEG()
@@ -105,18 +105,17 @@ class Pytorch_model_curve:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            res_preds, boxes_list = decode_curve(preds[0], scale)
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
                 decode_time = timeit.default_timer()
                 for i in range(50):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                    preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+                    preds_temp, boxes_list = decode_curve(preds[0], scale)
                 decode_time = (timeit.default_timer() - decode_time) / 50.0
 
             t = model_time + decode_time
 
-            t = time.time() - start
         return preds, boxes_list, t, model_time, decode_time  #, logit
 
 

@@ -99,7 +99,7 @@ def load_folder_file(file, fileNameRegExp='', allEntries=False):
             pairs.append([keyName, open(os.path.join(file,name)).read()])
         else:
             if allEntries:
-                raise Exception('ZIP entry not valid: %s' % name)
+                raise Exception('folder entry not valid: %s' % name)
 
     return dict(pairs)
 

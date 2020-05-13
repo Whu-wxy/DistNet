@@ -1,14 +1,13 @@
-name = 'distv2_IC15'
+name = 'dist_IC17'
 
 # data config
-dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py中不适用这个参数
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../../IC17/train'
-validroot = '../../IC17/validation'
-testroot = '../../IC17/test'
-output_dir = '../save/distv2_IC15'
-save_4_pt_box = True
-eval_script = 'iou'   # deteval, iou, 2013
+trainroot = '../data/IC17/train'
+validroot = '../data/IC17/validation'
+testroot = '../data/IC17/test'
+output_dir = '../save/dist_IC17'
+eval_script = 'iou'
 data_shape = 640    # 640
 
 long_size = None  # 2240/None
@@ -19,14 +18,14 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 15
+workers = 10
 pin_memory = True
 start_epoch = 0
 epochs = 301   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 420, 440, 460, 470, 480]
+try_test_epoch = [1, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 470      #绝对值
 test_inteval = 2
 always_test_threld = 0.75

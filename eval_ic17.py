@@ -6,8 +6,9 @@ import os
 import cv2
 from tqdm import tqdm
 from models import FPN_ResNet
+from torchvision import transforms
 from predict_ic15 import Pytorch_model
-from cal_recall.script import cal_recall_precison_f1
+from cal_recall.script17 import cal_recall_precison_f1_17
 from utils import draw_bbox
 from dist import decode as dist_decode
 import timeit
@@ -21,15 +22,16 @@ torch.backends.cudnn.benchmark = True
 def write_result_as_txt(save_path, bboxes, scores):
     lines = []
     for b_idx, bbox in enumerate(bboxes):
-        values = [int(v) for v in bbox]
-        line = "%d"%values[0]
-        for v_id in range(1, len(values)):
-            line += ", %d"%values[v_id]
+        line = ''
+        for box in bbox:
+            line += "%d, %d, "%(int(box[0]), int(box[1]))
 
         score = 1
-        if b_idx<len(scores):
+        if b_idx>len(scores)-1:
+            score = 1
+        else:
             score = scores[b_idx]
-        line += ", " + str(score)
+        line += str(score)
         line += '\n'
         lines.append(line)
     with open(save_path, 'w') as f:
@@ -37,7 +39,7 @@ def write_result_as_txt(save_path, bboxes, scores):
             f.write(line)
 
 
-class Pytorch_model_curve:
+class Pytorch_model_17:
     def __init__(self, model_path, net, scale, gpu_id=None):
         '''
         初始化pytorch模型
@@ -119,6 +121,10 @@ class Pytorch_model_curve:
                 decode_time = (timeit.default_timer() - decode_time) / 50.0
 
             t = model_time + decode_time
+
+            scale = (res_preds.shape[1] / w, res_preds.shape[0] / h)
+            if len(boxes_list):
+                boxes_list = boxes_list / scale
         return res_preds, boxes_list, t, scores_list, model_time, decode_time  #, logit
 
 
@@ -135,7 +141,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         os.makedirs(save_txt_folder)
     img_paths = [os.path.join(path, x) for x in os.listdir(path)]
 
-    model = Pytorch_model_curve(model_path, net=net, scale=scale, gpu_id=gpu_id)
+    model = Pytorch_model_17(model_path, net=net, scale=scale, gpu_id=gpu_id)
     total_frame = 0.0
     total_time = 0.0
     model_total_time = 0.0
@@ -152,9 +158,12 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         text_box = None
         if isinstance(img_path, str):
             text_box = cv2.imread(img_path)
-        for bbox in boxes_list:
-            cv2.drawContours(text_box, [bbox.reshape(bbox.shape[0] / 2, 2)], -1, (0, 255, 0), 2)
+        # for bbox in boxes_list:
+        #     cv2.drawContours(text_box, [bbox.reshape(-1, 8)], -1, (0, 255, 0), 2)
+        # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+        text_box = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+
         write_result_as_txt(save_name, boxes_list, scores_list)
 
     print('fps:{}'.format(total_frame / total_time))
@@ -167,11 +176,11 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 1800     #2240
     scale = 4
-    model_path = '../save/distv2_IC15/Best_340_r0.773712_p0.847574_f10.808960.pth'
+    model_path = '../save/dist_IC17/DistNet_IC17_1_loss1.595215.pth'
 
-    data_path = '../IC15/test/img'
-    gt_path = '../IC15/test/gt'   # gt_2pts, gt
-    save_path = '../test_best'
+    data_path = '../data/ic17_tiny/test/img'
+    gt_path = '../data/ic17_tiny/test/gt'   # gt_2pts, gt
+    save_path = '../test_result'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
@@ -183,7 +192,7 @@ if __name__ == '__main__':
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
-    result = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
+    result = cal_recall_precison_f1_17(gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)

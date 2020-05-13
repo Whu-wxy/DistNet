@@ -64,7 +64,6 @@ def decode(preds, scale):  # origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
-    :param scale: 网络的scale
     :return: 最后的输出图和文本框
     """
 
@@ -137,21 +136,17 @@ def decode(preds, scale):  # origin=0.7311
         scores_list.append(1)
 
 
-        if config.save_4_pt_box:
-            rect = cv2.minAreaRect(points)
-            if rect[1][0] > rect[1][1]:
-                if rect[1][1] <= 10:
-                    continue
-            else:
-                if rect[1][0] <= 10:
-                    continue
-
-            bbox = cv2.boxPoints(rect)
-
-            bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
+        rect = cv2.minAreaRect(points)
+        if rect[1][0] > rect[1][1]:
+            if rect[1][1] <= 10:
+                continue
         else:
-            x, y, w, h = cv2.boundingRect(points)
-            bbox_list.append([[x, y], [x + w, y + h]])
+            if rect[1][0] <= 10:
+                continue
+
+        bbox = cv2.boxPoints(rect)
+
+        bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
     return pred, np.array(bbox_list), scores_list  # , preds
 
@@ -216,6 +211,14 @@ def decode_curve(preds, scale):  # origin=0.7311
         if points.shape[0] < 200:  # 面积过滤   / (scale * scale)
             continue
 
+        rect = cv2.minAreaRect(points)
+        if rect[1][0] > rect[1][1]:
+            if rect[1][1] <= 10:
+                continue
+        else:
+            if rect[1][0] <= 10:
+                continue
+
         binary = np.zeros(pred.shape, dtype='uint8')
         binary[pred == label_value] = 1
 
@@ -228,9 +231,6 @@ def decode_curve(preds, scale):  # origin=0.7311
 
         bbox = bbox*1.0 / scale
         bbox = bbox.astype('int32')
-
-        # print(bbox.shape)
-        # print(bbox.reshape(-1).shape)
 
         bbox_list.append(bbox.reshape(-1))
     return pred, bbox_list  # , preds

@@ -37,9 +37,13 @@ class IC17Dataset(data.Dataset):
 
     def __getitem__(self, index):
         img_path, text_polys, text_tags = self.data_list[index]
-        img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
+        try:
+            img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
                                                                    scales = np.array(config.random_scales))
+        except:
+            print('error: ', img_path)
+
 
         #img = draw_bbox(img,text_polys)
         #img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
@@ -114,10 +118,10 @@ if __name__ == '__main__':
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
-    # F:\zzxs\Experiments\dl-data\TotalText\\train
+    # F:\zzxs\Experiments\dl-data\TotalText\\train    #validation
     train_data = IC17Dataset('../../data/IC17/train', '../../data/IC17/validation', data_shape=config.data_shape,
                              transform=transforms.ToTensor())
-    train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
+    train_loader = DataLoaderX(dataset=train_data, batch_size=6, shuffle=False, num_workers=10)
 
     pbar = tqdm(total=len(train_loader))
     empty_count = 0
@@ -132,14 +136,14 @@ if __name__ == '__main__':
         #print(dist_maps.shape)
         # input()
 
-        cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
-        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
-        cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
-        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        # cv2.namedWindow("img", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
+        # #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        # cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
+        # #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        # cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
 
         # cv2.imwrite('F:\zzxs\Experiments\dl-data\CTW\\' + str(i) + 'dist.jpg', distance_map.numpy().transpose((1, 2, 0))*255)
 

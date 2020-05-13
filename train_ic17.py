@@ -273,7 +273,7 @@ def main(model, criterion):
                 epoch, config.epochs, train_loss, time.time() - start, lr))
             net_save_path = '{}/DistNet_IC17_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
                                                                                           train_loss)
-            save_checkpoint(net_save_path, models, optimizer, epoch, logger)
+            save_checkpoint(net_save_path, model, optimizer, epoch, logger)
 
         writer.close()
     except KeyboardInterrupt:

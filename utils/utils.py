@@ -189,6 +189,18 @@ def torch_inport(save_path):
     print("export finish.")
     return model
 
+def torch2onnx(model, save_path):
+    """
+    :param model:
+    :param save_path:  XXX/XXX.onnx
+    :return:
+    """
+    model.eval()
+    data = torch.rand(1, 3, 224, 224)
+    input_names = ["input"]   #ncnn需要
+    output_names = ["out"]  #ncnn需要
+    torch.onnx._export(model, data, save_path, export_params=True, opset_version=11, input_names=input_names, output_names=output_names)
+    print("torch2onnx finish.")
 
 if __name__ == '__main__':
     from models import FPN_ResNet

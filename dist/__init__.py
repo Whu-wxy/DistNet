@@ -43,7 +43,7 @@ def dilate_alg(center, min_area=5, probs=None):
             label_img[label_img == label_idx] = 0
             continue
 
-        score_i = np.mean(probs[label_img == label_idx])  # 测试是否可以过滤难负样本
+        score_i = np.mean(probs[label_img == label_idx])  
         if score_i < 0.85:
             continue
         label_values.append(label_idx)

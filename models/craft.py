@@ -101,7 +101,7 @@ if __name__ == '__main__':
     model.eval()
     start = time.time()
     data = torch.randn(1, 3, 512, 512).to(device)
-    output, _ = model(data)
+    output = model(data)
     print(time.time() - start)
     print(output.shape)
 

@@ -11,6 +11,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <omp.h>
+
 using namespace std;
 using namespace cv;
 namespace py = pybind11;

@@ -18,6 +18,8 @@ jpeg = TurboJPEG()
 
 torch.backends.cudnn.benchmark = True
 
+# cv2.setNumThreads(0)
+# cv2.ocl.setUseOpenCL(False)
 
 def write_result_as_txt(save_path, bboxes, scores):
     lines = []
@@ -75,27 +77,34 @@ class Pytorch_model_17:
             print('load models')
         self.net.eval()
 
-    def predict(self, img: str, long_size: int = 2240, fast_test=True):
+    def predict(self, img_path: str, long_size: int = 2240, fast_test=True):
         '''
         对传入的图像进行预测，支持图像地址,opecv 读取图片，偏慢
         :param img: 图像地址
         :param is_numpy:
         :return:
         '''
-        assert os.path.exists(img), 'file is not exists'
-        if img.endswith('jpg'):
-            in_file = open(img, 'rb')
+        assert os.path.exists(img_path), 'file is not exists'
+        if img_path.endswith('jpg'):
+            in_file = open(img_path, 'rb')
             img = jpeg.decode(in_file.read())
             in_file.close()
             # im = jpeg.JPEG(im_fn).decode()
         else:
-            img = cv2.imread(img)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.imread(img_path)
+
+        try:
+            #img = np.asarray(img, dtype=np.uint8)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        except:
+            print('error: ', img_path)
         h, w = img.shape[:2]
 
         if long_size != None:
             scale = long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
+
+        #img = cv2.resize(img, None, fx=2, fy=2)
 
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)
@@ -129,8 +138,8 @@ class Pytorch_model_17:
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
-    if os.path.exists(save_path):
-        shutil.rmtree(save_path, ignore_errors=True)
+    # if os.path.exists(save_path):
+    #     shutil.rmtree(save_path, ignore_errors=True)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     save_img_folder = os.path.join(save_path, 'img')
@@ -148,7 +157,13 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
     decode_total_time = 0.0
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
-        save_name = os.path.join(save_txt_folder, img_name + '.txt')
+        lab_name = 'res_img_' + img_name.split('_')[-1]
+        save_name = os.path.join(save_txt_folder, lab_name + '.txt')
+        # print(lab_name)
+        # input()
+        if os.path.exists(save_name):
+            # print('exist')
+            continue
         pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
         total_frame += 1
         total_time += t
@@ -162,7 +177,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         #     cv2.drawContours(text_box, [bbox.reshape(-1, 8)], -1, (0, 255, 0), 2)
         # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
         text_box = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-        cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+        #cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
 
         write_result_as_txt(save_name, boxes_list, scores_list)
 
@@ -174,12 +189,12 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 1800     #2240
+    long_size = 2400     #2240
     scale = 4
-    model_path = '../save/dist_IC17/DistNet_IC17_1_loss1.595215.pth'
+    model_path = '../save/dist_IC17_2/final.pth'   #DistNet_IC17_97_loss1.057110.pth
 
-    data_path = '../data/ic17_tiny/test/img'
-    gt_path = '../data/ic17_tiny/test/gt'   # gt_2pts, gt
+    data_path = '../data/IC17/test/img'
+    gt_path = '../data/IC17/test/gt'   # gt_2pts, gt
     save_path = '../test_result'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
@@ -192,23 +207,26 @@ if __name__ == '__main__':
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
-    result = cal_recall_precison_f1_17(gt_path=gt_path, result_path=save_path)
-    print(result)
-    print('scale:', scale)
-    print('long_size: ', long_size)
+    # result = cal_recall_precison_f1_17(gt_path=gt_path, result_path=save_path)
+    # print(result)
+    # print('scale:', scale)
+    # print('long_size: ', long_size)
+    #
+    # ############################################
+    # import time
+    # device = torch.device('cuda:0')  #cuda:0
+    # x = torch.randn(1, 3, 512, 512).to(device)
+    # start = time.time()
+    # y = net(x)
+    # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
+    #
+    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+    #
+    # print_model_parm_flops(net, x)
+    # print_model_parm_nums(net)
 
-    ############################################
-    import time
-    device = torch.device('cuda:0')  #cuda:0
-    x = torch.randn(1, 3, 512, 512).to(device)
-    start = time.time()
-    y = net(x)
-    print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
 
-    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    print_model_parm_flops(net, x)
-    print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
     # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 

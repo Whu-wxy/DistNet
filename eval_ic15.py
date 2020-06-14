@@ -54,8 +54,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 1800     #2240
-    scale = 4
-    model_path = '../save/dist_IC15_adam/Best_556_r0.491093_p0.786430_f10.604624.pth'
+    scale = 4   # Best_340_r0.773712_p0.847574_f10.808960.pth
+    model_path = '../save/dist_IC17_2/DistNet_IC17_97_loss1.057110.pth' #save/dist_IC17_2/DistNet_IC17_97_loss1.057110.pth
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt

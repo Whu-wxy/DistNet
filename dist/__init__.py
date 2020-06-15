@@ -43,7 +43,7 @@ def dilate_alg(center, min_area=5, probs=None):
             label_img[label_img == label_idx] = 0
             continue
 
-        score_i = np.mean(probs[label_img == label_idx])  # 测试是否可以过滤难负样本
+        score_i = np.mean(probs[label_img == label_idx])
         if score_i < 0.85:
             continue
         label_values.append(label_idx)
@@ -116,9 +116,9 @@ def decode(preds, scale):  # origin=0.7311
     # input()
     #
 
-
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   # 0.95, 0.988, 200
+    area_threld = int(250*scale)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)   # 0.95, 0.988, 200
     # plt.imshow(pred)
     # plt.show()
 
@@ -137,12 +137,12 @@ def decode(preds, scale):  # origin=0.7311
 
 
         rect = cv2.minAreaRect(points)
-        if rect[1][0] > rect[1][1]:
-            if rect[1][1] <= 10:
-                continue
-        else:
-            if rect[1][0] <= 10:
-                continue
+        # if rect[1][0] > rect[1][1]:
+        #     if rect[1][1] <= 5*scale:
+        #         continue
+        # else:
+        #     if rect[1][0] <= 5*scale:
+        #         continue
 
         bbox = cv2.boxPoints(rect)
 
@@ -156,7 +156,6 @@ def decode_curve(preds, scale):  # origin=0.7311
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
-    :param scale: 网络的scale
     :return: 最后的输出图和文本框
     """
     #

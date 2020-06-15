@@ -235,7 +235,7 @@ def main(model, criterion):
     scheduler = None
     if config.checkpoint != '':  # and not config.restart_training
         if config.load_lr:
-            start_epoch = load_checkpoint(config.checkpoint, model, logger, device, None)
+            start_epoch = load_checkpoint(config.checkpoint, model, logger, device, optimizer)
             logger.info('model and optimizer load from checkpoint.')
         else:
             start_epoch = load_checkpoint(config.checkpoint, model, logger, device, None)

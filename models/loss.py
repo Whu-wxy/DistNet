@@ -58,7 +58,7 @@ class Loss(nn.Module):
         #
         output_bi_region = output[:, 1, :, :]   # bi_region
         output_bi_region = torch.sigmoid(output_bi_region)
-       
+
         output = output[:, 0, :, :]     # dist_map
         output = torch.sigmoid(output)
         #
@@ -193,6 +193,7 @@ class Loss(nn.Module):
         pos_weight = neg_num * 1. / (pos_num + neg_num)
         neg_weight = 1. - pos_weight
         #
+
         mse_loss = F.mse_loss(distance_map, distance_gt, reduction='mean')   #均方误差
         # #     mse_loss = F.smooth_l1_loss(distance_map, distance_gt, reduction='none')
         weighted_mse_loss = mse_loss * (text_gt * pos_weight + bg_gt * neg_weight)    # * training_mask
@@ -200,8 +201,62 @@ class Loss(nn.Module):
         return weighted_mse_loss.mean()
 
 
+
+class Loss_only_biregion(Loss):
+    def __init__(self, OHEM_ratio=3, reduction='mean'):
+        super().__init__(OHEM_ratio, reduction)
+
+    def forward(self, output, dist_label, training_masks):
+        #
+        output_bi_region = output[:, 0, :, :]  # bi_region
+        output_bi_region = torch.sigmoid(output_bi_region)
+
+        #
+        bi_region_gt = torch.where(dist_label >= config.min_threld, torch.ones_like(dist_label),
+                                   torch.zeros_like(dist_label))
+
+        bir_selected_masks = self.ohem_batch(output_bi_region, bi_region_gt, training_masks)
+        bir_selected_masks = bir_selected_masks.to(output.device)
+
+        loss = self.dice_loss(output_bi_region, bi_region_gt, bir_selected_masks)
+
+        return loss
+
+
+class Loss_only_dist(Loss):
+    def __init__(self, OHEM_ratio=3, reduction='mean'):
+        super().__init__(OHEM_ratio, reduction)
+
+    def forward(self, output, dist_label, training_masks):
+
+        output = output[:, 0, :, :]     # dist_map
+        output = torch.sigmoid(output)
+        #
+        center_gt = torch.where(dist_label >= config.max_threld, dist_label,
+                                torch.zeros_like(dist_label))
+
+        region_map = torch.where(output >= config.min_threld, output, torch.zeros_like(output))
+        center_map = torch.where(output >= config.max_threld, output, torch.zeros_like(output))
+
+        #
+        bi_region_gt = torch.where(dist_label >= config.min_threld, torch.ones_like(dist_label),
+                                   torch.zeros_like(dist_label))
+
+        selected_masks = self.ohem_batch(output, bi_region_gt, training_masks)
+        selected_masks = selected_masks.to(output.device)
+
+        #
+        dice_region = self.dice_loss(region_map, dist_label, selected_masks)
+        dice_center = self.dice_loss(center_map, center_gt, selected_masks)
+        weighted_mse_region = self.weighted_regression(output, dist_label, training_masks)
+
+        loss = dice_center + dice_region + weighted_mse_region
+        return dice_center, dice_region, weighted_mse_region, loss
+
+
+
 if __name__ == '__main__':
-    criteria = Loss()
+    criteria = Loss_only_biregion()
 
     logits = torch.tensor([[[0, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
                            [0, 0.3, 0.61, 0.7,  0.61, 0.3, 0],
@@ -218,20 +273,22 @@ if __name__ == '__main__':
                            [0, 1, 1, 1, 1, 1, 0],
                            [0, 0, 0, 0, 0, 0, 0]]])
 
-    logits2 = torch.tensor([[[0, 1, 1, 1, 1, 1, 0],
+    logits2 = torch.tensor([[[[0, 1, 1, 1, 1, 1, 0],
                            [0, 1, 1, 1, 1, 1, 0],
                            [0, 1, 1, 0, 0, 1, 0],
-                           [0, 1, 1, 0, 0, 0, 0]]])
+                           [0, 1, 1, 0, 0, 0, 0]]]])
 
+
+    print(label.shape)
+    print(logits2.shape)
 
     mask = torch.tensor(np.where(label > 0, 1, 0))
-    dice_center, dice_region, weighted_mse_region, bd_loss, loss = criteria(logits2.to(dtype=torch.float), label.to(dtype=torch.float), mask, 1, )
+    print(mask.shape)
 
 
+    dice_center, dice_region, weighted_mse_region, loss = criteria(logits2.to(dtype=torch.float), label.to(dtype=torch.float), mask)
 
-    # dice_center2, dice_region2, weighted_mse_region2, loss2 = criteria(1 - label.to(dtype=torch.float) + 0.1, label, label)
     print('loss1: ', dice_center, dice_region, weighted_mse_region, loss)
-    print('bd:', bd_loss)
 
 
     # print("loss2: ", dice_center2, dice_region2, weighted_mse_region2, loss2)

@@ -116,7 +116,7 @@ class CurveDataset(data.Dataset):
                 except:
                     print('load label failed on {}'.format(label_path))
 
-        if self.dataset_type == 'total':
+        if self.dataset_type == 'total':   # padding
             pt_count = 0
             for box in boxes:
                 if len(box) > pt_count:

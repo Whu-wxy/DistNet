@@ -69,6 +69,7 @@ class Pytorch_model:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         h, w = img.shape[:2]
 
+        scale = 1
         if long_size != None:
             scale = long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
@@ -87,13 +88,13 @@ class Pytorch_model:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], scale)
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
                 decode_time = timeit.default_timer()
                 for i in range(50):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                    preds_temp, boxes_list, scores_list = dist_decode(preds[0], self.scale)
+                    preds_temp, boxes_list, scores_list = dist_decode(preds[0], scale)
                 decode_time = (timeit.default_timer() - decode_time) / 50.0
 
             t = model_time + decode_time

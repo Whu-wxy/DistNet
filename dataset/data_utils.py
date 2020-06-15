@@ -33,8 +33,9 @@ data_aug = PSEDataAugment()
 
 dur = 0
 
-from turbojpeg import TurboJPEG
-jpeg = TurboJPEG()
+# from turbojpeg import TurboJPEG
+# jpeg = TurboJPEG()
+
 
 # def augument():
 #     augm = Compose([
@@ -474,11 +475,8 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
         # 距离图
         distance_map_i = cv2.distanceTransform(text_i, distanceType=cv2.DIST_L2, maskSize=5)
         cv2.normalize(distance_map_i, distance_map_i, 0.3, 1, cv2.NORM_MINMAX, mask=text_i.astype(np.uint8))
-        #dist_map[distance_map_i>0.1] = distance_map_i
         dist_map = np.where(distance_map_i>0.1, distance_map_i, dist_map)
 
-        #dist_map = dist_map * (1 - text_i) + distance_map_i
-    #
     # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
     # input()
     return dist_map
@@ -585,7 +583,7 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = IC15Dataset('../../data/IC15/test', data_shape=config.data_shape,
+    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\\train', data_shape=config.data_shape,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
@@ -609,10 +607,10 @@ if __name__ == '__main__':
         # input()
 
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
-        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
         cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
         cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
         cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
         cv2.waitKey()
         cv2.destroyAllWindows()

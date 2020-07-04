@@ -54,8 +54,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 1800     #2240
-    scale = 4   # Best_340_r0.773712_p0.847574_f10.808960.pth
-    model_path = '../save/dist_IC17_2/DistNet_IC17_97_loss1.057110.pth' #save/dist_IC17_2/DistNet_IC17_97_loss1.057110.pth
+    scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
+    model_path = '../save/abla_biregion_IC15/Best_375_r0.494945_p0.550911_f10.521430.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     from models.craft import CRAFT
 
-    net = CRAFT(num_out=2, pretrained=False)
+    net = CRAFT(num_out=1, pretrained=False, scale=scale)
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 

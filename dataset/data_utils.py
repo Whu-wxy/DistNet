@@ -421,11 +421,12 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
         for j, tempPoly in enumerate(text_polys, start=1):
             if j == i:
                 continue
+
             p2 = Polygon.Polygon(tempPoly)
             if p.overlaps(p2):
                 overlapP = p & p2
                 if overlapP.area() > inter_area_threld:
-                    undraw_list.append(j)
+                    undraw_list.append(j)    # 交集较大的先不画上去
                     bOverlap = True
                     break
         if bOverlap:

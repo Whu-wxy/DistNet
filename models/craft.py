@@ -30,7 +30,7 @@ class double_conv(nn.Module):
 
 
 class CRAFT(nn.Module):
-    def __init__(self, num_out=1, pretrained=False, freeze=False):
+    def __init__(self, num_out=1, pretrained=False, freeze=False, scale=1):
         super(CRAFT, self).__init__()
 
         """ Base network """
@@ -49,6 +49,8 @@ class CRAFT(nn.Module):
             nn.Conv2d(16, 16, kernel_size=1), nn.ReLU(inplace=True),
             nn.Conv2d(16, num_out, kernel_size=1),
         )
+
+        self.scale = scale
 
         init_weights(self.upconv1.modules())
         init_weights(self.upconv2.modules())
@@ -80,7 +82,10 @@ class CRAFT(nn.Module):
 
         y = self.conv_cls(y)
 
-        if self.train:
+        if self.scale == 1:
+            return y
+
+        if self.training:
             if config.scale_model == 'nearest':
                 y = F.interpolate(y, size=(H, W), mode=config.scale_model)
             else:

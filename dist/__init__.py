@@ -70,7 +70,6 @@ def decode(preds, scale):  # origin=0.7311
     bi_region = preds[1, :, :]
     preds = preds[0, :, :]
 
-
     bi_region = torch.sigmoid(bi_region)
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
@@ -111,16 +110,30 @@ def decode(preds, scale):  # origin=0.7311
     # cv2.imwrite('../save_bi_10.jpg', bi_region2 * 255)
 
     # pred2 = np.where((preds>=0.295) & (preds<=0.56), 1, 0)
-    # cv2.imwrite('../save_dist_10_29_56.jpg', pred2 * 255)
+    # cv2.imwrite('../region.jpg', region * 255)
+    # cv2.imwrite('../center.jpg', center * 255)
+    #
     # print('finish')
     # input()
-    #
+
 
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)   # 0.95, 0.988, 200
+    # print('in cpp')
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.91, 0.98, area_threld)   # 0.95, 0.988, 200
     # plt.imshow(pred)
     # plt.show()
+
+    # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
+    # print('label_num: ', label_num)
+    #
+    # plt.imshow(label_img)
+    # plt.show()
+    # cv2.imwrite('/home/beidou/pred.jpg', pred*30)
+    #
+    # print('out cpp')
+    # input()
+
 
     bbox_list = []
     scores_list = []
@@ -138,10 +151,10 @@ def decode(preds, scale):  # origin=0.7311
 
         rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
-        #     if rect[1][1] <= 5*scale:
+        #     if rect[1][1] <= 10*scale:
         #         continue
         # else:
-        #     if rect[1][0] <= 5*scale:
+        #     if rect[1][0] <= 10*scale:
         #         continue
 
         bbox = cv2.boxPoints(rect)
@@ -193,7 +206,8 @@ def decode_curve(preds, scale):  # origin=0.7311
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, 200)   #0.98, 0.9861
+    area_threld = int(250 * scale)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)   #0.98, 0.9861
 
 
 
@@ -207,16 +221,16 @@ def decode_curve(preds, scale):  # origin=0.7311
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        if points.shape[0] < 200:  # 面积过滤   / (scale * scale)
-            continue
+        # if points.shape[0] < 200:  # 面积过滤   / (scale * scale)
+        #     continue
 
         rect = cv2.minAreaRect(points)
-        if rect[1][0] > rect[1][1]:
-            if rect[1][1] <= 10:
-                continue
-        else:
-            if rect[1][0] <= 10:
-                continue
+        # if rect[1][0] > rect[1][1]:
+        #     if rect[1][1] <= 10:
+        #         continue
+        # else:
+        #     if rect[1][0] <= 10:
+        #         continue
 
         binary = np.zeros(pred.shape, dtype='uint8')
         binary[pred == label_value] = 1
@@ -234,6 +248,151 @@ def decode_curve(preds, scale):  # origin=0.7311
         bbox_list.append(bbox.reshape(-1))
     return pred, bbox_list  # , preds
 
+
+
+def decode_biregion(preds, scale):
+    preds = preds[0, :, :]
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+
+    preds = preds.to(device='cpu', non_blocking=True).numpy()
+
+    label_num, label_img = cv2.connectedComponents(preds.astype(np.uint8), connectivity=4)
+
+    label_values = []
+    for label_idx in range(1, label_num):
+        if np.sum(label_img == label_idx) < 10:
+            label_img[label_img == label_idx] = 0
+            continue
+
+        score_i = np.mean(preds[label_img == label_idx])
+        if score_i < 0.93:
+            continue
+        label_values.append(label_idx)
+
+    bbox_list = []
+    scores_list = []
+    for label_value in label_values:
+        if label_value == 0:
+            continue
+        points = np.array(np.where(label_img == label_value)).transpose((1, 0))[:, ::-1]
+
+
+        # score = np.where(pred == label_value, preds, 0)
+        # score = np.mean(score)
+        scores_list.append(1)
+
+        if len(points) < 100 * scale:
+            continue
+
+        rect = cv2.minAreaRect(points)
+        # if rect[1][0] > rect[1][1]:
+        #     if rect[1][1] <= 10*scale:
+        #         continue
+        # else:
+        #     if rect[1][0] <= 10*scale:
+        #         continue
+
+        bbox = cv2.boxPoints(rect)
+
+        bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
+
+    return preds, np.array(bbox_list), scores_list  # , preds
+
+
+
+def decode_dist(preds, scale):  # origin=0.7311
+    """
+    在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
+    :param preds: 网络输出
+    :return: 最后的输出图和文本框
+    """
+
+    preds = preds[0, :, :]
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+
+    # region = preds >= 0.295
+    # center = preds >= 0.56
+    ones_tensor = torch.ones_like(preds, dtype=torch.float32)
+    zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+
+    region = region.to(device='cpu', non_blocking=True).numpy()
+    center = center.to(device='cpu', non_blocking=True).numpy()
+    preds = preds.to(device='cpu', non_blocking=True).numpy()
+
+
+    #
+    # preds2 = preds > 0.8
+    # cv2.imwrite('../save_dist_10_8.jpg', preds2 * 255)
+    # preds2 = preds > 0.7
+    # cv2.imwrite('../save_dist_10_7.jpg', preds2 * 255)
+    # preds2 = preds > 0.56
+    # cv2.imwrite('../save_dist_10_56.jpg', preds2 * 255)
+    # preds2 = preds > 0.295
+    # cv2.imwrite('../save_dist_10_29.jpg', preds2 * 255)
+    # bi_region2 = bi_region > 0.9
+    # cv2.imwrite('../save_bi_10.jpg', bi_region2 * 255)
+
+    # pred2 = np.where((preds>=0.295) & (preds<=0.56), 1, 0)
+    # cv2.imwrite('../region.jpg', region * 255)
+    # cv2.imwrite('../center.jpg', center * 255)
+    #
+    # print('finish')
+    # input()
+
+
+    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
+    area_threld = int(250*scale)
+    # print('in cpp')
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), preds, 0.73, 0.76, area_threld)   # 0.95, 0.988, 200
+    # plt.imshow(pred)
+    # plt.show()
+
+    # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
+    # print('label_num: ', label_num)
+    #
+    # plt.imshow(label_img)
+    # plt.show()
+    # cv2.imwrite('/home/beidou/pred.jpg', pred*30)
+    #
+    # print('out cpp')
+    # input()
+
+
+    bbox_list = []
+    scores_list = []
+    label_values = np.max(pred)
+    for label_value in range(label_values+1):
+        if label_value == 0:
+            continue
+        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+
+
+        # score = np.where(pred == label_value, preds, 0)
+        # score = np.mean(score)
+        scores_list.append(1)
+
+
+        rect = cv2.minAreaRect(points)
+        # if rect[1][0] > rect[1][1]:
+        #     if rect[1][1] <= 10*scale:
+        #         continue
+        # else:
+        #     if rect[1][0] <= 10*scale:
+        #         continue
+
+        bbox = cv2.boxPoints(rect)
+
+        bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
+
+    return pred, np.array(bbox_list), scores_list  # , preds
 
 
 if __name__ == '__main__':

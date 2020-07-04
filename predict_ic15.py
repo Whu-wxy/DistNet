@@ -13,6 +13,8 @@ jpeg = TurboJPEG()
 
 from dist import decode as dist_decode
 from dist import decode_curve as dist_decode_curve
+from dist import decode_biregion
+from dist import decode_dist
 
 class Pytorch_model:
     def __init__(self, model_path, net, scale, gpu_id=None):
@@ -88,7 +90,7 @@ class Pytorch_model:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], scale)
+            res_preds, boxes_list, scores_list = decode_biregion(preds[0], scale)   #dist_decode
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:

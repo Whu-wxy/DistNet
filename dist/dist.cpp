@@ -18,7 +18,7 @@ using namespace cv;
 namespace py = pybind11;
 
 namespace dist{
-    py::array_t<unsigned char> cv_mat_uint8_1c_to_numpy(cv::Mat& input) {
+    py::array_t<unsigned char> cv_mat_to_numpy(cv::Mat& input) {
     //https://blog.csdn.net/non_hercules/article/details/105095153
 
     py::array_t<unsigned char> dst = py::array_t<unsigned char>({ input.rows,input.cols }, input.data);
@@ -26,7 +26,7 @@ namespace dist{
 }
 
 
-    py::array_t<unsigned char> dist(
+    py::array_t<short> dist(
     py::array_t<uint8_t, py::array::c_style> center,
     py::array_t<uint8_t, py::array::c_style> region,
     py::array_t<float, py::array::c_style> region_prob,
@@ -60,7 +60,7 @@ namespace dist{
 //        start = clock();
 
         Mat matCenter = Mat::zeros(h, w, CV_8UC1);
-        Mat res = Mat::zeros(h, w, CV_8UC1);
+        Mat res = Mat::zeros(h, w, CV_16U);
         //convert to mat center
         for (int x = 0; x < h; ++x) {
             for (int y = 0; y < w; ++y) {
@@ -74,8 +74,12 @@ namespace dist{
 //        cout<<"time: "<<(double)(finish - start) / CLOCKS_PER_SEC<<endl;
 //        start = clock();
 
+
         //convert to connectedComponents mat
         int label_num = connectedComponents(matCenter, matCenter, 4, CV_16U);
+//        cout<<"label num:"<<label_num<<endl;
+//
+//        imwrite("/home/beidou/matCenter.jpg", matCenter);
 
 //        finish = clock();
 //        alltime += (double)(finish - start) / CLOCKS_PER_SEC;
@@ -122,36 +126,40 @@ namespace dist{
         int region_area[label_num + 1];
         memset(region_area, 0, sizeof(region_area));
 
-
         // get text center area
-        std::queue<std::tuple<int, int, uint8_t>> q;
+        std::queue<std::tuple<int, int, ushort>> q;
         pImg = NULL;
         for (size_t i = 0; i<h; i++)
         {
             pImg = matCenter.ptr<ushort>(i);
-            uchar* res_ptr = res.ptr<uchar>(i);
-            for(size_t j = 0; j<w; j++)
+            ushort* res_ptr = res.ptr<ushort>(i);
+            for(size_t j = 0; j<w; j++,res_ptr++)
             {
                 ushort label = pImg[j];
                 if (label>0)
                 {
                     if (area[label] < 10) {
-                        res_ptr++;
+                        //res_ptr++;
                         continue;
                     }
                     q.push(std::make_tuple(i, j, label));
-                    *res_ptr++ = label;
+                    *res_ptr = label;
+                   // res_ptr++;
 
                     region_area[label] += 1;
                     region_area_prob[label] += ptr_region_prob[i * w + j];
                 }
                 else{
-                    res_ptr++;
+                    //res_ptr++;
                     continue;
                 }
             }
         }
         //
+              //   imwrite("/home/beidou/res0.jpg", res);
+
+
+        matCenter.release();
 
 //        finish = clock();
 //        alltime += (double)(finish - start) / CLOCKS_PER_SEC;
@@ -171,7 +179,9 @@ namespace dist{
             q.pop();
             int y = std::get<0>(q_n);
             int x = std::get<1>(q_n);
-            uint8_t l = std::get<2>(q_n);
+            ushort l = std::get<2>(q_n);
+
+
             //store the edge pixel after one expansion
             for (int idx=0; idx<4; idx++)
             {
@@ -180,16 +190,43 @@ namespace dist{
                 if (index_y<0 || index_y>=h || index_x<0 || index_x>=w)
                     continue;
                 // ptr_region == 1 or 0
-                if (!ptr_region[index_y*w+index_x] || res.at<uchar>(index_y, index_x)>0)
+                int region_value = ptr_region[index_y*w+index_x];
+                int res_value = res.at<ushort>(index_y, index_x);
+//                if(res_value > 0)
+//                    cout<<"res val: "<<res_value<<endl;
+
+                if (region_value == 0 || res_value>0)
                     continue;
+
+//                    cout<<"region_value : "<<region_value<<endl;
+//                cout<<"res val: "<<res_value<<endl;
+//                cout<<"l: "<<l<<endl;
+
+
                 q.push(std::make_tuple(index_y, index_x, l));
-                res.at<uchar>(index_y, index_x) = l;
+                res.at<ushort>(index_y, index_x) = l;
+
+//                res_value = res.at<uchar>(index_y, index_x);
+//                      cout<<"res val2: "<<res_value<<endl;
+//                      cout<<"#"<<endl;
 
                 region_area[l] += 1;
                 region_area_prob[l] += ptr_region_prob[index_y * w + index_x];
             }
+
+            if(q.size()>w*h){
+            cout<<"w: "<<w<<endl;
+                        cout<<"h: "<<h<<endl;
+
+                        cout<<"queue: "<<q.size()<<endl;
+                break;
+            }
+
         }
         //pse end
+      //   imwrite("/home/beidou/res.jpg", res);
+
+
 
 //        finish = clock();
 //        alltime += (double)(finish - start) / CLOCKS_PER_SEC;
@@ -211,6 +248,7 @@ namespace dist{
             }
         }
 
+
         // remove filtered labels
         // [10,0,3,0,5,0]--->[10,1,1,3,2]
         int mark = 1;
@@ -224,15 +262,15 @@ namespace dist{
         }
         // clean labels
         for (int x = 0; x < h; ++x) {
-            uchar* res_ptr = res.ptr<uchar>(x);
-            for (int y = 0; y < w; ++y) {
-                int label = *res_ptr;
+            ushort* res_ptr = res.ptr<ushort>(x);
+            for (int y = 0; y < w; ++y, res_ptr++) {
+                ushort label = *res_ptr;
                 if (label == 0) {
-                    res_ptr++;
+                   // res_ptr++;
                     continue;
                 }
 
-                *res_ptr++ = region_area[label];
+                *res_ptr = region_area[label];
             }
         }
 
@@ -241,8 +279,10 @@ namespace dist{
 //        cout<<"time: "<<(double)(finish - start) / CLOCKS_PER_SEC<<endl;
 //        start = clock();
 
+        res.convertTo(res, CV_8UC1, 1, 0);
+
         py::array_t<unsigned char> res_numpy;
-        res_numpy = cv_mat_uint8_1c_to_numpy(res);
+        res_numpy = cv_mat_to_numpy(res);
 
 //        finish = clock();
 //        alltime += (double)(finish - start) / CLOCKS_PER_SEC;

@@ -120,7 +120,9 @@ def decode(preds, scale):  # origin=0.7311
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
     # print('in cpp')
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.91, 0.98, area_threld)   # 0.95, 0.988, 200
+    #17: 0.91, 0.98, 250
+    #15: 0.95, 0.988, 250
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)
     # plt.imshow(pred)
     # plt.show()
 

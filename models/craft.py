@@ -82,9 +82,6 @@ class CRAFT(nn.Module):
 
         y = self.conv_cls(y)
 
-        if self.scale == 1:
-            return y
-
         if self.training:
             if config.scale_model == 'nearest':
                 y = F.interpolate(y, size=(H, W), mode=config.scale_model)

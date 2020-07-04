@@ -90,7 +90,7 @@ class Pytorch_model:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list, scores_list = decode_biregion(preds[0], scale)   #dist_decode
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], scale)   #dist_decode  decode_biregion
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:

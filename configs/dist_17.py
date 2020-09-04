@@ -6,7 +6,7 @@ dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py
 trainroot = '../data/IC17/train'
 validroot = '../data/IC17/validation'
 testroot = '../data/IC17/test'
-output_dir = '../save/dist_IC17_3'
+output_dir = '../save/dist_IC17_4'
 eval_script = 'iou'
 data_shape = 640    # 640
 
@@ -71,7 +71,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = False   # begin from 0 epoch
 load_lr = True
-checkpoint = '../save/dist_IC17_2/DistNet_IC17_97_loss1.057110.pth'   #full model ckpt
+checkpoint = '../save/dist_IC17_3/DistNet_IC17_151_loss1.045880.pth'   #full model ckpt
 if len(checkpoint) != 0:
     pretrained = False
 

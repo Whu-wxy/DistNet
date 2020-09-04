@@ -41,8 +41,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         total_time += t
         model_total_time += model_time
         decode_total_time += decode_time
-        img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-        cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
+        # img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+        # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
 
     print('fps:{}'.format(total_frame / total_time))
@@ -53,9 +53,12 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 1800     #2240
+    long_size = 2000     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
-    model_path = '../Best_340_r0.773712_p0.847574_f10.808960.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
+    model_path = '../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
+#../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
+
+    #../Best_340_r0.773712_p0.847574_f10.808960.pth
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt

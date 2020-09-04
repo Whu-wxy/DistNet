@@ -88,33 +88,17 @@ def decode(preds, scale):  # origin=0.7311
     # center = preds >= 0.56
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
-    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 17:0.54   15:0.56
 
     region = region.to(device='cpu', non_blocking=True).numpy()
     center = center.to(device='cpu', non_blocking=True).numpy()
     bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
 
-
-
-    #
-    # preds2 = preds > 0.8
-    # cv2.imwrite('../save_dist_10_8.jpg', preds2 * 255)
-    # preds2 = preds > 0.7
-    # cv2.imwrite('../save_dist_10_7.jpg', preds2 * 255)
-    # preds2 = preds > 0.56
-    # cv2.imwrite('../save_dist_10_56.jpg', preds2 * 255)
-    # preds2 = preds > 0.295
-    # cv2.imwrite('../save_dist_10_29.jpg', preds2 * 255)
-    # bi_region2 = bi_region > 0.9
-    # cv2.imwrite('../save_bi_10.jpg', bi_region2 * 255)
-
     # pred2 = np.where((preds>=0.295) & (preds<=0.56), 1, 0)
     # cv2.imwrite('../region.jpg', region * 255)
     # cv2.imwrite('../center.jpg', center * 255)
     #
-    # print('finish')
-    # input()
 
 
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
@@ -122,7 +106,7 @@ def decode(preds, scale):  # origin=0.7311
     # print('in cpp')
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.975, area_threld)
     # plt.imshow(pred)
     # plt.show()
 
@@ -259,6 +243,7 @@ def decode_biregion(preds, scale):
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
 
+    preds = preds > 0.73
     preds = preds.to(device='cpu', non_blocking=True).numpy()
 
     label_num, label_img = cv2.connectedComponents(preds.astype(np.uint8), connectivity=4)
@@ -353,7 +338,7 @@ def decode_dist(preds, scale):  # origin=0.7311
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
     # print('in cpp')
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), preds, 0.73, 0.76, area_threld)   # 0.95, 0.988, 200
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), preds, 0.6, 0.6, area_threld)   # 0.95, 0.988, 200
     # plt.imshow(pred)
     # plt.show()
 

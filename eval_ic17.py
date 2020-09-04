@@ -27,6 +27,8 @@ def write_result_as_txt(save_path, bboxes, scores):
 
     covered_list = []
     uncovered_list = []
+
+    res_boxes = []
     for (i, box) in enumerate(bboxes):
         if i in covered_list:
             continue
@@ -47,6 +49,7 @@ def write_result_as_txt(save_path, bboxes, scores):
             continue
 
         for box in bbox:
+            res_boxes.append(bbox)
             line += "%d, %d, "%(int(box[0]), int(box[1]))
 
         score = 1
@@ -60,6 +63,8 @@ def write_result_as_txt(save_path, bboxes, scores):
     with open(save_path, 'w') as f:
         for line in lines:
             f.write(line)
+
+    return  np.array(res_boxes)
 
 
 class Pytorch_model_17:
@@ -125,6 +130,17 @@ class Pytorch_model_17:
             scale = long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
+
+        # long_side = max(h, w)
+        # short_side = min(h, w)
+        # scale = 1900.0 / short_side
+        # if long_side*scale > 2800:
+        #     scale = 2800.0 / long_side
+        # # print("scale: ", scale)
+        # img = cv2.resize(img, None, fx=scale, fy=scale)
+        # # print("img size:", img.shape)
+
+
         #img = cv2.resize(img, None, fx=2, fy=2)
 
         # 将图片由(w,h)变为(1,img_channel,h,w)
@@ -159,8 +175,8 @@ class Pytorch_model_17:
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
-    if os.path.exists(save_path):
-        shutil.rmtree(save_path, ignore_errors=True)
+    # if os.path.exists(save_path):
+    #     shutil.rmtree(save_path, ignore_errors=True)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     save_img_folder = os.path.join(save_path, 'img')
@@ -180,10 +196,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         img_name = os.path.basename(img_path).split('.')[0]
         lab_name = 'res_img_' + img_name.split('_')[-1]
         save_name = os.path.join(save_txt_folder, lab_name + '.txt')
-        # print(lab_name)
-        # input()
+
         if os.path.exists(save_name):
-            # print('exist')
             continue
 
         pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
@@ -192,13 +206,13 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         model_total_time += model_time
         decode_total_time += decode_time
 
-        # text_box = None
+        res_boxes = write_result_as_txt(save_name, boxes_list, scores_list)
+
         # if isinstance(img_path, str):
         #     text_box = cv2.imread(img_path)
-        # text_box = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+        # text_box = draw_bbox(img_path, res_boxes, color=(0, 255, 0))
         # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
 
-        write_result_as_txt(save_name, boxes_list, scores_list)
 
     print('fps:{}'.format(total_frame / total_time))
     print('average model time:{}'.format(model_total_time / total_frame))
@@ -208,7 +222,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 2800     #2240
+    long_size = 2840     #2240
     scale = 1    #DistNet_IC17_130_loss1.029557.pth
     model_path = '../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth'   #DistNet_IC17_97_loss1.057110.pth
 

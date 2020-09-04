@@ -90,7 +90,8 @@ class Pytorch_model:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list, scores_list = dist_decode(preds[0], scale)   #dist_decode  decode_biregion
+            res_preds, boxes_list, scores_list = dist_decode(preds[0], scale)
+			#dist_decode  decode_biregion   decode_dist
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
@@ -126,43 +127,56 @@ def _get_annotation(label_path):
 
 
 if __name__ == '__main__':
-    import config
-    from models import FPN_ResNet
-    import matplotlib.pyplot as plt
-    from utils.utils import show_img, draw_bbox
+	import config
+	from models import FPN_ResNet
+	import matplotlib.pyplot as plt
+	from utils.utils import show_img, draw_bbox
 
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
+	os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
 
-    model_path = '../Best_340_r0.773712_p0.847574_f10.808960.pth'   #psenet.pt
+	model_path = '../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth'   #psenet.pt
+	#../Best_340_r0.773712_p0.847574_f10.808960.pth
+	#../save/abla_biregion_IC15/Best_375_r0.494945_p0.550911_f10.521430.pth
+	#../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
 
-    img_id = 10
-    img_path = '../data/IC15/test/img/img_{}.jpg'.format(img_id)
-    label_path = '../data/IC15/test/gt/gt_img_{}.txt'.format(img_id)
-  #  label = _get_annotation(label_path)
+	# 初始化网络
+	from models.craft import CRAFT
 
-    # 初始化网络
-    from models.craft import CRAFT
+	net = CRAFT(num_out=1, pretrained=False)
+	model = Pytorch_model(model_path, net=net, scale=1, gpu_id=0)
+	# for i in range(100):
+	#     models.predict(img_path)
 
-    net = CRAFT(num_out=2, pretrained=False)
-    model = Pytorch_model(model_path, net=net, scale=1, gpu_id=0)
-    # for i in range(100):
-    #     models.predict(img_path)
-    preds, boxes_list,t, model_time, decode_time = model.predict(img_path, 1800)
-    #print(boxes_list)
-    # show_img(preds)
+	img_id_list = [5, 10, 11, 14, 89, 121, 125, 143, 152, 173, 192]
 
-    cv2.imwrite('../img_pred14.jpg', logit*255)
+	for img_id in img_id_list:
+		img_path = '../data/IC15/test/img/img_{}.jpg'.format(img_id)
+		label_path = '../data/IC15/test/gt/gt_img_{}.txt'.format(img_id)
+		preds, boxes_list,t, model_time, decode_time = model.predict(img_path, 1800)
+		img = draw_bbox(img_path, boxes_list, color=(0,255,0))
+		cv2.imwrite('../abla/only_dist/'+ str(img_id)+'.jpg', img)
+		print(str(img_id)+' finished')
 
-    center = np.where(logit>=config.max_threld, 255, 0)
-    cv2.imwrite('../img_pred_center14.jpg', center)
 
-    region = np.where(logit >= config.min_threld, 255, 0)
-    cv2.imwrite('../img_pred_region14.jpg', region)
+	print('all finished!')
 
-    img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-    cv2.imwrite('../img_label14.jpg', img)
-#    img = draw_bbox(img, label,color=(0,0,255))
-#     show_img(img, color=True)
-#
-#     plt.show()
+	#print(boxes_list)
+	# show_img(preds)
+
+	# cv2.imwrite('../only_bi/5.jpg', logit*255)
+	#
+	# center = np.where(logit>=config.max_threld, 255, 0)
+	# cv2.imwrite('../img_pred_center14.jpg', center)
+	#
+	# region = np.where(logit >= config.min_threld, 255, 0)
+	# cv2.imwrite('../img_pred_region14.jpg', region)
+	#
+	# img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+	# cv2.imwrite('../img_label14.jpg', img)
+
+
+
+	#     show_img(img, color=True)
+	#
+	#     plt.show()

@@ -461,11 +461,12 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
             inter_region = np.where(dist_map==j, 1, 0)
             inter_region_sum = np.sum(inter_region)
             temp_map_sum = np.sum(temp_map)
+            #当前文本实例和已有文本实例之间的交集，与他们的比例，
             rate_temp = float(inter_sum) / temp_map_sum
             rate_inter_region = float(inter_sum) / inter_region_sum
-            if rate_temp > rate_inter_region:
+            if rate_temp > rate_inter_region:   #交集占新区域比例更大
                 dist_map[temp_map==idx] = idx
-            else:
+            else:         
                 dist_map[(temp_map==idx)&(inter!=1)] = idx
             if inter_sum == Inter_count:  # 当前box只与这个box相交
                 break

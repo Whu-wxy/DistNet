@@ -78,6 +78,7 @@ class CRAFT(nn.Module):
 
         y = F.interpolate(y, size=sources[4].size()[2:], mode='bilinear', align_corners=False)
         y = torch.cat([y, sources[4]], dim=1)
+
         y = self.upconv4(y)
 
         y = self.conv_cls(y)
@@ -99,15 +100,17 @@ if __name__ == '__main__':
     import  time
 
     device = torch.device('cpu')
-    model = CRAFT(pretrained=False).to(device)
+    model = CRAFT(num_out=2, pretrained=False).to(device)
     model.eval()
     start = time.time()
-    data = torch.randn(1, 3, 512, 512).to(device)
+    data = torch.randn(1, 3, 256, 256).to(device)
     output = model(data)
     print(time.time() - start)
     print(output.shape)
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    # print_model_parm_flops(net, data)
-    # print_model_parm_nums(net)
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)
+
+    show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')

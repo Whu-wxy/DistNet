@@ -71,3 +71,23 @@ class vgg16_bn(torch.nn.Module):
         vgg_outputs = namedtuple("VggOutputs", ['fc7', 'relu5_3', 'relu4_3', 'relu3_2', 'relu2_2'])
         out = vgg_outputs(h_fc7, h_relu5_3, h_relu4_3, h_relu3_2, h_relu2_2)
         return out
+
+
+if __name__ == '__main__':
+    import  time
+
+    device = torch.device('cpu')
+    model = vgg16_bn(pretrained=False).to(device)
+    model.eval()
+    start = time.time()
+    data = torch.randn(1, 3, 256, 256).to(device)
+    output = model(data)
+    print(time.time() - start)
+    print(output.shape)
+
+    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)
+
+    show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')

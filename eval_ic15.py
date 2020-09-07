@@ -57,8 +57,10 @@ if __name__ == '__main__':
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
     model_path = '../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
 #../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
-
+#../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth
     #../Best_340_r0.773712_p0.847574_f10.808960.pth
+#../save/abla_biregion_IC15/Best_375_r0.494945_p0.550911_f10.521430.pth
+
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt

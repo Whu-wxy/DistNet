@@ -506,8 +506,8 @@ def curve_cal_recall_precison_f1(type, gt_path, result_path, show_result=False):
 
 if __name__ == '__main__':
     type = 'ctw1500'
-    gt_path = 'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\test\gt'  # gt_2pts, gt
-    save_path = 'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\test\gt'
+    gt_path = '../../data/ctw1500_tiny/test/gt'  # gt_2pts, gt
+    save_path = '../../data/ctw1500_tiny/pred/gt'
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)

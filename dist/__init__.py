@@ -155,11 +155,6 @@ def decode_curve(preds, scale):  # origin=0.7311
     if len(bi_region.shape) == 3:
         bi_region = bi_region.squeeze(0)
 
-    #bi_region = bi_region>0.7311
-    #
-    #cv2.imwrite('../save.jpg', bi_region*255)
-    #input()
-
     preds = torch.sigmoid(preds)
 
     if len(preds.shape) == 3:
@@ -183,13 +178,8 @@ def decode_curve(preds, scale):  # origin=0.7311
 
     # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
-    area_threld = int(250 * scale)
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)   #0.98, 0.9861
-
-
-
-    # plt.imshow(pred)
-    # plt.show()
+    area_threld = int(220 * scale)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)   #0.98, 0.98
 
     bbox_list = []
     label_values = np.max(pred)
@@ -197,9 +187,6 @@ def decode_curve(preds, scale):  # origin=0.7311
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
-
-        # if points.shape[0] < 200:  # 面积过滤   / (scale * scale)
-        #     continue
 
         rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
@@ -234,7 +221,7 @@ def decode_biregion(preds, scale):
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
 
-    preds = preds > 0.73
+    preds = preds > 0.998
     preds = preds.to(device='cpu', non_blocking=True).numpy()
 
     label_num, label_img = cv2.connectedComponents(preds.astype(np.uint8), connectivity=4)

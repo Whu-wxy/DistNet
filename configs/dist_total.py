@@ -1,15 +1,15 @@
-name = 'distv2_CTW_exdata'
+name = 'distv2_total_exdata'
 
 # data config
-dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/ctw1500/train'
-testroot = '../data/ctw1500/test'
-output_dir = '../save/distv2_CTW_exdata'
+trainroot = '../data/totaltext/train'
+testroot = '../data/totaltext/test'
+output_dir = '../save/distv2_Total_exdata'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
-long_size = 1800  # 2240/None
+long_size = 800  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
@@ -71,6 +71,7 @@ pretrained = True   #backbone
 restart_training = True # begin from 0 epoch
 load_lr = False
 checkpoint = '../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth'   #full model ckpt
+#../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth
 if len(checkpoint) != 0:
     pretrained = False
 

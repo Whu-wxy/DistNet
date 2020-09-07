@@ -140,6 +140,9 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, img_name + '.txt')
+        # if os.path.exists(save_name):
+        #     continue
+
         pred, boxes_list, t, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
         total_frame += 1
         total_time += t
@@ -163,14 +166,14 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 1280
-    scale = 4
-    data_type = 'total'   # ctw1500/total
-    model_path = '../Best_340_r0.773712_p0.847574_f10.808960.pth'
+    long_size = 800
+    scale = 1
+    data_type = 'ctw1500'   # ctw1500/total
+    model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
+#../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
 
-
-    data_path = '../data/totaltext/test/img'
-    gt_path = '../data/totaltext/test/gt'   # gt_2pts, gt
+    data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
+    gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
     save_path = '../test_result2'   #../test_result
 
     gpu_id = 0
@@ -186,7 +189,7 @@ if __name__ == '__main__':
 
 
     # ctw1500/total
-    save_path = os.path.join(save_path, 'result')
+    #save_path = os.path.join(save_path, 'result')
     result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)

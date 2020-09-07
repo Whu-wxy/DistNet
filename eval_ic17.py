@@ -208,10 +208,10 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
         res_boxes = write_result_as_txt(save_name, boxes_list, scores_list)
 
-        # if isinstance(img_path, str):
-        #     text_box = cv2.imread(img_path)
-        # text_box = draw_bbox(img_path, res_boxes, color=(0, 255, 0))
-        # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+        if isinstance(img_path, str):
+            text_box = cv2.imread(img_path)
+        text_box = draw_bbox(img_path, res_boxes, color=(0, 255, 0), thickness=4)
+        cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
 
 
     print('fps:{}'.format(total_frame / total_time))

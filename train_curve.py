@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import glob
+import json
 
 from torch import nn
 import torch.utils.data as Data
@@ -174,7 +175,7 @@ def eval(model, save_path, test_path, device):
     img_paths = [os.path.join(img_path, x) for x in os.listdir(img_path)]
     for img_path in tqdm(img_paths, desc='test models'):
         img_name = os.path.basename(img_path).split('.')[0]
-        save_name = os.path.join(save_path, 'res_' + img_name + '.txt')
+        save_name = os.path.join(save_path, img_name + '.txt')
 
         assert os.path.exists(img_path), 'file is not exists'
         img = cv2.imread(img_path)
@@ -195,7 +196,7 @@ def eval(model, save_path, test_path, device):
         with torch.no_grad():
             preds = model(tensor)
             #preds, boxes_list = pse_decode(preds[0], config.scale)
-            preds, boxes_list = dist_decode_curve(preds[0], config.scale)
+            preds, boxes_list = dist_decode_curve(preds[0], scale)
 
         write_result_as_txt(save_name, boxes_list)
 
@@ -345,6 +346,7 @@ def main(model, criterion):
             # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
             #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
                 result_dict = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
+
                 recall = result_dict['recall']
                 precision = result_dict['precision']
                 f1 = result_dict['hmean']

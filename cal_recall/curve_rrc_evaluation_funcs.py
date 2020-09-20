@@ -169,6 +169,7 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
     confidence = 0.0
     transcription = "";
     points = []
+    withTranscription=True
 
     if LTRB:
         # do not use

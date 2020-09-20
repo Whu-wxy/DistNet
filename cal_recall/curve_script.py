@@ -516,3 +516,4 @@ if __name__ == '__main__':
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)
+    print(result['recall'])

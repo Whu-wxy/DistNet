@@ -186,18 +186,29 @@ if __name__ == '__main__':
         #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
         cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
         #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
-        cv2.imshow('dist_map', distance_map.numpy().transpose((1, 2, 0)))
+        distance_map = distance_map.numpy().transpose((1, 2, 0))
+        cv2.imshow('dist_map', distance_map)
         cv2.waitKey()
         cv2.destroyAllWindows()
 
-        distance_map = distance_map.numpy().transpose((1, 2, 0))
-        center = np.where(distance_map>=0.6, 255, 0)
+        center = np.where(distance_map>=0.6, 255, 0).astype(np.uint8)
+        center2 = np.where(distance_map >= 0.8, 255, 0).astype(np.uint8)
         #cv2.imwrite('F:\zzxs\Experiments\dl-data\CTW\\' + str(i) + 'dist.jpg', distance_map.numpy().transpose((1, 2, 0))*255)
 
-        cv2.imwrite('F:\zzxs\Experiments\dl-data\CTW\\' + str(i) + 'dist.jpg', center)
+        distance_map = distance_map*255
+        distance_map = distance_map.astype(np.uint8)
+        distance_map = cv2.cvtColor(distance_map, cv2.COLOR_GRAY2BGR)
+
+        contours, hierarchy = cv2.findContours(center, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(distance_map, contours, -1, (0, 0, 255), 1)
+        contours, hierarchy = cv2.findContours(center2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(distance_map, contours, -1, (0, 255, 0), 1)
+
+        cv2.imwrite('F:\zzxs\Experiments\dl-data\CTW\\exp' + str(i) + 'dist.jpg', distance_map)
 
 
     pbar.close()
     print('all time:', time_sum)
     print('count:', len(train_loader))
     print('ave time:', time_sum/len(train_loader))
+

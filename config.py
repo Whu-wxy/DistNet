@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../save/distv2_Total_exdata'
+output_dir = '../save/distv2_Total_exdata2'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -24,7 +24,7 @@ epochs = 201   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [0, 40, 60, 70, 80, 85, 90, 100, 105, 110, 115, 120, 150, 175, 200]
+try_test_epoch = [0, 20, 40, 60, 70, 80, 85, 90, 100, 101, 105, 110, 115, 120, 150, 175, 200]
 start_test_epoch = 80      #绝对值
 test_inteval = 1
 always_test_threld = 0.7
@@ -68,9 +68,9 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 
 # check points
 pretrained = True   #backbone
-restart_training = True # begin from 0 epoch
-load_lr = False
-checkpoint = '../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth'   #full model ckpt
+restart_training = False # begin from 0 epoch
+load_lr = True
+checkpoint = '../save/distv2_Total_exdata/Best_100_r0.587358_p0.633094_f10.609369.pth'   #full model ckpt
 #../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth
 if len(checkpoint) != 0:
     pretrained = False

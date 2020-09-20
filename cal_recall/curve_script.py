@@ -8,6 +8,7 @@ import sys
 
 import math
 
+#https://github.com/Yuliang-Liu/TIoU-metric/tree/master/curved-tiou
 
 def evaluation_imports():
     """
@@ -505,9 +506,13 @@ def curve_cal_recall_precison_f1(type, gt_path, result_path, show_result=False):
 
 
 if __name__ == '__main__':
-    type = 'ctw1500'
-    gt_path = '../../data/ctw1500_tiny/test/gt'  # gt_2pts, gt
-    save_path = '../../data/ctw1500_tiny/pred/gt'
+    # type = 'ctw1500'
+    # gt_path = '../../data/ctw1500_tiny/test/gt'  # gt_2pts, gt
+    # save_path = '../../data/ctw1500_tiny/pred/gt'
+
+    type = 'total'
+    gt_path = '../../data/totaltext/test/gt' #data/totaltext/test/gt'  # gt_2pts, gt
+    save_path = '../../test_resultTotal2/result'
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)

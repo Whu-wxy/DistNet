@@ -120,8 +120,8 @@ class Pytorch_model_curve:
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
-    if os.path.exists(save_path):
-        shutil.rmtree(save_path, ignore_errors=True)
+    # if os.path.exists(save_path):
+    #     shutil.rmtree(save_path, ignore_errors=True)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     save_img_folder = os.path.join(save_path, 'img')
@@ -140,8 +140,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
     for img_path in tqdm(img_paths):
         img_name = os.path.basename(img_path).split('.')[0]
         save_name = os.path.join(save_txt_folder, img_name + '.txt')
-        # if os.path.exists(save_name):
-        #     continue
+        if os.path.exists(save_name):
+            continue
 
         pred, boxes_list, t, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
         total_frame += 1
@@ -170,11 +170,12 @@ if __name__ == '__main__':
     scale = 1
     data_type = 'ctw1500'   # ctw1500/total
     model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
-#../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
+#../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
+#../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_result2'   #../test_result
+    save_path = '../test_resultTotal/result'
 
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
@@ -182,31 +183,32 @@ if __name__ == '__main__':
     fast_test=True
 
     from models.craft import CRAFT
-
+    #
     net = CRAFT(num_out=2, pretrained=False)
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
 
     # ctw1500/total
-    #save_path = os.path.join(save_path, 'result')
     result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)
+    #
+    # ############################################
+    # import time
+    # device = torch.device('cuda:0')  #cuda:0
+    # x = torch.randn(1, 3, 512, 512).to(device)
+    # start = time.time()
+    # y = net(x)
+    # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
+    #
+    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+    #
+    # print_model_parm_flops(net, x)
+    # print_model_parm_nums(net)
 
-    ############################################
-    import time
-    device = torch.device('cuda:0')  #cuda:0
-    x = torch.randn(1, 3, 512, 512).to(device)
-    start = time.time()
-    y = net(x)
-    print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
 
-    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
-
-    print_model_parm_flops(net, x)
-    print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
     # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 

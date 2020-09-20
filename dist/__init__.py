@@ -104,7 +104,7 @@ def decode(preds, scale):  # origin=0.7311
     #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
-    #15: 0.95, 0.988, 250
+    #15: 0.95, 0.988, 250   extData:0.95,0.976
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.976, area_threld)
 
 
@@ -163,23 +163,22 @@ def decode_curve(preds, scale):  # origin=0.7311
     #
     preds = torch.add(preds, bi_region)
     preds = torch.add(preds, -1)
-    # preds = preds + bi_region - 1
 
-    # region = preds >= 0.295
-    # center = preds >= 0.56
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
     region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.8, ones_tensor, zeros_tensor)
 
     region = region.to(device='cpu', non_blocking=True).numpy()
     center = center.to(device='cpu', non_blocking=True).numpy()
     bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
 
-    # pred, label_values = dilate_alg(center, min_area=5, probs=preds)
-    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(220 * scale)
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)   #0.98, 0.98
+
+
+    # area_threld = int(250 * scale)
+    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)  # 0.98, 0.98
 
     bbox_list = []
     label_values = np.max(pred)

@@ -98,7 +98,7 @@ class CurveDataset(data.Dataset):
                         x = 0
                         y = 0
                         if not params[-1].isdigit():
-                            if not line.endswith('#'):
+                            if line.endswith('#'):
                                 text_tags.append(True)
                             else:
                                 text_tags.append(False)

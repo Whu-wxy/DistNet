@@ -110,9 +110,9 @@ class Pytorch_model_curve:
 
             if not fast_test:
                 decode_time = timeit.default_timer()
-                for i in range(50):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                for i in range(30):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
                     preds_temp, boxes_list = decode_curve(preds[0], scale)
-                decode_time = (timeit.default_timer() - decode_time) / 50.0
+                decode_time = (timeit.default_timer() - decode_time) / 30.0
 
             t = model_time + decode_time
 
@@ -120,8 +120,8 @@ class Pytorch_model_curve:
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
-    # if os.path.exists(save_path):
-    #     shutil.rmtree(save_path, ignore_errors=True)
+    if os.path.exists(save_path):
+        shutil.rmtree(save_path, ignore_errors=True)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     save_img_folder = os.path.join(save_path, 'img')
@@ -156,6 +156,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         for bbox in boxes_list:
             cv2.drawContours(text_box, [bbox.reshape(bbox.shape[0] // 2, 2)], -1, (0, 255, 0), 2)
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+
         write_result_as_txt(save_name, boxes_list)
 
     print('fps:{}'.format(total_frame / total_time))
@@ -166,24 +167,35 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 800
     scale = 1
+
+    long_size = 800
     data_type = 'ctw1500'   # ctw1500/total
     model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
 #../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
 #../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
+#../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
+
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_resultTotal/result'
+    save_path = '../test_resultCTW/result'  # 2/result
 
+
+    long_size = 1050
+    data_type = 'total'  # ctw1500/total
+    model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
+    gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
+    save_path = '../test_resultTotal'
+#
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
-    fast_test=True
+    fast_test=False
 
     from models.craft import CRAFT
-    #
+
     net = CRAFT(num_out=2, pretrained=False)
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)

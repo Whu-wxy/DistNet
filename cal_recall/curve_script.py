@@ -3,6 +3,7 @@
 from collections import namedtuple
 from cal_recall.curve_rrc_evaluation_funcs import *
 from  cal_recall import curve_rrc_evaluation_funcs
+from cal_recall.curve_rrc_evaluation_funcs import load_folder_file
 import importlib
 import sys
 
@@ -252,7 +253,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     totalNumGtPols = 0
     totalNumDetPols = 0
 
-    #fper_ = open('per_sample_result.txt', 'w')
+    fper_ = open('per_sample_result.txt', 'w')
 
     for resFile in gt:
         gtFile = decode_utf8(gt[resFile])
@@ -446,12 +447,14 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         # fper_.writelines(
         #     resFile + '\t"IoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})",\t"TIoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})".\n'.format(
         #         precision, recall, hmean, tiouPrecision, tiouRecall, tiouHmean))
+
+        fper_.writelines('{:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
         try:
             totalNumGtPols += len(gtPols)
             totalNumDetPols += len(detPols)
         except Exception as e:
             raise e
-    #fper_.close()
+    fper_.close()
 
     # Compute MAP and MAR
     AP = 0
@@ -493,9 +496,6 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     return resDict;
 
 
-# if __name__=='__main__':
-#     main_evaluation(None,default_evaluation_params,validate_data,evaluate_method)
-
 
 # ctw1500/total
 def curve_cal_recall_precison_f1(type, gt_path, result_path, show_result=False):
@@ -506,14 +506,16 @@ def curve_cal_recall_precison_f1(type, gt_path, result_path, show_result=False):
 
 
 if __name__ == '__main__':
-    # type = 'ctw1500'
-    # gt_path = '../../data/ctw1500_tiny/test/gt'  # gt_2pts, gt
-    # save_path = '../../data/ctw1500_tiny/pred/gt'
+
+    type = 'ctw1500'
+    gt_path = '../../data/ctw1500/test/gt' #data/totaltext/test/gt'  # gt_2pts, gt
+    save_path = '../../test_resultCTW/result'
 
     type = 'total'
-    gt_path = '../../data/totaltext/test/gt' #data/totaltext/test/gt'  # gt_2pts, gt
-    save_path = '../../test_resultTotal2/result'
+    gt_path = '../../data/totaltext/test/gt'  # data/totaltext/test/gt'  # gt_2pts, gt
+    save_path = '../../test_resultTotal/result2'
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)
     print(result['recall'])
+

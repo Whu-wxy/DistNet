@@ -55,7 +55,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 2000     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
-    model_path = '../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
+    model_path = '../save/distv2_IC15_exdata3333/Best_142_r0.712085_p0.892577_f10.792180.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
 #../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
 #../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth
     #../Best_340_r0.773712_p0.847574_f10.808960.pth

@@ -60,7 +60,7 @@ def dilate_alg(center, min_area=5, probs=None):
     return np.array(label_img), label_values
 
 
-def decode(preds, scale):  # origin=0.7311
+def decode(preds, scale):  
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
@@ -89,7 +89,8 @@ def decode(preds, scale):  # origin=0.7311
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
     region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 17:0.54   15:0.56
+    center = torch.where(preds >= 0.64, ones_tensor, zeros_tensor)   # 17:0.54   15:0.56
+    
 
     region = region.to(device='cpu', non_blocking=True).numpy()
     center = center.to(device='cpu', non_blocking=True).numpy()
@@ -142,7 +143,7 @@ def decode(preds, scale):  # origin=0.7311
 
 
 
-def decode_curve(preds, scale):  # origin=0.7311
+def decode_curve(preds, scale):
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
@@ -166,19 +167,28 @@ def decode_curve(preds, scale):  # origin=0.7311
 
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
-    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.8, ones_tensor, zeros_tensor)
+
+    #CTW
+    # region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    # center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+
+    #Total
+    region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+
 
     region = region.to(device='cpu', non_blocking=True).numpy()
     center = center.to(device='cpu', non_blocking=True).numpy()
     bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
 
-    area_threld = int(220 * scale)
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)   #0.98, 0.98
 
+    #CTW
+    # area_threld = int(220 * scale)
+    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)
 
-    # area_threld = int(250 * scale)
-    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)  # 0.98, 0.98
+    #Total
+    area_threld = int(250 * scale)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
 
     bbox_list = []
     label_values = np.max(pred)

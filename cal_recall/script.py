@@ -141,6 +141,8 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     arrGlobalConfidences = [];
     arrGlobalMatches = [];
 
+    fper_ = open('15_per_sample_result.txt', 'w')
+
     for resFile in gt:
 
         gtFile = gt[resFile]  # rrc_evaluation_funcs.decode_utf8(gt[resFile])
@@ -301,6 +303,10 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
                 'evaluationParams': evaluationParams,
                 'evaluationLog': evaluationLog
             }
+
+        fper_.writelines('{:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
+
+    fper_.close()
 
     # Compute MAP and MAR
     AP = 0

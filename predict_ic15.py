@@ -96,9 +96,9 @@ class Pytorch_model:
 
             if not fast_test:
                 decode_time = timeit.default_timer()
-                for i in range(50):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
+                for i in range(30):    # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
                     preds_temp, boxes_list, scores_list = dist_decode(preds[0], scale)
-                decode_time = (timeit.default_timer() - decode_time) / 50.0
+                decode_time = (timeit.default_timer() - decode_time) / 30.0
 
             t = model_time + decode_time
 

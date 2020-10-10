@@ -17,7 +17,10 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset.data_utils import IC15Dataset, DataLoaderX
+from dataset.CurveDataset import CurveDataset
+from dataset.data_utils import DataLoaderX
+from eval_curve import write_result_as_txt
+
 
 from models import FPN_ResNet
 from models.loss import Loss, Loss_only_biregion, Loss_only_dist
@@ -30,7 +33,7 @@ from dist import decode as dist_decode
 from dist import decode_biregion
 from dist import decode_dist
 
-from cal_recall import cal_recall_precison_f1
+from cal_recall import curve_cal_recall_precison_f1
 
 from utils.radam import RAdam
 from utils.ranger import Ranger
@@ -102,8 +105,8 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         distance_map = distance_map.to(torch.float)
 
         #
-        #loss = criterion(outputs, distance_map, training_mask)
-        dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
+        loss = criterion(outputs, distance_map, training_mask)
+        #dice_center, dice_region, weighted_mse_region, loss = criterion(outputs, distance_map, training_mask)
 
         # Backward
         optimizer.zero_grad()
@@ -112,27 +115,27 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
         train_loss += loss.item()
 
 
-        dice_center = dice_center.item()
-        dice_region = dice_region.item()
-        weighted_mse_region = weighted_mse_region.item()
+        # dice_center = dice_center.item()
+        # dice_region = dice_region.item()
+        # weighted_mse_region = weighted_mse_region.item()
         loss = loss.item()
         cur_step = epoch * all_step + i
 
 
-        writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
-        writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
+        # writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
+        # writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
+        # writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
         writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
         writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
 
         batch_time = time.time() - start
-        # logger.info(
-        # 	'[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, time:{:.4f}, lr:{}'.format(
-        # 		epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, batch_time, lr))
         logger.info(
-            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
-                weighted_mse_region, batch_time, lr))
+        	'[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, time:{:.4f}, lr:{}'.format(
+        		epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, batch_time, lr))
+        # logger.info(
+        #     '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, time:{:.4f}, lr:{}'.format(
+        #         epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
+        #         weighted_mse_region, batch_time, lr))
 
         start = time.time()
 
@@ -198,14 +201,12 @@ def eval(model, save_path, test_path, device):
         tensor = tensor.to(device)
         with torch.no_grad():
             preds = model(tensor)
-            preds, boxes_list, scores_list = decode_biregion(preds[0], config.scale)   # dist_decode     decode_biregion
-            scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
-            if len(boxes_list):
-                boxes_list = boxes_list / scale
-        np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
-    # 开始计算 recall precision f1
-    if config.eval_script == 'iou':
-        result_dict = cal_recall_precison_f1(gt_path=gt_path, result_path=save_path)
+            preds, boxes_list = decode_biregion(preds[0], scale)   # dist_decode     decode_biregion
+
+        write_result_as_txt(save_name, boxes_list)
+
+        # 开始计算 recall precision f1
+    result_dict = curve_cal_recall_precison_f1(type=config.dataset_type, gt_path=gt_path, result_path=save_path)
     return result_dict['recall'], result_dict['precision'], result_dict['hmean']
 
 
@@ -234,7 +235,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = IC15Dataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor())
+    train_data = CurveDataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor())
     # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
     #                                num_workers=int(config.workers))
 
@@ -323,78 +324,78 @@ def main(model, criterion):
                                          writer, logger)
             logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
                 epoch, config.epochs, train_loss, time.time() - start, lr))
-            # net_save_path = '{}/PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
-            #                                                                               train_loss)
-            # save_checkpoint(net_save_path, models, optimizer, epoch, logger)
-            if config.test_inteval <= 0 or config.test_inteval==None:
-                raise ValueError('test_inteval must be zhengzhengshu.')
-            if config.always_test_threld <= 0 or config.always_test_threld==None:
-                raise ValueError('always_test_threld must be zhengshishu.')
-
-            bTest = False
-            if last_f1 > config.always_test_threld:
-                if epoch % config.test_inteval == 0:
-                    bTest = True
-            elif epoch in config.try_test_epoch:
-                bTest = True
-            elif (epoch > config.start_test_epoch and epoch > max(config.try_test_epoch)):
-                if epoch % config.test_inteval == 0:
-                    bTest = True
-
-            # if epoch > max(config.try_test_epoch):
-            #     net_save_path = '{}/train_PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)
+            net_save_path = '{}/PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
+                                                                                           train_loss)
+            save_checkpoint(net_save_path, models, optimizer, epoch, logger)
+            # if config.test_inteval <= 0 or config.test_inteval==None:
+            #     raise ValueError('test_inteval must be zhengzhengshu.')
+            # if config.always_test_threld <= 0 or config.always_test_threld==None:
+            #     raise ValueError('always_test_threld must be zhengshishu.')
+            #
+            # bTest = False
+            # if last_f1 > config.always_test_threld:
+            #     if epoch % config.test_inteval == 0:
+            #         bTest = True
+            # elif epoch in config.try_test_epoch:
+            #     bTest = True
+            # elif (epoch > config.start_test_epoch and epoch > max(config.try_test_epoch)):
+            #     if epoch % config.test_inteval == 0:
+            #         bTest = True
+            #
+            # # if epoch > max(config.try_test_epoch):
+            # #     net_save_path = '{}/train_PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)
+            # #     save_checkpoint(net_save_path, model, optimizer, epoch, logger)
+            #
+            # if bTest:
+            # # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
+            # #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
+            #     recall, precision, f1 = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
+            #
+            #     logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
+            #
+            #     net_save_path = '{}/PSENet_{}_loss{:.6f}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
+            #                                                                                   train_loss,
+            #                                                                                   recall,
+            #                                                                                   precision,
+            #                                                                                   f1)
             #     save_checkpoint(net_save_path, model, optimizer, epoch, logger)
-
-            if bTest:
-            # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
-            #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
-                recall, precision, f1 = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
-
-                logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
-
-                net_save_path = '{}/PSENet_{}_loss{:.6f}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
-                                                                                              train_loss,
-                                                                                              recall,
-                                                                                              precision,
-                                                                                              f1)
-                save_checkpoint(net_save_path, model, optimizer, epoch, logger)
-                if f1 > best_model['f1']:
-                    best_path = glob.glob(config.output_dir + '/Best_*.pth')
-                    for b_path in best_path:
-                        if os.path.exists(b_path):
-                            os.remove(b_path)
-
-                    best_model['recall'] = recall
-                    best_model['precision'] = precision
-                    best_model['f1'] = f1
-                    best_model['models'] = net_save_path
-
-                    best_save_path = '{}/Best_{}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
-                                                                                              recall,
-                                                                                              precision,
-                                                                                              f1)
-                    if os.path.exists(net_save_path):
-                        shutil.copyfile(net_save_path, best_save_path)
-                    else:
-                        save_checkpoint(best_save_path, model, optimizer, epoch, logger)
-
-                    if epoch > config.start_test_epoch:
-                        pse_path = glob.glob(config.output_dir + '/PSENet_*.pth')
-                        for p_path in pse_path:
-                            if os.path.exists(p_path):
-                                os.remove(p_path)
-                if f1 < last_f1:  #decrease
-                    decrease_number = decrease_number + 1
-                else:    #increase
-                    decrease_number = 0
-
-                writer.add_scalar(tag='Test/recall', scalar_value=recall, global_step=epoch)
-                writer.add_scalar(tag='Test/precision', scalar_value=precision, global_step=epoch)
-                writer.add_scalar(tag='Test/f1', scalar_value=f1, global_step=epoch)
-
-                if decrease_number > config.early_stop:
-                    break
-                last_f1 = f1
+            #     if f1 > best_model['f1']:
+            #         best_path = glob.glob(config.output_dir + '/Best_*.pth')
+            #         for b_path in best_path:
+            #             if os.path.exists(b_path):
+            #                 os.remove(b_path)
+            #
+            #         best_model['recall'] = recall
+            #         best_model['precision'] = precision
+            #         best_model['f1'] = f1
+            #         best_model['models'] = net_save_path
+            #
+            #         best_save_path = '{}/Best_{}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
+            #                                                                                   recall,
+            #                                                                                   precision,
+            #                                                                                   f1)
+            #         if os.path.exists(net_save_path):
+            #             shutil.copyfile(net_save_path, best_save_path)
+            #         else:
+            #             save_checkpoint(best_save_path, model, optimizer, epoch, logger)
+            #
+            #         if epoch > config.start_test_epoch:
+            #             pse_path = glob.glob(config.output_dir + '/PSENet_*.pth')
+            #             for p_path in pse_path:
+            #                 if os.path.exists(p_path):
+            #                     os.remove(p_path)
+            #     if f1 < last_f1:  #decrease
+            #         decrease_number = decrease_number + 1
+            #     else:    #increase
+            #         decrease_number = 0
+            #
+            #     writer.add_scalar(tag='Test/recall', scalar_value=recall, global_step=epoch)
+            #     writer.add_scalar(tag='Test/precision', scalar_value=precision, global_step=epoch)
+            #     writer.add_scalar(tag='Test/f1', scalar_value=f1, global_step=epoch)
+            #
+            #     if decrease_number > config.early_stop:
+            #         break
+            #     last_f1 = f1
         writer.close()
     except KeyboardInterrupt:
         save_checkpoint('{}/final.pth'.format(config.output_dir), model, optimizer, epoch, logger)
@@ -422,8 +423,8 @@ if __name__ == '__main__':
     #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
 
 
-    #criterion = Loss_only_biregion(OHEM_ratio=config.OHEM_ratio, reduction='mean')
-    criterion = Loss_only_dist(OHEM_ratio=config.OHEM_ratio, reduction='mean')
+    criterion = Loss_only_biregion(OHEM_ratio=config.OHEM_ratio, reduction='mean')
+    #criterion = Loss_only_dist(OHEM_ratio=config.OHEM_ratio, reduction='mean')
 
     main(model, criterion)
 

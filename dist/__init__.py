@@ -230,7 +230,7 @@ def decode_biregion(preds, scale):
     if len(preds.shape) == 3:
         preds = preds.squeeze(0)
 
-    preds = preds > 0.998
+    preds = preds > 0.93
     preds = preds.to(device='cpu', non_blocking=True).numpy()
 
     label_num, label_img = cv2.connectedComponents(preds.astype(np.uint8), connectivity=4)
@@ -273,8 +273,62 @@ def decode_biregion(preds, scale):
 
         bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
-    return preds, np.array(bbox_list), scores_list  # , preds
+    return preds, np.array(bbox_list)  #, scores_list  # , preds
 
+
+
+def decode_curve_biregion(preds, scale):
+    preds = preds[0, :, :]
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+
+    preds = preds > 0.7
+    preds = preds.to(device='cpu', non_blocking=True).numpy()
+
+    label_num, label_img = cv2.connectedComponents(preds.astype(np.uint8), connectivity=4)
+
+    label_values = []
+    for label_idx in range(1, label_num):
+        if np.sum(label_img == label_idx) < 10:
+            label_img[label_img == label_idx] = 0
+            continue
+
+        score_i = np.mean(preds[label_img == label_idx])
+        if score_i < 0.98:
+            continue
+        label_values.append(label_idx)
+
+    bbox_list = []
+    scores_list = []
+    for label_value in label_values:
+        if label_value == 0:
+            continue
+        points = np.array(np.where(label_img == label_value)).transpose((1, 0))[:, ::-1]
+
+        # score = np.where(pred == label_value, preds, 0)
+        # score = np.mean(score)
+        scores_list.append(1)
+
+        if len(points) < 100 * scale:
+            continue
+
+        binary = np.zeros(label_img.shape, dtype='uint8')
+        binary[label_img == label_value] = 1
+
+        _, contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour = contours[0]
+        bbox = contour
+
+        if bbox.shape[0] <= 2:
+            continue
+
+        bbox = bbox * 1.0 / scale
+        bbox = bbox.astype('int32')
+
+        bbox_list.append(bbox.reshape(-1))
+    return label_img, bbox_list  # , preds
 
 
 def decode_dist(preds, scale):  # origin=0.7311

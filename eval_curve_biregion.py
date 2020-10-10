@@ -13,6 +13,7 @@ import timeit
 from cal_recall.curve_script import curve_cal_recall_precison_f1
 from utils import draw_bbox
 from dist import decode_curve
+from dist import decode_curve_biregion
 
 from turbojpeg import TurboJPEG
 jpeg = TurboJPEG()
@@ -105,13 +106,13 @@ class Pytorch_model_curve:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list = decode_curve(preds[0], scale)
+            res_preds, boxes_list = decode_curve_biregion(preds[0], scale)
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
                 decode_time = timeit.default_timer()
                 for i in range(30):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                    preds_temp, boxes_list = decode_curve(preds[0], scale)
+                    preds_temp, boxes_list = decode_curve_biregion(preds[0], scale)
                 decode_time = (timeit.default_timer() - decode_time) / 30.0
 
             t = model_time + decode_time
@@ -155,9 +156,22 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
         for bbox in boxes_list:
             cv2.drawContours(text_box, [bbox.reshape(bbox.shape[0] // 2, 2)], -1, (0, 255, 0), 2)
+
+        # #cv2.fillPoly(text_box, [bbox.reshape(bbox.shape[0] // 2, 2)], (0, 255, 0))
+        # zeros = np.zeros((text_box.shape), dtype=np.uint8)
+        # for bbox in boxes_list:
+        #     cv2.drawContours(zeros, [bbox.reshape(bbox.shape[0] // 2, 2)], -1,
+        #                             color=(0, 255, 0), thickness=-1)
+        # alpha = 1
+        # # beta 为第二张图片的透明度
+        # beta = 0.3
+        # gamma = 0
+        # # cv2.addWeighted 将原始图片与 mask 融合
+        # mask_img = cv2.addWeighted(text_box, alpha, zeros, beta, gamma)
+
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
 
-        write_result_as_txt(save_name, boxes_list)
+        #write_result_as_txt(save_name, boxes_list)
 
     print('fps:{}'.format(total_frame / total_time))
     print('average model time:{}'.format(model_total_time / total_frame))
@@ -166,12 +180,12 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
     scale = 1
 
-    long_size = 800
+    long_size = 600
     data_type = 'ctw1500'   # ctw1500/total
-    model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
+    model_path = '../save/CTW/distv2_CTW_biregion/final.pth'
 #../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
 #../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
 #../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
@@ -181,6 +195,9 @@ if __name__ == '__main__':
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
     save_path = '../test_resultCTW/result'  # 2/result
 
+    data_path = '../img/image'  # ../data/totaltext/test/img
+    gt_path = '../data/ctw1500/test/gt'  # ../data/totaltext/test/gt
+    save_path = '../test_resultCTW/result'  # 2/result
 
     # long_size = 1050
     # data_type = 'total'  # ctw1500/total

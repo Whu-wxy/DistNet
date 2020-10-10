@@ -202,24 +202,37 @@ def torch2onnx(model, save_path):
     torch.onnx._export(model, data, save_path, export_params=True, opset_version=11, input_names=input_names, output_names=output_names)
     print("torch2onnx finish.")
 
+def torch2onnx_dynamic(model, save_path):
+    """
+    :param model:
+    :param save_path:  XXX/XXX.onnx
+    :return:
+    """
+    model.eval()
+    data = torch.rand(1, 3, 224, 224)
+    input_names = ["input"]  # ncnn需要
+    output_names = ["out"]  # ncnn需要
+    torch.onnx._export(model, data, save_path, export_params=True, opset_version=11, input_names=input_names,
+                       output_names=output_names, dynamic_axes={'input': [2, 3], 'out': [2, 3]})
+    print("torch2onnx finish.")
+
 if __name__ == '__main__':
     from models import FPN_ResNet
-    from models import ACCL_CB_FPN_ResNet
+    from models.craft import CRAFT
     import config
-    #print_model_param('../../data/PSENet_Resnet_on_ic15/resnet50.pth')
-    model = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=6)
-    #model = ACCL_CB_FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n,
-                               # scale=config.scale, checkpoint='../../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth')
 
-    #load_part_checkpoint('../../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model, device=torch.device('cuda:0'),
-                               #part_id_list=[(318, -1)])  # 144, 319
+    # model = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=6)
+    # state = torch.load('E:\\PSENet_Resnet_on_ic15\\Best_825_r0.767935_p0.854312_f10.808824.pth', torch.device('cpu'))
+    # print(state.keys())
+    # model.load_state_dict(state['state_dict'])
+    # torch_export(model, 'E:\\PSENet_Resnet_on_ic15\\psenet.pt')
+    # print('finished')
 
-    #print_model_param('../../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth')
-    # load_part_checkpoint('../../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model,
-    #                      device=torch.device('cpu'), part_id_list=[(144, 319)]) #[(0, 317), (339, -1)]
+    net = CRAFT(num_out=2, pretrained=False, scale=1)
 
-    state = torch.load('E:\\PSENet_Resnet_on_ic15\\Best_825_r0.767935_p0.854312_f10.808824.pth', torch.device('cpu'))
-    print(state.keys())
-    model.load_state_dict(state['state_dict'])
-    torch_export(model, 'E:\\PSENet_Resnet_on_ic15\\psenet.pt')
+    state = torch.load('../../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth', torch.device('cpu'))
+    net.load_state_dict(state['state_dict'])
+    #print(state.keys())
+    #model.load_state_dict(state['state_dict'])
+    torch2onnx_dynamic(net, '../../dmnet.onnx')
     print('finished')

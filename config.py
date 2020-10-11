@@ -1,18 +1,18 @@
-﻿name = 'distv2_ctw_exdata'
+﻿name = 'distv2_ReCTS'
 
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/ctw1500/train'
-testroot = '../data/ctw1500/test'
-output_dir = '../save/CTW/distv2_CTW_biregion'
+trainroot = '../data/ReCTS/train'
+testroot = '../data/ReCTS/test'
+output_dir = '../save/ReCTS/dist_ReCTS'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = 800  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
-random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
+random_scales = [0.5, 0.8, 1, 1.5]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config

@@ -1,5 +1,7 @@
 import os
 
+# label前缀变成res_img_
+
 path = '../test_result/result/'
 
 img_paths = os.listdir(path)

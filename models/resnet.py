@@ -226,14 +226,20 @@ def resnet152(pretrained=False, **kwargs):
 
 
 if __name__ == '__main__':
-    x = torch.zeros(1, 3, 640, 640)
-    net = resnet50()
-    print(net)
-    y = net(x)
-    for u in y:
+    import time
+
+    device = torch.device('cpu')
+    model = resnet50().to(device)
+    model.eval()
+
+    start = time.time()
+    data = torch.randn(1, 3, 256, 256).to(device)
+    output = model(data)
+    print(time.time() - start)
+    for u in output:
         print(u.shape)
 
-# torch.Size([1, 256, 160, 160])
-# torch.Size([1, 512, 80, 80])
-# torch.Size([1, 1024, 40, 40])
-# torch.Size([1, 2048, 20, 20])
+    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)

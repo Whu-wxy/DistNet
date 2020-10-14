@@ -10,6 +10,7 @@ import torch.nn.functional as F
 
 from models.vgg.vgg16_bn import vgg16_bn, init_weights
 from models.ShuffleNetV2 import shufflenet_v2_x1_0
+import torchvision.models as models
 
 import config
 
@@ -30,12 +31,13 @@ class double_conv(nn.Module):
         return x
 
 
-class CRAFT(nn.Module):
+class CRAFT_shuffle(nn.Module):
     def __init__(self, num_out=1, pretrained=False, freeze=False, scale=1):
-        super(CRAFT, self).__init__()
+        super(CRAFT_shuffle, self).__init__()
 
         """ Base network """
-        self.basenet = vgg16_bn(pretrained, freeze)
+        # self.basenet = shufflenet_v2_x1_0(pretrained=pretrained)
+        self.basenet = models.mobilenet_v2(pretrained=True)
 
         """ U network """
         self.upconv1 = double_conv(1024, 512, 256)
@@ -58,12 +60,15 @@ class CRAFT(nn.Module):
         init_weights(self.upconv3.modules())
         init_weights(self.upconv4.modules())
         init_weights(self.conv_cls.modules())
-        
+
     def forward(self, x):
         _, _, H, W = x.size()
 
         """ Base network """
         sources = self.basenet(x)
+        for sss in sources:
+            print(sss.shape)
+        return sources[0]
 
         """ U network """
         y = torch.cat([sources[0], sources[1]], dim=1)
@@ -101,7 +106,7 @@ if __name__ == '__main__':
     import  time
 
     device = torch.device('cpu')
-    model = CRAFT(num_out=2, pretrained=False).to(device)
+    model = CRAFT_shuffle(num_out=2, pretrained=False).to(device)
     model.eval()
     start = time.time()
     data = torch.randn(1, 3, 256, 256).to(device)

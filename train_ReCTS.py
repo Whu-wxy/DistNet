@@ -185,7 +185,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = ReCTSDataset(config.trainroot, config.validroot, data_shape=config.data_shape, transform=transforms.ToTensor())
+    train_data = ReCTSDataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor(), ignore_english=True)
     # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
     #                                num_workers=int(config.workers))
 

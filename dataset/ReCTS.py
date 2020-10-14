@@ -28,12 +28,12 @@ time_sum = 0
 
 class ReCTSDataset(data.Dataset):
     def __init__(self, train_dir, data_shape: int = 640, transform=None, target_transform=None, ignore_english=False):
+        self.ignore_english = ignore_english
         self.data_list = self.load_data(train_dir)
         print('count:', len(self.data_list))
         self.data_shape = data_shape
         self.transform = transform
         self.target_transform = target_transform
-        self.ignore_english = ignore_english
 
         #self.aug = augument()  #20200302增加新augument方式
 

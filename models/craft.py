@@ -104,7 +104,7 @@ if __name__ == '__main__':
     model = CRAFT(num_out=2, pretrained=False).to(device)
     model.eval()
     start = time.time()
-    data = torch.randn(1, 3, 256, 256).to(device)
+    data = torch.randn(1, 3, 512, 512).to(device)
     output = model(data)
     print(time.time() - start)
     print(output.shape)
@@ -115,3 +115,13 @@ if __name__ == '__main__':
     print_model_parm_nums(model)
 
     #show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')
+
+# 1.2210698127746582
+# torch.Size([1, 2, 256, 256])
+#   + Number of FLOPs: 23.39G
+#   + Number of params: 20.77M
+
+# 4.9732842445373535
+# torch.Size([1, 2, 512, 512])
+#   + Number of FLOPs: 93.55G
+#   + Number of params: 20.77M

@@ -90,4 +90,4 @@ if __name__ == '__main__':
     print_model_parm_flops(model, data)
     print_model_parm_nums(model)
 
-    show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')
+    #show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')

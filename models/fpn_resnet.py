@@ -125,7 +125,7 @@ if __name__ == '__main__':
     backbone = 'resnet50'
     net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=5, predict=False).to(device)
     net.eval()
-    x = torch.randn(1, 3, 512, 512).to(device)
+    x = torch.randn(1, 3, 256, 256).to(device)
     start = time.time()
     y = net(x)
     print(time.time() - start)  # 18->4.5  50->5.8
@@ -134,6 +134,6 @@ if __name__ == '__main__':
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    # print_model_parm_flops(net)
-    # print_model_parm_nums(net)
+    print_model_parm_flops(net)
+    print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')

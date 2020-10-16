@@ -22,8 +22,6 @@ from Polygon.Utils import pointList
 
 from dataset.data_utils import image_label, image_label_v2, image_label_v3, DataLoaderX
 
-data_aug = PSEDataAugment()
-
 time_sum = 0
 
 class ReCTSDataset(data.Dataset):

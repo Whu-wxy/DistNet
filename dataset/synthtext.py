@@ -10,9 +10,7 @@ import torch
 import glob
 import numpy as np
 import cv2
-from dataset.augment import PSEDataAugment
-from utils.utils import draw_bbox
-
+from tqdm import tqdm
 import config
 
 import Polygon
@@ -20,22 +18,30 @@ from Polygon.Utils import pointList
 
 from dataset.data_utils import image_label, image_label_v2, image_label_v3, DataLoaderX
 
-
 time_sum = 0
 
-class IC17Dataset(data.Dataset):
-    def __init__(self, train_dir, validation_dir, data_shape: int = 640, transform=None, target_transform=None):
-        self.data_list = self.load_data(train_dir)
-        self.data_list.extend(self.load_data(validation_dir))
-        print('count:', len(self.data_list))
+class SynthTextDataset(data.Dataset):
+    def __init__(self, filepath, data_shape: int = 640, transform=None, target_transform=None):
+        number = 0
+        with open(filepath, "r") as f:
+            # 获得训练数据的总行数
+            for _ in tqdm(f, desc="load training dataset"):
+                number += 1
+        self.number = number
+        self.fopen = open(filepath, 'r')
+
         self.data_shape = data_shape
         self.transform = transform
         self.target_transform = target_transform
 
-        #self.aug = augument()  #20200302增加新augument方式
 
     def __getitem__(self, index):
-        img_path, text_polys, text_tags = self.data_list[index]
+        line = self.fopen.__next__()
+        line = line.split(',')
+        img_path = line[0]
+        gt_path = line[1]
+
+        text_polys, text_tags = _get_annotation(gt_path)
         try:
             img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
@@ -44,30 +50,12 @@ class IC17Dataset(data.Dataset):
             print('error: ', img_path)
 
 
-        #img = draw_bbox(img,text_polys)
-        #img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
-
         if self.transform:
             img = self.transform(img)
         if self.target_transform:
             training_mask = self.target_transform(training_mask)
 
         return img, training_mask, distance_map
-
-    def load_data(self, data_dir: str) -> list:
-        data_list = []
-        img_list = os.listdir(data_dir + '/img')   # jpg and png
-        for x in img_list:
-        #for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
-            d = pathlib.Path(x)
-            label_path = os.path.join(data_dir, 'gt', ('gt_' + str(d.stem) + '.txt'))
-            bboxs, text = self._get_annotation(label_path)
-            if len(bboxs) > 0:
-                x_path = os.path.join(data_dir, 'img', x)
-                data_list.append((x_path, bboxs, text))
-            else:
-                print('there is no suit bbox on {}'.format(label_path))
-        return data_list
 
     def _get_annotation(self, label_path: str) -> tuple:
         boxes = []
@@ -93,7 +81,7 @@ class IC17Dataset(data.Dataset):
         return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
 
     def __len__(self):
-        return len(self.data_list)
+        return self.number
 
 
 
@@ -108,19 +96,9 @@ if __name__ == '__main__':
 
     from collections import Counter
 
-    # print('1')
-    # for x in glob.glob('F:\imgs\ps\*.jpg|*.png)', recursive=False):
-    #     print(x)
-    # input()
-
-#F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
-    #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    #F:\zzxs\Experiments\dl-data\CTW
-    #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
-    # F:\zzxs\Experiments\dl-data\TotalText\\train    #validation
-    train_data = IC17Dataset('../../data/IC17/train', '../../data/IC17/validation', data_shape=config.data_shape,
+    train_data = SynthTextDataset('../../data/syntext.txt', data_shape=config.data_shape,
                              transform=transforms.ToTensor())
-    train_loader = DataLoaderX(dataset=train_data, batch_size=6, shuffle=False, num_workers=10)
+    train_loader = DataLoaderX(dataset=train_data, batch_size=6, shuffle=False, num_workers=1)
 
     pbar = tqdm(total=len(train_loader))
     empty_count = 0

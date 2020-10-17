@@ -31,9 +31,9 @@ class double_conv(nn.Module):
 
 inplace = True
 
-class CRAFT_mobile(nn.Module):
+class mobilenetv3_fpn(nn.Module):
     def __init__(self, num_out=1, model_path=None, freeze=False, scale=1):
-        super(CRAFT_mobile, self).__init__()
+        super(mobilenetv3_fpn, self).__init__()
 
         """ Base network """
         self.basenet = mobilenetv3_large(model_path=model_path)
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     import  time
 
     device = torch.device('cpu')
-    model = CRAFT_mobile(num_out=2, model_path='F:\\MobileNetV3_large_x0_5.pth').to(device)
+    model = mobilenetv3_fpn(num_out=2, model_path='F:\\MobileNetV3_large_x0_5.pth').to(device)
     model.eval()
     start = time.time()
     data = torch.randn(1, 3, 512, 512).to(device)

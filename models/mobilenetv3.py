@@ -250,7 +250,7 @@ class MobileNetV3(nn.Module):
         return out[0], out[1], out[2], out[3]
 
     def _load_pretrained_model(self, model_path):
-        if os.path.exists(ckpt_path):
+        if os.path.exists(model_path):
             self.load_state_dict(torch.load(model_path))
             print('load pretrained models from imagenet')
 

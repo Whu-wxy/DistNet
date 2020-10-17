@@ -21,14 +21,15 @@ from dataset.data_utils import image_label, image_label_v2, image_label_v3, Data
 time_sum = 0
 
 class SynthTextDataset(data.Dataset):
-    def __init__(self, filepath, data_shape: int = 640, transform=None, target_transform=None):
+    def __init__(self, rootpath, data_shape: int = 640, transform=None, target_transform=None):
         number = 0
-        with open(filepath, "r") as f:
+        self.root_path = rootpath
+        with open(os.path.join(rootpath, "train_list.txt"), "r") as f:
             # 获得训练数据的总行数
             for _ in tqdm(f, desc="load training dataset"):
                 number += 1
         self.number = number
-        self.fopen = open(filepath, 'r')
+        self.fopen = open(os.path.join(rootpath, "train_list.txt"), 'r')
 
         self.data_shape = data_shape
         self.transform = transform
@@ -37,11 +38,15 @@ class SynthTextDataset(data.Dataset):
 
     def __getitem__(self, index):
         line = self.fopen.__next__()
+        #8/ballet_106_0.jpg, ballet_106_0.txt
         line = line.split(',')
-        img_path = line[0]
-        gt_path = line[1]
+        img_path = line[0].strip()
+        gt_path = line[1].strip()
 
-        text_polys, text_tags = _get_annotation(gt_path)
+        img_path = os.path.join(self.root_path, "img", img_path)
+        gt_path = os.path.join(self.root_path, "gt", gt_path)
+
+        text_polys, text_tags = self._get_annotation(gt_path)
         try:
             img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
@@ -73,7 +78,6 @@ class SynthTextDataset(data.Dataset):
                             text_tags.append(True)  # True
                         else:
                             text_tags.append(False)  # False
-                        # text_tags.append(False)
                         x1, y1, x2, y2, x3, y3, x4, y4 = list(map(float, params[:8]))
                     boxes.append([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
                 except:
@@ -96,9 +100,9 @@ if __name__ == '__main__':
 
     from collections import Counter
 
-    train_data = SynthTextDataset('../../data/syntext.txt', data_shape=config.data_shape,
+    train_data = SynthTextDataset('F:\\zzxs\\Experiments\\dl-data\\SynthText\\SynthText800k\\detection\\SynthText', data_shape=config.data_shape,
                              transform=transforms.ToTensor())
-    train_loader = DataLoaderX(dataset=train_data, batch_size=6, shuffle=False, num_workers=1)
+    train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, pin_memory=True)
 
     pbar = tqdm(total=len(train_loader))
     empty_count = 0

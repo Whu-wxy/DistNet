@@ -137,7 +137,7 @@ if __name__ == '__main__':
     import  time
 
     device = torch.device('cpu')
-    model = CRAFT_mobile(num_out=2, model_path=None).to(device)
+    model = CRAFT_mobile(num_out=2, model_path='F:\\MobileNetV3_large_x0_5.pth').to(device)
     model.eval()
     start = time.time()
     data = torch.randn(1, 3, 512, 512).to(device)

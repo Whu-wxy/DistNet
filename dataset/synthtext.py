@@ -36,7 +36,9 @@ class SynthTextDataset(data.Dataset):
             for _ in tqdm(f, desc="load training dataset"):
                 number += 1
         self.number = number
+        print('label number: ', number)
         self.fopen = open(os.path.join(rootpath, "train_list.txt"), 'r')
+        print('file is open.')
 
         self.data_shape = data_shape
         self.transform = transform

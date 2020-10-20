@@ -288,5 +288,7 @@ if __name__ == '__main__':
 
     model = mobilenetv3_fpn(num_out=2, model_path='../MobileNetV3_large_x0_5.pth')
 
+    # model = CRAFT(num_out=2, pretrained=True)
+
     criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
     main(model, criterion)

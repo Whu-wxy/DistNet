@@ -1,18 +1,18 @@
-﻿name = 'distv2_Synth'
+name = 'distv2_ReCTS'
 
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/Synth/'
+trainroot = '../data/ReCTS/ReCTS_PART/train'
 testroot = 'c'
-output_dir = '../save/dist_distv2_Synth'
+output_dir = '../save/ReCTS/dist_ReCTS_mobile'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = 800  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
-random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
+random_scales = [0.5, 0.8, 1, 1.5]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config
@@ -23,7 +23,7 @@ start_epoch = 0
 epochs = 301   #600
 early_stop=20  #test F1
 
-train_batch_size = 16
+train_batch_size = 6
 try_test_epoch = [0, 20, 40, 60, 70, 80, 85, 90, 100, 101, 105, 110, 115, 120, 150, 175, 200]
 start_test_epoch = 80      #绝对值
 test_inteval = 1

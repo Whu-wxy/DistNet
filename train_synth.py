@@ -18,7 +18,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 
 from dataset.data_utils import DataLoaderX
-from dataset.ReCTS import ReCTSDataset
+from dataset.synthtext import SynthTextDataset
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -29,7 +29,7 @@ from models.SA_FPN import SA_FPN
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
 #from dist import decode as dist_decode
 
-from cal_recall import cal_recall_precison_f1
+#from cal_recall import cal_recall_precison_f1
 
 from utils.radam import RAdam
 from utils.ranger import Ranger
@@ -71,93 +71,96 @@ def adjust_learning_rate(optimizer, epoch):
 
 def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoch, all_step, writer, logger):
 
-    net.train()
-    train_loss = 0.
-    start = time.time()
+	net.train()
+	train_loss = 0.
+	start = time.time()
 
-    if scheduler == None:
-        lr = optimizer.param_groups[-1]['lr']
-    else:
-        lr = scheduler.get_lr()[0]
+	if scheduler == None:
+		lr = optimizer.param_groups[-1]['lr']
+	else:
+		lr = scheduler.get_lr()[0]
 
-    if config.if_warm_up:
-        lr = adjust_learning_rate(optimizer, epoch)
+	if config.if_warm_up:
+		lr = adjust_learning_rate(optimizer, epoch)
 
-    for i, (images, training_mask, distance_map) in enumerate(train_loader):
-        cur_batch = images.size()[0]
-        non_blocking = False
-        if config.pin_memory and config.workers > 1:
-            non_blocking = True
+	for i, (images, training_mask, distance_map) in enumerate(train_loader):
+		cur_batch = images.size()[0]
+		non_blocking = False
+		if config.pin_memory and config.workers > 1:
+			non_blocking = True
 
-        #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
-        images = images.to(device, non_blocking=non_blocking)
+		#images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
+		images = images.to(device, non_blocking=non_blocking)
 
-        # Forward
-        outputs = net(images)   #B1HW
+		# Forward
+		outputs = net(images)   #B1HW
 
-        # labels, training_mask后面放到gpu是否会占用更少一些显存？
-        training_mask = training_mask.to(device, non_blocking=non_blocking)
-        distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
-        distance_map = distance_map.to(torch.float)
+		# labels, training_mask后面放到gpu是否会占用更少一些显存？
+		training_mask = training_mask.to(device, non_blocking=non_blocking)
+		distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
+		distance_map = distance_map.to(torch.float)
 
-        #outputs = torch.squeeze(outputs, dim=1)
+		#outputs = torch.squeeze(outputs, dim=1)
 
-        #
-        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
+		#
+		dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
 
-        # Backward
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        train_loss += loss.item()
+		# Backward
+		optimizer.zero_grad()
+		loss.backward()
+		optimizer.step()
+		train_loss += loss.item()
 
-        dice_center = dice_center.item()
-        dice_region = dice_region.item()
-        weighted_mse_region = weighted_mse_region.item()
-        dice_bi_region = dice_bi_region.item()
-        loss = loss.item()
-        cur_step = epoch * all_step + i
+		dice_center = dice_center.item()
+		dice_region = dice_region.item()
+		weighted_mse_region = weighted_mse_region.item()
+		dice_bi_region = dice_bi_region.item()
+		loss = loss.item()
+		cur_step = epoch * all_step + i
 
-        writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
-        writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/dice_bi_region', scalar_value=dice_bi_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
-        writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
-        writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
+		writer.add_scalar(tag='Train/dice_center', scalar_value=dice_center, global_step=cur_step)
+		writer.add_scalar(tag='Train/dice_region', scalar_value=dice_region, global_step=cur_step)
+		writer.add_scalar(tag='Train/dice_bi_region', scalar_value=dice_bi_region, global_step=cur_step)
+		writer.add_scalar(tag='Train/weighted_mse_region', scalar_value=weighted_mse_region, global_step=cur_step)
+		writer.add_scalar(tag='Train/loss', scalar_value=loss, global_step=cur_step)
+		writer.add_scalar(tag='Train/lr', scalar_value=lr, global_step=cur_step)
 
-        batch_time = time.time() - start
-        logger.info(
-            '[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}, lr:{}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time, lr))
-        start = time.time()
+		batch_time = time.time() - start
+		logger.info(
+			'[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}, lr:{}'.format(
+				epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time, lr))
+		start = time.time()
 
-        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            # show images on tensorboard
-            if config.display_input_images:
-                ######image
-                x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
-                writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
-                ######distance_map
-                show_distance_map = distance_map * training_mask
-                show_distance_map = show_distance_map.detach().cpu()
-                show_distance_map = show_distance_map[:8, :, :]
-                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                              pad_value=1)
-                writer.add_image(tag='input/distmap', img_tensor=show_distance_map, global_step=cur_step)
+		if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
+			# show images on tensorboard
+			if config.display_input_images:
+				######image
+				x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
+				writer.add_image(tag='input/image', img_tensor=x, global_step=cur_step)
+				######distance_map
+				show_distance_map = distance_map * training_mask
+				show_distance_map = show_distance_map.detach().cpu()
+				show_distance_map = show_distance_map[:8, :, :]
+				show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
+											  pad_value=1)
+				writer.add_image(tag='input/distmap', img_tensor=show_distance_map, global_step=cur_step)
 
-            if config.display_output_images:
-                ######output
-                outputs = outputs[:, 0, :, :]
-                outputs = torch.sigmoid(outputs)
-                show_y = outputs.detach().cpu()
-                show_y = show_y[:8, :, :]
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
+			if config.display_output_images:
+				######output
+				outputs = outputs[:, 0, :, :]
+				outputs = torch.sigmoid(outputs)
+				show_y = outputs.detach().cpu()
+				show_y = show_y[:8, :, :]
+				show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
+				writer.add_image(tag='output/preds', img_tensor=show_y, global_step=cur_step)
 
-    if scheduler!=None:
-        scheduler.step()   #scheduler.step behind optimizer after pytorch1.1
-    writer.add_scalar(tag='Train_epoch/loss', scalar_value=train_loss / all_step, global_step=epoch)
-    return train_loss / all_step, lr
+			net_save_path = '{}/DistNet_synth_{}_loss{:.6f}.pth'.format(config.output_dir, cur_step, train_loss/cur_step)
+			save_checkpoint(net_save_path, net, optimizer, 0, logger)
+
+	if scheduler!=None:
+		scheduler.step()   #scheduler.step behind optimizer after pytorch1.1
+	writer.add_scalar(tag='Train_epoch/loss', scalar_value=train_loss / all_step, global_step=epoch)
+	return train_loss / all_step, lr
 
 
 def main(model, criterion):
@@ -185,7 +188,7 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = ReCTSDataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor(), ignore_english=True)
+    train_data = SynthTextDataset(config.trainroot, data_shape=config.data_shape, transform=transforms.ToTensor())
     # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
     #                                num_workers=int(config.workers))
 
@@ -271,9 +274,6 @@ def main(model, criterion):
                                          writer, logger)
             logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
                 epoch, config.epochs, train_loss, time.time() - start, lr))
-            net_save_path = '{}/DistNet_ReCTS_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
-                                                                                          train_loss)
-            save_checkpoint(net_save_path, model, optimizer, epoch, logger)
 
         writer.close()
     except KeyboardInterrupt:
@@ -282,11 +282,10 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
-    from models.mobilenetv3_fpn import mobilenetv3_fpn
 
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    model = mobilenetv3_fpn(num_out=2, model_path='../MobileNetV3_large_x0_5.pth')
+    model = CRAFT(num_out=2, pretrained=True)
 
     criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
     main(model, criterion)

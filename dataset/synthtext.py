@@ -20,6 +20,13 @@ from dataset.data_utils import image_label, image_label_v2, image_label_v3, Data
 
 time_sum = 0
 
+# rootpath
+#### train_list.txt
+#### img
+######1
+######10
+#### gt
+
 class SynthTextDataset(data.Dataset):
     def __init__(self, rootpath, data_shape: int = 640, transform=None, target_transform=None):
         number = 0

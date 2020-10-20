@@ -43,8 +43,8 @@ class SynthTextDataset(data.Dataset):
         img_path = line[0].strip()
         gt_path = line[1].strip()
 
-        img_path = os.path.join(self.root_path, "img", img_path)
-        gt_path = os.path.join(self.root_path, "gt", gt_path)
+        img_path = os.path.join(self.root_path, "img", "img",  img_path)
+        gt_path = os.path.join(self.root_path, "gt", "gt", gt_path)
 
         text_polys, text_tags = self._get_annotation(gt_path)
         try:

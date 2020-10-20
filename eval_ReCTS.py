@@ -21,49 +21,52 @@ torch.backends.cudnn.benchmark = True
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
 
-def write_result_as_txt(save_path, bboxes, scores):
-    lines = []
+def write_result_as_txt(save_path, bboxes, scores=None):
+	lines = []
 
-    covered_list = []
-    uncovered_list = []
+	covered_list = []
+	uncovered_list = []
 
-    res_boxes = []
-    for (i, box) in enumerate(bboxes):
-        if i in covered_list:
-            continue
+	res_boxes = []
+	for (i, box) in enumerate(bboxes):
+		if i in covered_list:
+			continue
 
-        p = Polygon.Polygon(box)
-        for j, tempBox in enumerate(bboxes):
-            if j == i:
-                continue
-            if j in covered_list:
-                continue
-            p2 = Polygon.Polygon(tempBox)
-            if p.covers(p2):
-                covered_list.append(j)
+		p = Polygon.Polygon(box)
+		for j, tempBox in enumerate(bboxes):
+			if j == i:
+				continue
+			if j in covered_list:
+				continue
+			p2 = Polygon.Polygon(tempBox)
+			if p.covers(p2):
+				covered_list.append(j)
 
-    for b_idx, bbox in enumerate(bboxes):
-        line = ''
-        if b_idx in covered_list:
-            continue
+	for b_idx, bbox in enumerate(bboxes):
+		line = ''
+		if b_idx in covered_list:
+			continue
 
-        for box in bbox:
-            res_boxes.append(bbox)
-            line += "%d, %d, "%(int(box[0]), int(box[1]))
+		for box in bbox:
+			res_boxes.append(bbox)
+			line += "%d, %d, "%(max(int(box[0]), 0), max(int(box[1]),0) )
 
-        score = 1
-        if b_idx>len(scores)-1:
-            score = 1
-        else:
-            score = scores[b_idx]
-        line += str(score)
-        line += '\n'
-        lines.append(line)
-    with open(save_path, 'w') as f:
-        for line in lines:
-            f.write(line)
+		score = 1
+		if scores != None:
+			if b_idx>len(scores)-1:
+				score = 1
+			else:
+				score = scores[b_idx]
+			line += str(score)
+		else:
+			line = line.rsplit(',', 1)[0]
+		line += '\n'
+		lines.append(line)
+	with open(save_path, 'w') as f:
+		for line in lines:
+			f.write(line)
 
-    return  np.array(res_boxes)
+	return  np.array(res_boxes)
 
 
 class Pytorch_model_ReCTS:
@@ -165,67 +168,71 @@ class Pytorch_model_ReCTS:
 
 
 def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
-    if os.path.exists(save_path):
-        shutil.rmtree(save_path, ignore_errors=True)
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    save_img_folder = os.path.join(save_path, 'img')
-    if not os.path.exists(save_img_folder):
-        os.makedirs(save_img_folder)
-    save_txt_folder = os.path.join(save_path, 'result')
-    if not os.path.exists(save_txt_folder):
-        os.makedirs(save_txt_folder)
-    img_paths = [os.path.join(path, x) for x in os.listdir(path)]
+	if os.path.exists(save_path):
+		shutil.rmtree(save_path, ignore_errors=True)
+	if not os.path.exists(save_path):
+		os.makedirs(save_path)
+	save_img_folder = os.path.join(save_path, 'img')
+	if not os.path.exists(save_img_folder):
+		os.makedirs(save_img_folder)
+	save_txt_folder = os.path.join(save_path, 'result')
+	if not os.path.exists(save_txt_folder):
+		os.makedirs(save_txt_folder)
+	img_paths = [os.path.join(path, x) for x in os.listdir(path)]
 
-    model = Pytorch_model_ReCTS(model_path, net=net, scale=scale, gpu_id=gpu_id)
-    total_frame = 0.0
-    total_time = 0.0
-    model_total_time = 0.0
-    decode_total_time = 0.0
-    for img_path in tqdm(img_paths):
-        img_name = os.path.basename(img_path).split('.')[0]
-        lab_name = 'res_img_' + img_name.split('_')[-1]
-        save_name = os.path.join(save_txt_folder, lab_name + '.txt')
+	model = Pytorch_model_ReCTS(model_path, net=net, scale=scale, gpu_id=gpu_id)
+	total_frame = 0.0
+	total_time = 0.0
+	model_total_time = 0.0
+	decode_total_time = 0.0
+	for img_path in tqdm(img_paths):
+		img_name = os.path.basename(img_path).split('.')[0]
+		#lab_name = 'res_img_' + img_name.split('_')[-1]
+		lab_name = img_name
+		save_name = os.path.join(save_txt_folder, lab_name + '.txt')
 
-        if os.path.exists(save_name):
-            continue
+		if os.path.exists(save_name):
+			continue
 
-        pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
-        total_frame += 1
-        total_time += t
-        model_total_time += model_time
-        decode_total_time += decode_time
+		pred, boxes_list, t, scores_list, model_time, decode_time = model.predict(img_path, long_size=long_size, fast_test=fast_test)
+		total_frame += 1
+		total_time += t
+		model_total_time += model_time
+		decode_total_time += decode_time
 
-        res_boxes = write_result_as_txt(save_name, boxes_list, scores_list)
+		res_boxes = write_result_as_txt(save_name, boxes_list)
 
-        if isinstance(img_path, str):
-            text_box = cv2.imread(img_path)
-        text_box = draw_bbox(img_path, res_boxes, color=(0, 255, 0), thickness=4)
-        cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
+		if isinstance(img_path, str):
+			text_box = cv2.imread(img_path)
+		text_box = draw_bbox(img_path, res_boxes, color=(0, 255, 0), thickness=4)
+		cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), text_box)
 
 
-    print('fps:{}'.format(total_frame / total_time))
-    print('average model time:{}'.format(model_total_time / total_frame))
-    print('average decode time:{}'.format(decode_total_time / total_frame))
-    return save_txt_folder
+	print('fps:{}'.format(total_frame / total_time))
+	print('average model time:{}'.format(model_total_time / total_frame))
+	print('average decode time:{}'.format(decode_total_time / total_frame))
+	return save_txt_folder
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 2200     #2240
-    scale = 1    #DistNet_IC17_130_loss1.029557.pth
-    model_path = '../save/ReCTS/dist_ReCTS/DistNet_ReCTS_155_loss0.288792.pth'   #DistNet_IC17_97_loss1.057110.pth
+	os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
+	long_size = 2200     #2240
+	scale = 1    #DistNet_IC17_130_loss1.029557.pth
+	model_path = '../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth'   #DistNet_IC17_97_loss1.057110.pth
+	#DistNet_ReCTS_188_loss0.407465.pth
+	#../save/ReCTS/dist_ReCTS/DistNet_ReCTS_155_loss0.288792.pth
+	data_path = '../data/ReCTS/ReCTS_OUR/train'   #../data/ReCTS/test/img/ghz
+	save_path = '../test_resultReCTS2'
+	gpu_id = 0
+	print('sDistNet_ReCTS_180_loss0.403586.pthcale:{},model_path:{}'.format(scale,model_path))
 
-    data_path = '../data/ReCTS/test/img/ghz'
-    save_path = '../test_resultReCTS2'
-    gpu_id = 0
-    print('scale:{},model_path:{}'.format(scale,model_path))
+	fast_test=True
 
-    fast_test=True
+	from models.craft import CRAFT
+	from models.mobilenetv3_fpn import mobilenetv3_fpn
 
-    from models.craft import CRAFT
+	#net = CRAFT(num_out=2, pretrained=False, scale=scale)
+	net = mobilenetv3_fpn(num_out=2)
 
-    net = CRAFT(num_out=2, pretrained=False, scale=scale)
-
-    save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
+	save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 

@@ -1,4 +1,4 @@
-﻿name = 'distv2_Synth'
+name = 'distv2_Synth'
 
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数

@@ -182,12 +182,12 @@ if __name__ == '__main__':
     save_path = '../test_resultCTW/result'  # 2/result
 
 
-    # long_size = 1050
-    # data_type = 'total'  # ctw1500/total
-    # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    # data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
-    # gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    # save_path = '../test_resultTotal'
+    long_size = 1050
+    data_type = 'total'  # ctw1500/total
+    model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
+    gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
+    save_path = '../test_resultTotal'
 #
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
     from models.craft import CRAFT
 
-    net = CRAFT(num_out=1, pretrained=False)
+    net = CRAFT(num_out=2, pretrained=False)
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 

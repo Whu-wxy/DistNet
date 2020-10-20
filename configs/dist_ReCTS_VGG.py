@@ -1,11 +1,11 @@
-﻿name = 'distv2_ReCTS'
+name = 'distv2_ReCTS'
 
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
 trainroot = '../data/ReCTS/ReCTS_PART/train'
 testroot = 'c'
-output_dir = '../save/ReCTS/dist_ReCTS_mobile'
+output_dir = '../save/ReCTS/dist_ReCTS'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -20,7 +20,7 @@ gpu_id = '0'
 workers = 14
 pin_memory = True
 start_epoch = 0
-epochs = 301   #600
+epochs = 201   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
@@ -70,7 +70,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = True # begin from 0 epoch
 load_lr = False
-checkpoint = ''   #full model ckpt
+checkpoint = '../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth'   #full model ckpt
 #../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth
 if len(checkpoint) != 0:
     pretrained = False

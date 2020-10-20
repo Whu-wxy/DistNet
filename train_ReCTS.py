@@ -282,37 +282,11 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+    from models.mobilenetv3_fpn import mobilenetv3_fpn
 
-    #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    model = CRAFT(num_out=2, pretrained=True)
-
-    #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-
-    # model = SA_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-
-    #model = FPN_ResNet_atten_v1(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-
-
-    # utils.load_part_checkpoint('../save/CV/ranger/ranger3/Best_825_r0.767935_p0.854312_f10.808824.pth', model,
-    #                      device=torch.device('cuda:0'), part_id_list=[(318, -1)])
-
+    model = mobilenetv3_fpn(num_out=2, model_path='../MobileNetV3_large_x0_5.pth')
 
     criterion = Loss(OHEM_ratio=config.OHEM_ratio, reduction='mean')
     main(model, criterion)
-
-    # import time
-    # device = torch.device('cpu')
-    # model = CRAFT(pretrained=False).to(device)
-    # model.eval()
-    # start = time.time()
-    # data = torch.randn(1, 3, 512, 512).to(device)
-    # output, _ = model(data)
-    # print(time.time() - start)
-    # print(output.shape)
-    #
-    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
-    #
-    # print_model_parm_flops(model, data)
-    # print_model_parm_nums(model)

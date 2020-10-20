@@ -219,6 +219,7 @@ def torch2onnx_dynamic(model, save_path):
 if __name__ == '__main__':
     from models import FPN_ResNet
     from models.craft import CRAFT
+    from models.mobilenetv3_fpn import mobilenetv3_fpn
     import config
 
     # model = FPN_ResNet(backbone='resnet50', pretrained=False, result_num=6)
@@ -228,11 +229,12 @@ if __name__ == '__main__':
     # torch_export(model, 'E:\\PSENet_Resnet_on_ic15\\psenet.pt')
     # print('finished')
 
-    net = CRAFT(num_out=2, pretrained=False, scale=1)
+    # net = CRAFT(num_out=2, pretrained=False, scale=1)
+    net = mobilenetv3_fpn(2)
 
-    state = torch.load('../../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth', torch.device('cpu'))
+    state = torch.load('../../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth', torch.device('cpu'))
     net.load_state_dict(state['state_dict'])
     #print(state.keys())
     #model.load_state_dict(state['state_dict'])
-    torch2onnx_dynamic(net, '../../dmnet.onnx')
+    torch2onnx_dynamic(net, '../../mobilenet.onnx')
     print('finished')

@@ -60,7 +60,8 @@ class CurveDataset(data.Dataset):
             if self.dataset_type == 'ctw1500':
                 label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
             elif self.dataset_type == 'total':
-                label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
+                # label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
+                label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
             else:
                 raise Exception('数据集类型必须是ctw1500或total！')
             bboxs, text = self._get_annotation(label_path)
@@ -100,7 +101,7 @@ class CurveDataset(data.Dataset):
                                 text_tags.append(True)
                             else:
                                 text_tags.append(False)
-                            params.pop(-1)
+                            # params.pop(-1)
                         else:
                             text_tags.append(False)
                         for i, val in enumerate(params):
@@ -162,8 +163,8 @@ if __name__ == '__main__':
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
     # F:\zzxs\Experiments\dl-data\TotalText\\train
-    train_data = CurveDataset('F:\zzxs\Experiments\dl-data\CTW\exp', data_shape=config.data_shape,
-                            dataset_type='ctw1500', transform=transforms.ToTensor())
+    train_data = CurveDataset('../../data/ReCTS/ReCTS_OUR/train', data_shape=config.data_shape,
+                            dataset_type='total', transform=transforms.ToTensor())
     train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
     pbar = tqdm(total=len(train_loader))

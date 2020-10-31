@@ -1,18 +1,19 @@
-﻿name = 'distv2_Synth'
+﻿name = 'distv2_ReCTS'
 
 # data config
-dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/Synth/'
+trainroot = '../data/ReCTS/ReCTS_OUR/train'
+validroot = None
 testroot = 'c'
-output_dir = '../save/dist_distv2_Synth'
+output_dir = '../save/ReCTS/dist_ReCTS_mobile_ours2'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
 long_size = 800  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
-random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
+random_scales = [0.5, 0.8, 1, 1.5, 2]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 
 # train config
@@ -20,10 +21,10 @@ gpu_id = '0'
 workers = 14
 pin_memory = True
 start_epoch = 0
-epochs = 301   #600
+epochs = 201   #600
 early_stop=20  #test F1
 
-train_batch_size = 16
+train_batch_size = 6
 try_test_epoch = [0, 20, 40, 60, 70, 80, 85, 90, 100, 101, 105, 110, 115, 120, 150, 175, 200]
 start_test_epoch = 80      #绝对值
 test_inteval = 1
@@ -34,7 +35,7 @@ optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
-lr = 1e-3
+lr = 1e-4
 end_lr = 1e-7
 
 
@@ -70,7 +71,7 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 pretrained = True   #backbone
 restart_training = True # begin from 0 epoch
 load_lr = False
-checkpoint = ''   #full model ckpt
+checkpoint = '../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth'   #full model ckpt
 #../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth
 if len(checkpoint) != 0:
     pretrained = False

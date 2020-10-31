@@ -36,7 +36,9 @@ class SynthTextDataset(data.Dataset):
             for _ in tqdm(f, desc="load training dataset"):
                 number += 1
         self.number = number
+        print('label number: ', number)
         self.fopen = open(os.path.join(rootpath, "train_list.txt"), 'r')
+        print('file is open.')
 
         self.data_shape = data_shape
         self.transform = transform
@@ -50,8 +52,8 @@ class SynthTextDataset(data.Dataset):
         img_path = line[0].strip()
         gt_path = line[1].strip()
 
-        img_path = os.path.join(self.root_path, "img", img_path)
-        gt_path = os.path.join(self.root_path, "gt", gt_path)
+        img_path = os.path.join(self.root_path, "img", "img",  img_path)
+        gt_path = os.path.join(self.root_path, "gt", "gt", gt_path)
 
         text_polys, text_tags = self._get_annotation(gt_path)
         try:

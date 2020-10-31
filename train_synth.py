@@ -39,10 +39,10 @@ from utils.lamb import Lamb, log_lamb_rs
 from utils.lamb_v3 import Lamb as Lamb_v3
 from utils.la_lamb import La_Lamb, La_Lamb_v3
 
-from boundary_loss import class2one_hot, one_hot2dist
+#from boundary_loss import class2one_hot, one_hot2dist
 
-from models.GFF_FPN import GFF_FPN
-from models.resnet_FPEM import ResNet_FPEM
+# from models.GFF_FPN import GFF_FPN
+# from models.resnet_FPEM import ResNet_FPEM
 from models.craft import CRAFT
 
 def weights_init(m):
@@ -192,8 +192,7 @@ def main(model, criterion):
     # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
     #                                num_workers=int(config.workers))
 
-    train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
-                                   num_workers=int(config.workers), pin_memory=config.pin_memory)
+    train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=False, pin_memory=config.pin_memory)
 
     writer = SummaryWriter(config.output_dir)
 

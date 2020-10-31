@@ -24,9 +24,10 @@ from dataset.data_utils import image_label, image_label_v2, image_label_v3, Data
 time_sum = 0
 
 class IC17Dataset(data.Dataset):
-    def __init__(self, train_dir, validation_dir, data_shape: int = 640, transform=None, target_transform=None):
+    def __init__(self, train_dir, validation_dir=None, data_shape: int = 640, transform=None, target_transform=None):
         self.data_list = self.load_data(train_dir)
-        self.data_list.extend(self.load_data(validation_dir))
+        if validation_dir != None:
+            self.data_list.extend(self.load_data(validation_dir))
         print('count:', len(self.data_list))
         self.data_shape = data_shape
         self.transform = transform
@@ -61,6 +62,8 @@ class IC17Dataset(data.Dataset):
         #for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
             d = pathlib.Path(x)
             label_path = os.path.join(data_dir, 'gt', ('gt_' + str(d.stem) + '.txt'))
+            # label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
+
             bboxs, text = self._get_annotation(label_path)
             if len(bboxs) > 0:
                 x_path = os.path.join(data_dir, 'img', x)

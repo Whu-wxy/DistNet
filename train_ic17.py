@@ -19,6 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from dataset.data_utils import DataLoaderX
 from dataset.IC17 import IC17Dataset
+from dataset.CurveDataset import CurveDataset
 
 from models import FPN_ResNet
 from models.loss import Loss
@@ -185,7 +186,9 @@ def main(model, criterion):
         logger.info('train with cpu and pytorch {}'.format(torch.__version__))
         device = torch.device("cpu")
 
-    train_data = IC17Dataset(config.trainroot, config.validroot, data_shape=config.data_shape, transform=transforms.ToTensor())
+    # train_data = IC17Dataset(config.trainroot, config.validroot, data_shape=config.data_shape, transform=transforms.ToTensor())
+    train_data = CurveDataset(config.trainroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor())
+
     # train_loader = Data.DataLoader(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
     #                                num_workers=int(config.workers))
 
@@ -282,11 +285,16 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+    from models.mobilenetv3_fpn import mobilenetv3_fpn
+
+    # model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
+
+    model = mobilenetv3_fpn(num_out=2, model_path='../MobileNetV3_large_x0_5.pth')
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    model = CRAFT(num_out=2, pretrained=True)
+    # model = CRAFT(num_out=2, pretrained=True)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

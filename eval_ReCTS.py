@@ -134,6 +134,7 @@ class Pytorch_model_ReCTS:
 
 		if long_size != None:
 			scale = long_size / max(h, w)
+			scale = 1.5
 			img = cv2.resize(img, None, fx=scale, fy=scale)
 
 		# 将图片由(w,h)变为(1,img_channel,h,w)
@@ -216,15 +217,18 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
 	os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-	long_size = 2200     #2240
+	long_size = 2000     #2240
 	scale = 1    #DistNet_IC17_130_loss1.029557.pth
-	model_path = '../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth'   #DistNet_IC17_97_loss1.057110.pth
+	model_path = '../save/ReCTS/dist_ReCTS_mobile_ours2/DistNet_IC17_100_loss0.569300.pth'   #DistNet_IC17_97_loss1.057110.pth
 	#DistNet_ReCTS_188_loss0.407465.pth
 	#../save/ReCTS/dist_ReCTS/DistNet_ReCTS_155_loss0.288792.pth
-	data_path = '../data/ReCTS/ReCTS_OUR/train'   #../data/ReCTS/test/img/ghz
-	save_path = '../test_resultReCTS2'
+	#../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth
+	#../save/ReCTS/dist_ReCTS_mobile_ours/DistNet_IC17_121_loss0.564716.pth
+	#../save/ReCTS/dist_ReCTS_mobile_ours2/DistNet_IC17_100_loss0.569300.pth
+	data_path = '../data/ReCTS/ReCTS_OUR/test/img'   #../data/ReCTS/test/img/ghz  ../data/ReCTS/ReCTS_OUR/test
+	save_path = '../test_resultReCTS'
 	gpu_id = 0
-	print('sDistNet_ReCTS_180_loss0.403586.pthcale:{},model_path:{}'.format(scale,model_path))
+	print('model_path:{}'.format(model_path))
 
 	fast_test=True
 

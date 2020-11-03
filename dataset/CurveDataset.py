@@ -60,8 +60,8 @@ class CurveDataset(data.Dataset):
             if self.dataset_type == 'ctw1500':
                 label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
             elif self.dataset_type == 'total':
-                # label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
-                label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
+                label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
+                # label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
             else:
                 raise Exception('数据集类型必须是ctw1500或total！')
             bboxs, text = self._get_annotation(label_path)
@@ -101,7 +101,7 @@ class CurveDataset(data.Dataset):
                                 text_tags.append(True)
                             else:
                                 text_tags.append(False)
-                            # params.pop(-1)
+                            params.pop(-1)
                         else:
                             text_tags.append(False)
                         for i, val in enumerate(params):

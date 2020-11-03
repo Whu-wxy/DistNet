@@ -23,7 +23,7 @@ start_epoch = 0
 epochs = 301   #600
 early_stop=20  #test F1
 
-train_batch_size = 16
+train_batch_size = 9
 try_test_epoch = [0, 20, 40, 60, 70, 80, 85, 90, 100, 101, 105, 110, 115, 120, 150, 175, 200]
 start_test_epoch = 80      #绝对值
 test_inteval = 1

@@ -29,7 +29,6 @@ from models.SA_FPN import SA_FPN
 from utils.utils import load_checkpoint, save_checkpoint, setup_logger
 #from dist import decode as dist_decode
 
-from cal_recall import cal_recall_precison_f1
 
 from utils.radam import RAdam
 from utils.ranger import Ranger

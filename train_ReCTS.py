@@ -161,6 +161,9 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
 def main(model, criterion):
 
+    if os.path.exists(config.output_dir):
+        return
+
     if config.output_dir is None:
         config.output_dir = 'output'
     if config.restart_training:

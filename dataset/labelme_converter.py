@@ -71,7 +71,7 @@ def json2text(json_path, text_path):
                 shape = shape.tolist()
                 length = len(shape)
                 if (length == 2):
-                    shape = [shape[0], [shape[0][0], shape[1][1]], shape[1], [shape[1][0], shape[0][1]] ]
+                    shape = [shape[0], [shape[1][0], shape[0][1]], shape[1], [shape[0][0], shape[1][1]] ]
                 # clear[]
                 s = str(shape).replace('[', '').replace(']', '') + '\n'
                 f.write(s)

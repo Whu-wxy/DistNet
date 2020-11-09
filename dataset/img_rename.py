@@ -4,10 +4,10 @@ import cv2
 path = './img'
 
 
-def convert_name(img_path, gt_path=None, extention='.json'):
+def convert_name(img_path, start=1, gt_path=None, extention='.json'):
     img_names = os.listdir(img_path)
 
-    for i, img in enumerate(img_names, start=1):
+    for i, img in enumerate(img_names, start=start):
         extension = '.'+img.rsplit('.', 1)[-1]
         new_name = os.path.join(img_path, str(i)+extension)
         if not os.path.exists(new_name):
@@ -32,5 +32,5 @@ def convert_name(img_path, gt_path=None, extention='.json'):
 
 
 if __name__ == '__main__':
-    convert_name('./img', './gt', '.json')
+    convert_name('./img', 351, './gt', '.json')
     print('finished.')

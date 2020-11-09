@@ -70,7 +70,9 @@ def json2text(json_path, text_path):
                 ###
                 shape = shape.tolist()
                 length = len(shape)
-                if (length == 2):
+                if length == 1:
+                    continue
+                if length == 2:
                     shape = [shape[0], [shape[1][0], shape[0][1]], shape[1], [shape[0][0], shape[1][1]] ]
                 # clear[]
                 s = str(shape).replace('[', '').replace(']', '') + '\n'
@@ -98,9 +100,9 @@ def find_multi_point_gt(gt_path):
 
 if __name__ == '__main__':
     # text2json('F:\\train\\gt', 'F:\\train\\gt_json', 'F:\\train\\img')
-    # json2text('./gt_json', './gt_txt')
+    json2text('./gt_json', './gt')
     # check_img_and_gt('./img', './gt_txt')
-    find_multi_point_gt('./gt')
+    # find_multi_point_gt('./gt')
     print('finished.')
 
 

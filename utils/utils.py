@@ -232,9 +232,9 @@ if __name__ == '__main__':
     # net = CRAFT(num_out=2, pretrained=False, scale=1)
     net = mobilenetv3_fpn(2)
 
-    state = torch.load('../../save/ReCTS/dist_ReCTS_mobile_ours2/DistNet_IC17_100_loss0.569300.pth', torch.device('cpu'))
+    state = torch.load('../../save/ReCTS/dist_ReCTS_mobile_big/DistNet_IC17_76_loss0.486856.pth', torch.device('cpu'))
     net.load_state_dict(state['state_dict'])
     #print(state.keys())
     #model.load_state_dict(state['state_dict'])
-    torch2onnx_dynamic(net, '../../mobilenet_our.onnx')
+    torch2onnx_dynamic(net, '../../mobilenet_our_big.onnx')
     print('finished')

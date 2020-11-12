@@ -61,8 +61,8 @@ class IC17Dataset(data.Dataset):
         for x in img_list:
         #for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
             d = pathlib.Path(x)
-            label_path = os.path.join(data_dir, 'gt', ('gt_' + str(d.stem) + '.txt'))
-            # label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
+            # label_path = os.path.join(data_dir, 'gt', ('gt_' + str(d.stem) + '.txt'))
+            label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
 
             bboxs, text = self._get_annotation(label_path)
             if len(bboxs) > 0:
@@ -89,7 +89,7 @@ class IC17Dataset(data.Dataset):
                         else:
                             text_tags.append(False)  # False
                         # text_tags.append(False)
-                        x1, y1, x2, y2, x3, y3, x4, y4 = list(map(float, params[:8]))
+                    x1, y1, x2, y2, x3, y3, x4, y4 = list(map(float, params[:8]))
                     boxes.append([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
                 except:
                     print('load label failed on {}'.format(label_path))

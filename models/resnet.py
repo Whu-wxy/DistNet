@@ -243,3 +243,12 @@ if __name__ == '__main__':
 
     print_model_parm_flops(model, data)
     print_model_parm_nums(model)
+
+
+# 0.15084409713745117
+# torch.Size([1, 256, 64, 64])
+# torch.Size([1, 512, 32, 32])
+# torch.Size([1, 1024, 16, 16])
+# torch.Size([1, 2048, 8, 8])
+#   + Number of FLOPs: 5.37G
+#   + Number of params: 23.51M

@@ -399,11 +399,15 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+    from models.fpn_scnet import FPN_SCNet
+
+    model = FPN_SCNet('scnet50_v1d', 2, pretrained=True)
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
-    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    model = CRAFT(num_out=2, pretrained=True)
+    #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=2)
+
+    # model = CRAFT(num_out=2, pretrained=True)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

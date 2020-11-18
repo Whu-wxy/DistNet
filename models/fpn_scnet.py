@@ -1,33 +1,23 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from models.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
+from models.scnet import scnet50, scnet50_v1d, scnet101, scnet101_v1d
 
-#from models.dcn_resnet import load_dcn_resnet
-
-#from utils.utils import show_feature_map
 from utils import show_feature_map
 import math
 import config
 
-def load_dcn_resnet():
-    pass
-
-# from models.encoding.danet_head import DANetHead
-
-d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
-     'resnet34': {'models': resnet34, 'out': [64, 128, 256, 512]},
-     'resnet50': {'models': resnet50, 'out': [256, 512, 1024, 2048]},
-     'resnet101': {'models': resnet101, 'out': [256, 512, 1024, 2048]},
-     'resnet152': {'models': resnet152, 'out': [256, 512, 1024, 2048]},
-     'dcn_resnet50': {'models': load_dcn_resnet, 'out': [256, 512, 1024, 2048]}
+d = {'scnet50': {'models': scnet50, 'out': [256, 512, 1024, 2048]},
+     'scnet50_v1d': {'models': scnet50_v1d, 'out': [256, 512, 1024, 2048]},
+     'scnet101': {'models': scnet101, 'out': [256, 512, 1024, 2048]},
+     'scnet101_v1d': {'models': scnet101_v1d, 'out': [256, 512, 1024, 2048]}
      }
 inplace = True
 
 
-class FPN_ResNet(nn.Module):
+class FPN_SCNet(nn.Module):
     def __init__(self, backbone, result_num, scale: int = 1, pretrained=False, predict=False):
-        super(FPN_ResNet, self).__init__()
+        super(FPN_SCNet, self).__init__()
         assert backbone in d, 'backbone must in: {}'.format(d)
         self.scale = scale
         conv_out = 256
@@ -69,11 +59,7 @@ class FPN_ResNet(nn.Module):
     def forward(self, input: torch.Tensor):
         _, _, H, W = input.size()
 
-        if self.backbone_name == 'dcn_resnet50':
-            res_dict = self.backbone(input)
-            c2, c3, c4, c5 = res_dict['res2'], res_dict['res3'], res_dict['res4'], res_dict['res5']
-        else:
-            c2, c3, c4, c5 = self.backbone(input)
+        c2, c3, c4, c5 = self.backbone(input)
 
         # Top-down
         p5 = self.toplayer(c5)
@@ -122,8 +108,8 @@ if __name__ == '__main__':
     import time
 
     device = torch.device('cpu')  #cuda:0
-    backbone = 'resnet50'
-    net = FPN_ResNet(backbone=backbone, pretrained=False, result_num=2, predict=False).to(device)
+    backbone = 'scnet50_v1d'
+    net = FPN_SCNet(backbone=backbone, pretrained=False, result_num=2, predict=False).to(device)
     net.eval()
     x = torch.randn(1, 3, 256, 256).to(device)
     start = time.time()
@@ -139,6 +125,6 @@ if __name__ == '__main__':
     #show_summary(net, 'E:/summery.xlsx')
 
 
-# 0.356372594833374
-#   + Number of FLOPs: 19.32G
-#   + Number of params: 28.77M
+# 0.4388742446899414
+#   + Number of FLOPs: 20.12G
+#   + Number of params: 28.80M

@@ -88,7 +88,7 @@ def decode(preds, scale):
     # center = preds >= 0.56
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
-    region = torch.where(preds >= 0.28, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
     center = torch.where(preds >= 0.64, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
     
 
@@ -104,7 +104,7 @@ def decode(preds, scale):
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.94, 0.96, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)
 
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)

@@ -9,8 +9,12 @@
 """SCNet variants"""
 import torch
 import torch.nn as nn
+import logging
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
+logger = logging.getLogger('project')
+
+
 
 __all__ = ['SCNet', 'scnet50', 'scnet101', 'scnet50_v1d', 'scnet101_v1d']
 
@@ -197,8 +201,8 @@ class SCNet(nn.Module):
                                            norm_layer=norm_layer)
             self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
                                            norm_layer=norm_layer)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        # self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        # self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -253,22 +257,34 @@ class SCNet(nn.Module):
 
         return nn.Sequential(*layers)
 
+    def _load_pretrained_model(self, model_url):
+        pretrain_dict = model_zoo.load_url(model_url)
+        model_dict = {}
+        state_dict = self.state_dict()
+        for k, v in pretrain_dict.items():
+            if k in state_dict:
+                model_dict[k] = v
+        state_dict.update(model_dict)
+        self.load_state_dict(state_dict)
+        logger.info('load pretrained models from imagenet')
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        c2 = self.layer1(x)
+        c3 = self.layer2(c2)
+        c4 = self.layer3(c3)
+        c5 = self.layer4(c4)
+        return c2, c3, c4, c5
 
-        x = self.avgpool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        # x = self.avgpool(x)
+        # x = x.view(x.size(0), -1)
+        # x = self.fc(x)
 
-        return x
+        # return x
 
 
 def scnet50(pretrained=False, **kwargs):
@@ -280,7 +296,7 @@ def scnet50(pretrained=False, **kwargs):
                 deep_stem=False, stem_width=32, avg_down=False,
                 avd=False, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['scnet50']))
+        model._load_pretrained_model(model_urls['scnet50'])
     return model
 
 def scnet50_v1d(pretrained=False, **kwargs):
@@ -299,7 +315,7 @@ def scnet50_v1d(pretrained=False, **kwargs):
                    deep_stem=True, stem_width=32, avg_down=True,
                    avd=True, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['scnet50_v1d']))
+        model._load_pretrained_model(model_urls['scnet50_v1d'])
     return model
 
 def scnet101(pretrained=False, **kwargs):
@@ -311,7 +327,7 @@ def scnet101(pretrained=False, **kwargs):
                 deep_stem=False, stem_width=64, avg_down=False,
                 avd=False, **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['scnet101']))
+        model._load_pretrained_model(model_urls['scnet101'])
     return model
 
 def scnet101_v1d(pretrained=False, **kwargs):
@@ -335,8 +351,28 @@ def scnet101_v1d(pretrained=False, **kwargs):
 
 
 if __name__ == '__main__':
-    images = torch.rand(1, 3, 224, 224).cuda(0)
-    model = scnet101(pretrained=True)
-    model = model.cuda(0)
-    print(model(images).size())
+    import time
 
+    device = torch.device('cpu')
+    model = scnet50_v1d(True).to(device)
+    model.eval()
+
+    start = time.time()
+    data = torch.randn(1, 3, 256, 256).to(device)
+    output = model(data)
+    print(time.time() - start)
+    for u in output:
+        print(u.shape)
+
+    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)
+
+# 0.28980493545532227
+# torch.Size([1, 256, 64, 64])
+# torch.Size([1, 512, 32, 32])
+# torch.Size([1, 1024, 16, 16])
+# torch.Size([1, 2048, 8, 8])
+#   + Number of FLOPs: 6.17G
+#   + Number of params: 23.53M

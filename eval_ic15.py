@@ -41,8 +41,8 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         total_time += t
         model_total_time += model_time
         decode_total_time += decode_time
-        # img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
-        # cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
+        img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+        cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
 
     print('fps:{}'.format(total_frame / total_time))
@@ -53,7 +53,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 2000     #2240
+    long_size = 1800     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
     model_path = '../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
 #../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
@@ -71,6 +71,10 @@ if __name__ == '__main__':
     fast_test = True
 
     from models.craft import CRAFT
+    from models.fpn_scnet import FPN_SCNet
+
+    # net = FPN_SCNet('scnet50_v1d', 2,  pretrained=False, scale=scale)
+
 
     net = CRAFT(num_out=2, pretrained=False, scale=scale)
 
@@ -82,17 +86,17 @@ if __name__ == '__main__':
     print('long_size: ', long_size)
 
     ############################################
-    import time
-    device = torch.device('cuda:0')  #cuda:0
-    x = torch.randn(1, 3, 512, 512).to(device)
-    start = time.time()
-    y = net(x)
-    print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
-
-    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
-
-    print_model_parm_flops(net, x)
-    print_model_parm_nums(net)
+    # import time
+    # device = torch.device('cuda:0')  #cuda:0
+    # x = torch.randn(1, 3, 512, 512).to(device)
+    # start = time.time()
+    # y = net(x)
+    # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
+    #
+    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+    #
+    # print_model_parm_flops(net, x)
+    # print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
     # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 

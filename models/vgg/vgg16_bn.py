@@ -83,11 +83,19 @@ if __name__ == '__main__':
     data = torch.randn(1, 3, 256, 256).to(device)
     output = model(data)
     print(time.time() - start)
-    print(output.shape)
+
+    for out in output:
+        print(out.shape)
+
+    # torch.Size([1, 1024, 16, 16])
+    # torch.Size([1, 512, 16, 16])
+    # torch.Size([1, 512, 32, 32])
+    # torch.Size([1, 256, 64, 64])
+    # torch.Size([1, 128, 128, 128])
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    print_model_parm_flops(model, data)
-    print_model_parm_nums(model)
+    # print_model_parm_flops(model, data)
+    # print_model_parm_nums(model)
 
     #show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')

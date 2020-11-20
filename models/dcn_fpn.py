@@ -2,11 +2,11 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from models.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
-from models.mobilenetv3 import MobileNetV3_Large, MobileNetV3_Small
-from models.ShuffleNetV2 import shufflenet_v2_x1_0
-
-from models.res2net import res2net50_26w_6s,res2net50_26w_4s
-from models.res2net_dla import res2net_dla60, res2next_dla60
+# from models.mobilenetv3 import MobileNetV3_Large, MobileNetV3_Small
+# from models.ShuffleNetV2 import shufflenet_v2_x1_0
+#
+# from models.res2net import res2net50_26w_6s,res2net50_26w_4s
+# from models.res2net_dla import res2net_dla60, res2next_dla60
 
 from models.dcn_resnet import load_dcn_resnet
 

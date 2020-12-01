@@ -1,2 +1,2 @@
 from .fpn_resnet import FPN_ResNet
-from .loss import Loss
+# from .loss import Loss

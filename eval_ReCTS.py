@@ -219,13 +219,13 @@ if __name__ == '__main__':
 	os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
 	long_size = 2000     #2240
 	scale = 1    #DistNet_IC17_130_loss1.029557.pth
-	model_path = '../save/ReCTS/dist_ReCTS_mobile_ours2/DistNet_IC17_100_loss0.569300.pth'   #DistNet_IC17_97_loss1.057110.pth
+	model_path = '../save/ours/DistNet_IC17_91_loss0.599448.pth'   #DistNet_IC17_97_loss1.057110.pth
 	#DistNet_ReCTS_188_loss0.407465.pth
 	#../save/ReCTS/dist_ReCTS/DistNet_ReCTS_155_loss0.288792.pth
 	#../save/ReCTS/dist_ReCTS_mobile/DistNet_ReCTS_188_loss0.407465.pth
 	#../save/ReCTS/dist_ReCTS_mobile_ours/DistNet_IC17_121_loss0.564716.pth
 	#../save/ReCTS/dist_ReCTS_mobile_ours2/DistNet_IC17_100_loss0.569300.pth
-	data_path = '../data/ReCTS/ReCTS_OUR/test/img'   #../data/ReCTS/test/img/ghz  ../data/ReCTS/ReCTS_OUR/test
+	data_path = '../data/ReCTS/ReCTS_OUR/sum/img'   #../data/ReCTS/test/img/ghz  ../data/ReCTS/ReCTS_OUR/test
 	save_path = '../test_resultReCTS'
 	gpu_id = 0
 	print('model_path:{}'.format(model_path))

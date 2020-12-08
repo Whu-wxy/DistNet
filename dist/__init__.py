@@ -104,7 +104,7 @@ def decode(preds, scale):
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.988, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
 
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)

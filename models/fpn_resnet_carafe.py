@@ -70,8 +70,8 @@ class FPN_ResNet_CARAFE(nn.Module):
 
         #self.DANetHead = DANetHead(conv_out, result_num, norm_layer=nn.BatchNorm2d)
 
-        # self.out_up_CARAFE =  CARAFEPack(conv_out, 2, up_kernel=5, compressed_channels=64)
-        self.deform = ModulatedDeformConv2dPack(conv_out,conv_out,3,1,1)
+        self.out_up_CARAFE = CARAFEPack(conv_out, 2, up_kernel=5, compressed_channels=64)
+        # self.deform = ModulatedDeformConv2dPack(conv_out,conv_out,3,1,1)
         self.out_conv = nn.Conv2d(conv_out, result_num, kernel_size=1, stride=1)
 
         
@@ -107,8 +107,8 @@ class FPN_ResNet_CARAFE(nn.Module):
 
         x = self._upsample_cat(p2, p3, p4, p5)
         x = self.conv(x)
-        # x = self.out_up_CARAFE(x)   #上采样2倍
-        x = self.deform(x)
+        x = self.(x)   #上采样2倍out_up_CARAFE
+        # x = self.deform(x)
         x = self.out_conv(x)
 
         if self.train:
@@ -140,7 +140,7 @@ class FPN_ResNet_CARAFE(nn.Module):
 if __name__ == '__main__':
     import time
 
-    device = torch.device('cpu')  #cuda:0
+    device = torch.device('cuda:0')  #cuda:0
     backbone = 'resnet50'
     net = FPN_ResNet_CARAFE(backbone=backbone, pretrained=False, result_num=2, predict=False).to(device)
     net.eval()
@@ -156,3 +156,20 @@ if __name__ == '__main__':
     print_model_parm_flops(net, x)
     print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
+
+
+
+# origin
+# 0.18357586860656738
+#   + Number of FLOPs: 15.54G
+#   + Number of params: 26.85M
+
+# add deform
+# 0.32088136672973633
+#   + Number of FLOPs: 15.80G
+#   + Number of params: 27.50M
+
+# add carafe
+# 0.19291138648986816
+#   + Number of FLOPs: 15.85G
+#   + Number of params: 26.93M

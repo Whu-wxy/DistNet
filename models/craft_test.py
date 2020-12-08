@@ -8,11 +8,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.vgg.vgg16_bn import vgg16_bn, init_weights
+from models.vgg.vgg16_bn_test import vgg16_bn, init_weights
 from models.ShuffleNetV2 import shufflenet_v2_x1_0
+from mmcv.ops.modulated_deform_conv import ModulatedDeformConv2dPack
 
 import config
-from mmcv.ops.carafe import CARAFEPack
 
 
 class double_conv(nn.Module):

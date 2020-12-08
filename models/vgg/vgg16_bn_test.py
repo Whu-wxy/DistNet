@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.init as init
 from torchvision import models
 from torchvision.models.vgg import model_urls
+from mmcv.ops.modulated_deform_conv import ModulatedDeformConv2dPack
 
 def init_weights(modules):
     for m in modules:
@@ -30,29 +31,44 @@ class vgg16_bn(torch.nn.Module):
         self.slice3 = torch.nn.Sequential()
         self.slice4 = torch.nn.Sequential()
         self.slice5 = torch.nn.Sequential()
-        for x in range(12):         # conv2_2
-            self.slice1.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(12, 19):         # conv3_3
+        for x in range(13):
+            if isinstance(vgg_pretrained_features[x], nn.Conv2d):
+                conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
+                                          vgg_pretrained_features[x].out_channels,
+                                          vgg_pretrained_features[x].kernel_size,
+                                          vgg_pretrained_features[x].stride,
+                                          vgg_pretrained_features[x].padding,
+                                          vgg_pretrained_features[x].dilation,
+                                          vgg_pretrained_features[x].groups)
+                                          #bias=vgg_pretrained_features[x].bias)
+                self.slice1.add_module(str(x), conv)
+            else:
+                self.slice1.add_module(str(x), vgg_pretrained_features[x])
+        for x in range(13, 23):
             self.slice2.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(19, 29):         # conv4_3
+        for x in range(23, 33):
             self.slice3.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(29, 39):         # conv5_3
+        for x in range(33, 40):
             self.slice4.add_module(str(x), vgg_pretrained_features[x])
+        for x in range(40, 43):
+            self.slice5.add_module(str(x), vgg_pretrained_features[x])
 
         # fc6, fc7 without atrous conv
-        self.slice5 = torch.nn.Sequential(
-                nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
-                nn.Conv2d(512, 1024, kernel_size=3, padding=6, dilation=6),
-                nn.Conv2d(1024, 1024, kernel_size=1)
-        )
+        # self.slice5 = torch.nn.Sequential(
+        #         nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
+        #         nn.Conv2d(512, 1024, kernel_size=3, padding=6, dilation=6),
+        #         nn.Conv2d(1024, 1024, kernel_size=1)
+        # )
+        # init_weights(self.slice5.modules())        # no pretrained model for fc6 and fc7
+
 
         if not pretrained:
             init_weights(self.slice1.modules())
             init_weights(self.slice2.modules())
             init_weights(self.slice3.modules())
             init_weights(self.slice4.modules())
+            init_weights(self.slice5.modules())
 
-        init_weights(self.slice5.modules())        # no pretrained model for fc6 and fc7
 
         if freeze:
             for param in self.slice1.parameters():      # only first conv
@@ -77,7 +93,7 @@ class vgg16_bn(torch.nn.Module):
 if __name__ == '__main__':
     import  time
 
-    device = torch.device('cpu')
+    device = torch.device('cuda:0')   # cpu
     model = vgg16_bn(pretrained=False).to(device)
     model.eval()
     start = time.time()
@@ -104,7 +120,7 @@ if __name__ == '__main__':
     print_model_parm_flops(model, data)
     print_model_parm_nums(model)
 
-    # show_summary(model, input_shape=(3, 256, 256), save_path='E:/summery.xlsx')
+    show_summary(model, input_shape=(3, 256, 256), save_path='E:/vgg16_bn_test.xlsx')
 
     # net = models.vgg16_bn(pretrained=False)
-    # show_summary(net, input_shape=(3, 256, 256), save_path='E:/vgg.xlsx')
+    # show_summary(net, input_shape=(3, 256, 256), save_path='E:/vgg16_bn_fix.xlsx')

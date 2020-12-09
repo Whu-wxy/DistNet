@@ -8,9 +8,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.vgg.vgg16_bn_test import vgg16_bn, init_weights
+from models.vgg.vgg16_bn import vgg16_bn, init_weights
+# from models.vgg.vgg16_bn_test import vgg16_bn, init_weights
+
 from models.ShuffleNetV2 import shufflenet_v2_x1_0
-from mmcv.ops.modulated_deform_conv import ModulatedDeformConv2dPack
+# from mmcv.ops.modulated_deform_conv import ModulatedDeformConv2dPack
 
 import config
 
@@ -32,12 +34,14 @@ class double_conv(nn.Module):
 		return x
 
 
-class CRAFT(nn.Module):
+class CRAFT_test(nn.Module):
 	def __init__(self, num_out=1, pretrained=False, freeze=False, scale=1):
-		super(CRAFT, self).__init__()
+		super(CRAFT_test, self).__init__()
 
 		""" Base network """
+		mdConv = [True, True, False, False, False]
 		self.basenet = vgg16_bn(pretrained, freeze)
+		# self.basenet = vgg16_bn(pretrained, freeze, config.mdConv)
 
 		""" U network """
 		self.upconv1 = double_conv(1024, 512, 256)
@@ -46,9 +50,9 @@ class CRAFT(nn.Module):
 		self.upconv4 = double_conv(128, 64, 32)
 
 		self.conv_cls = nn.Sequential(
-			# nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-			# nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-			# nn.Conv2d(32, 16, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 16, kernel_size=3, padding=1), nn.ReLU(inplace=True),
 			nn.Conv2d(32, 16, kernel_size=1), nn.ReLU(inplace=True),
 			nn.Conv2d(16, num_out, kernel_size=1),
 		)

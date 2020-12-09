@@ -3,9 +3,11 @@
 # data config
 dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
+mdConv = [True, True, False, False, False]
+
 trainroot = '../data/IC15/train'
 testroot = '../data/IC15/test'
-output_dir = '../save/ic15/vgg_test_distv2_IC15'
+output_dir = '../save/ic15/vgg_test_IC15'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -24,7 +26,7 @@ epochs = 601   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 420, 440, 460, 470, 480]
+try_test_epoch = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 420, 440, 460, 470, 480]
 start_test_epoch = 470      #绝对值
 test_inteval = 2
 always_test_threld = 0.75

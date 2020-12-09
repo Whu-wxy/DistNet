@@ -21,7 +21,7 @@ def init_weights(modules):
             m.bias.data.zero_()
 
 class vgg16_bn(torch.nn.Module):
-    def __init__(self, pretrained=True, freeze=True):
+    def __init__(self, pretrained=True, freeze=True, mdConv=[]):
         super(vgg16_bn, self).__init__()
         model_urls['vgg16_bn'] = model_urls['vgg16_bn'].replace('https://', 'http://')
         vgg_pretrained_features = models.vgg16_bn(pretrained=pretrained).features
@@ -113,6 +113,14 @@ if __name__ == '__main__':
     # 20.98G
     # 18.13M
 
+    # 0.3554525375366211
+    # torch.Size([1, 512, 16, 16])
+    # torch.Size([1, 512, 16, 16])
+    # torch.Size([1, 512, 32, 32])
+    # torch.Size([1, 256, 64, 64])
+    # torch.Size([1, 128, 128, 128])
+    # 5.78G
+    # 14.79M
 
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
@@ -120,7 +128,7 @@ if __name__ == '__main__':
     print_model_parm_flops(model, data)
     print_model_parm_nums(model)
 
-    show_summary(model, input_shape=(3, 256, 256), save_path='E:/vgg16_bn_test.xlsx')
+    show_summary(model, input_shape=(3, 256, 256), save_path='../../vgg16_bn_test.xlsx')
 
     # net = models.vgg16_bn(pretrained=False)
     # show_summary(net, input_shape=(3, 256, 256), save_path='E:/vgg16_bn_fix.xlsx')

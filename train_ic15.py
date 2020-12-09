@@ -400,6 +400,7 @@ def main(model, criterion):
 if __name__ == '__main__':
     import utils
     from models.fpn_scnet import FPN_SCNet
+    from models.craft_test import CRAFT_test
 
     # model = FPN_SCNet('scnet50_v1d', 2, pretrained=True)
 
@@ -407,7 +408,9 @@ if __name__ == '__main__':
 
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=2)
 
-    model = CRAFT(num_out=2, pretrained=True)
+    # model = CRAFT(num_out=2, pretrained=True)
+
+    model = CRAFT_test(num_out=2, pretrained=True)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

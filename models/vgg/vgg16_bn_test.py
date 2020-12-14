@@ -32,7 +32,7 @@ class vgg16_bn(torch.nn.Module):
         self.slice4 = torch.nn.Sequential()
         self.slice5 = torch.nn.Sequential()
         for x in range(13):
-            if isinstance(vgg_pretrained_features[x], nn.Conv2d):
+            if mdConv[0] and isinstance(vgg_pretrained_features[x], nn.Conv2d):
                 conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
                                           vgg_pretrained_features[x].out_channels,
                                           vgg_pretrained_features[x].kernel_size,
@@ -45,13 +45,57 @@ class vgg16_bn(torch.nn.Module):
             else:
                 self.slice1.add_module(str(x), vgg_pretrained_features[x])
         for x in range(13, 23):
-            self.slice2.add_module(str(x), vgg_pretrained_features[x])
+            if mdConv[0] and isinstance(vgg_pretrained_features[x], nn.Conv2d):
+                conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
+                                                 vgg_pretrained_features[x].out_channels,
+                                                 vgg_pretrained_features[x].kernel_size,
+                                                 vgg_pretrained_features[x].stride,
+                                                 vgg_pretrained_features[x].padding,
+                                                 vgg_pretrained_features[x].dilation,
+                                                 vgg_pretrained_features[x].groups)
+                # bias=vgg_pretrained_features[x].bias)
+                self.slice2.add_module(str(x), conv)
+            else:
+                self.slice2.add_module(str(x), vgg_pretrained_features[x])
         for x in range(23, 33):
-            self.slice3.add_module(str(x), vgg_pretrained_features[x])
+            if mdConv[0] and isinstance(vgg_pretrained_features[x], nn.Conv2d):
+                conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
+                                                 vgg_pretrained_features[x].out_channels,
+                                                 vgg_pretrained_features[x].kernel_size,
+                                                 vgg_pretrained_features[x].stride,
+                                                 vgg_pretrained_features[x].padding,
+                                                 vgg_pretrained_features[x].dilation,
+                                                 vgg_pretrained_features[x].groups)
+                # bias=vgg_pretrained_features[x].bias)
+                self.slice3.add_module(str(x), conv)
+            else:
+                self.slice3.add_module(str(x), vgg_pretrained_features[x])
         for x in range(33, 40):
-            self.slice4.add_module(str(x), vgg_pretrained_features[x])
+            if mdConv[0] and isinstance(vgg_pretrained_features[x], nn.Conv2d):
+                conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
+                                                 vgg_pretrained_features[x].out_channels,
+                                                 vgg_pretrained_features[x].kernel_size,
+                                                 vgg_pretrained_features[x].stride,
+                                                 vgg_pretrained_features[x].padding,
+                                                 vgg_pretrained_features[x].dilation,
+                                                 vgg_pretrained_features[x].groups)
+                # bias=vgg_pretrained_features[x].bias)
+                self.slice4.add_module(str(x), conv)
+            else:
+                self.slice4.add_module(str(x), vgg_pretrained_features[x])
         for x in range(40, 43):
-            self.slice5.add_module(str(x), vgg_pretrained_features[x])
+            if mdConv[0] and isinstance(vgg_pretrained_features[x], nn.Conv2d):
+                conv = ModulatedDeformConv2dPack(vgg_pretrained_features[x].in_channels,
+                                                 vgg_pretrained_features[x].out_channels,
+                                                 vgg_pretrained_features[x].kernel_size,
+                                                 vgg_pretrained_features[x].stride,
+                                                 vgg_pretrained_features[x].padding,
+                                                 vgg_pretrained_features[x].dilation,
+                                                 vgg_pretrained_features[x].groups)
+                # bias=vgg_pretrained_features[x].bias)
+                self.slice5.add_module(str(x), conv)
+            else:
+                self.slice5.add_module(str(x), vgg_pretrained_features[x])
 
         # fc6, fc7 without atrous conv
         # self.slice5 = torch.nn.Sequential(

@@ -1,5 +1,5 @@
 # Introduction
-This is a PyToch implementation of "Arbitrary-Shaped Scene Text Detection by Predicting Distance Map".  In this paper, a novel arbitrary-shaped text
+This is a PyToch implementation of **"Arbitrary-Shaped Scene Text Detection by Predicting Distance Map"**.  In this paper, a novel arbitrary-shaped text
 detector based on distance map is proposed, which can flexibly and robustly detect arbitrary shaped texts via variable-width center lines.
 # Installation
 ### Requirements:

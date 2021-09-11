@@ -100,7 +100,7 @@ def find_multi_point_gt(gt_path):
 
 if __name__ == '__main__':
     # text2json('F:\\train\\gt', 'F:\\train\\gt_json', 'F:\\train\\img')
-    json2text('./gt_json', './gt')
+    json2text('./gt', './gt_txt')
     # check_img_and_gt('./img', './gt_txt')
     # find_multi_point_gt('./gt')
     print('finished.')

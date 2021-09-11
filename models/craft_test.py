@@ -50,10 +50,10 @@ class CRAFT_test(nn.Module):
 		self.upconv4 = double_conv(128, 64, 32)
 
 		self.conv_cls = nn.Sequential(
-			# nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-			# nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-			# nn.Conv2d(32, 16, kernel_size=3, padding=1), nn.ReLU(inplace=True),
-			nn.Conv2d(32, 16, kernel_size=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 32, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(32, 16, kernel_size=3, padding=1), nn.ReLU(inplace=True),
+			nn.Conv2d(16, 16, kernel_size=1), nn.ReLU(inplace=True),
 			nn.Conv2d(16, num_out, kernel_size=1),
 		)
 

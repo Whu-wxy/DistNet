@@ -10,13 +10,13 @@ def convert_name(img_path, start=1, gt_path=None, extention='.json'):
     for i, img in enumerate(img_names, start=start):
         extension = '.'+img.rsplit('.', 1)[-1]
         new_name = os.path.join(img_path, str(i)+extension)
-        if not os.path.exists(new_name):
-            os.rename(os.path.join(img_path, img), new_name)
+        # if not os.path.exists(new_name):
+        #     os.rename(os.path.join(img_path, img), new_name)
         if gt_path != None:
             if not os.path.exists(os.path.join(gt_path, img.split('.')[0]+extention)):
                 print(img.split('.')[0]+extention, ' is not exist. ---> ', str(i))
                 continue
-            os.rename(os.path.join(gt_path, img.split('.')[0]+extention), os.path.join(gt_path, str(i)+extention))
+            # os.rename(os.path.join(gt_path, img.split('.')[0]+extention), os.path.join(gt_path, str(i)+extention))
 
 
 ####################################################################

@@ -31,17 +31,22 @@ class CopyPaste(object):
         self.iou = iou
         self.scales = scales
         self.angle = angle
+        self.filt_large_text = 0.1 #大于图片面积百分比的文本不复制
 
     def __call__(self, data):
         src_img = data['image']
         src_polys = data['polys']
         src_ignores = data['ignore_tags']
+        src_img = cv2.imread(src_img)
 
         indexs = [i for i in range(len(src_ignores)) if not src_ignores[i]]
         if len(indexs) == 0 or len(src_polys) == 0:
+            data['image'] = src_img
             return data
 
         select_num = max(1, min(int(self.objects_paste_ratio * len(src_polys)), 30))
+        if len(src_polys) <= 5:   # 少于5个的，直接复制，多于5个的，复制一定比例，而且不超过30个
+            select_num = len(src_polys)
 
         random.shuffle(indexs)
         select_idxs = indexs[:select_num]
@@ -64,6 +69,9 @@ class CopyPaste(object):
             text_img = Image.fromarray(text_img, "RGBA")
             poly = np.array(poly)
             xmin, ymin, xmax, ymax = poly[:, 0].min(), poly[:, 1].min(), poly[:, 0].max(), poly[:, 1].max()
+            if (xmax-xmin)*(ymax-ymin) > src_img_rgba.shape[1]*src_img_rgba.shape[0]*self.filt_large_text:
+                print('filt large text')
+                continue
             new_poly = poly.copy()
             new_poly[:, 0] -= xmin
             new_poly[:, 1] -= ymin
@@ -89,7 +97,7 @@ class CopyPaste(object):
         return data
 
     def paste_img(self, src_img, text_img, poly, src_polys):
-        text_img = self.resize(text_img)
+        text_img, poly = self.resize(text_img, np.array(poly, dtype=np.float64))
 
         src_w, src_h = src_img.size
         box_w, box_h = text_img.size
@@ -99,8 +107,8 @@ class CopyPaste(object):
         text_img = text_img.rotate(angle, expand=1)  # 旋转
         box_w, box_h = text_img.width, text_img.height
         if src_w - box_w < 0 or src_h - box_h < 0:
-            print(src_w - box_w)
-            print(src_h - box_h)
+            # print(src_w - box_w)
+            # print(src_h - box_h)
             print('after rotate failed')
             return src_img, None
 
@@ -115,13 +123,14 @@ class CopyPaste(object):
 
         return src_img, new_poly
 
-    def resize(self, text_img):
+    def resize(self, text_img, poly):
         min = self.scales[0] * 10
         max = self.scales[-1] * 10
         rd_scale = np.random.randint(min, max, 1)
         rd_scale = rd_scale / 10
-
-        return text_img.resize((rd_scale*text_img.size[0], rd_scale*text_img.size[1]), Image.BILINEAR)
+        text_img = text_img.resize((rd_scale * text_img.size[0], rd_scale * text_img.size[1]), Image.BILINEAR)
+        poly *= rd_scale
+        return text_img, poly.tolist()   # .astype(np.uint8)
 
     def select_coord(self, src_polys, new_poly, endx, endy):
         if self.limit_paste:
@@ -204,8 +213,7 @@ def load_data_15(data_dir: str) -> list:
         bboxs, text = get_annotation_15(label_path)
         if len(bboxs) > 0:
             x_path = os.path.join(data_dir, 'img', x)
-            img = cv2.imread(x_path)
-            data_list.append({'image': img, "polys": bboxs, "ignore_tags": text})
+            data_list.append({'image': x_path, "polys": bboxs, "ignore_tags": text})
         else:
             print('there is no suit bbox on {}'.format(label_path))
     return data_list
@@ -246,8 +254,7 @@ def load_data_curve(data_dir: str, dataset_type) -> list:
             raise Exception('数据集类型必须是ctw1500或total！')
         bboxs, text = get_annotation_curve(label_path, dataset_type)
         if len(bboxs) > 0:
-            img = cv2.imread(x)
-            data_list.append({'image': img, "polys": bboxs, "ignore_tags": text})
+            data_list.append({'image': x, "polys": bboxs, "ignore_tags": text})
         else:
             print('there is no suit bbox on {}'.format(label_path))
     return data_list
@@ -262,7 +269,7 @@ def get_annotation_curve(label_path: str, dataset_type) -> tuple:
             try:
                 if dataset_type == 'ctw1500':
                     text_tags.append(False)
-                    xmin, ymin, w, h = list(map(float, params[:4]))
+                    xmin, ymin, w, h = list(map(int, params[:4]))
                     box = []
                     x = 0
                     y = 0
@@ -324,14 +331,33 @@ def cvt_15(data_dir, save_dir):
     cp = CopyPaste(0.5, True, 0.05, scales = [1, 2])
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
-        data = cp(data)
-        cv2.imwrite(os.path.join(img_dir, str(i)+'.jpg'), data['image'])
+        result = cp(data)
+        # img = result['image']
+        try:
+            cv2.imwrite(os.path.join(img_dir, str(i)+'.jpg'), result['image'])
+        except Exception as r:
+            cv2.namedWindow('res', cv2.WINDOW_NORMAL)
+            cv2.imshow('res', result['image'])
+            cv2.waitKey()
+            print('error： ', r)
+        with open(os.path.join(gt_dir, 'gt_' + str(i)+'.txt'), 'w') as f:
+            ignore_tags = result['ignore_tags']
+            for j, box in enumerate(result['polys']) :
+                box_str = ''
+                for pt in box:
+                    box_str += str(int(pt[0])) + ', ' + str(int(pt[1])) + ', '
+                if ignore_tags[j]:
+                    box_str += '###\n'
+                else:
+                    box_str += 'TEXT\n'
+                f.write(box_str)
         # cv2.namedWindow('res', cv2.WINDOW_NORMAL)
-        # cv2.imshow('res', data['image'])
+        # cv2.imshow('res', result['image'])
         # cv2.waitKey()
 
 
 def cvt_curve(data_dir, save_dir, dataset_type):
+
     cur_num = 0
     img_dir = os.path.join(save_dir, 'img')
     gt_dir = os.path.join(save_dir, 'gt')
@@ -346,8 +372,27 @@ def cvt_curve(data_dir, save_dir, dataset_type):
     cp = CopyPaste(0.5, True, 0.05, scales = [1, 2])
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
-        data = cp(data)
-        cv2.imwrite(os.path.join(img_dir, str(i)+'.jpg'), data['image'])
+        result = cp(data)
+        cv2.imwrite(os.path.join(img_dir, str(i)+'.jpg'), result['image'])
+        gt_file = os.path.join(gt_dir, str(i) + '.txt')
+        if dataset_type == 'total':
+            gt_file = os.path.join(gt_dir, 'poly_gt_' + str(i) + '.txt')
+        with open(gt_file, 'w') as f:
+            ignore_tags = result['ignore_tags']
+            for j, box in enumerate(result['polys']):
+                box_str = ''
+                if dataset_type == 'ctw1500':
+                    box_str = '0, 0, 0, 0, '
+                for pt in box:
+                    box_str += str(pt[0]) + ', ' + str(pt[1]) + ', '
+                if dataset_type == 'total':
+                    if ignore_tags[j]:
+                        box_str += '###\n'
+                    else:
+                        box_str += 'TEXT\n'
+                else:
+                    box_str = box_str[:-2] + '\n'
+                f.write(box_str)
         # cv2.namedWindow('res', cv2.WINDOW_NORMAL)
         # cv2.imshow('res', data['image'])
         # cv2.waitKey()
@@ -375,5 +420,8 @@ if __name__ == '__main__':
     # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train',
     #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train_res')
 
-    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample',
-              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res', 'total')
+    # cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample',
+    #           'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res', 'total')
+
+    cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
+              'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500')

@@ -5,6 +5,8 @@ import glob
 import pathlib
 import os
 import cv2
+import random
+import copy
 
 def load_data_15(data_dir: str) -> list:
     data_list = []
@@ -118,7 +120,7 @@ def get_annotation_curve(label_path: str, dataset_type) -> tuple:
 
     return boxes, text_tags
 
-def cvt_15(data_dir, save_dir):
+def cvt_15(data_dir, save_dir, dataset_count_scale=1, use_shape_adaptor=False):
     cur_num = 0
     img_dir = os.path.join(save_dir, 'img')
     gt_dir = os.path.join(save_dir, 'gt')
@@ -129,8 +131,11 @@ def cvt_15(data_dir, save_dir):
         cur_num = len(os.listdir(img_dir))
 
     data_list = load_data_15(data_dir)
+    random.shuffle(data_list)
+    for i in range(dataset_count_scale-1):
+        data_list.extend(copy.deepcopy(data_list))
     pbar = tqdm(total=len(data_list))
-    cp = CopyPaste(0.5, True, 0.05, scales = [1, 2])
+    cp = CopyPaste_v2(0.5, True, 0.05, scales = [1, 2], use_shape_adaptor=use_shape_adaptor)
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
         result = cp(data)
@@ -158,7 +163,7 @@ def cvt_15(data_dir, save_dir):
         # cv2.waitKey()
 
 
-def cvt_curve(data_dir, save_dir, dataset_type):
+def cvt_curve(data_dir, save_dir, dataset_type, dataset_count_scale=1, use_shape_adaptor=False):
 
     cur_num = 0
     img_dir = os.path.join(save_dir, 'img')
@@ -170,8 +175,11 @@ def cvt_curve(data_dir, save_dir, dataset_type):
         cur_num = len(os.listdir(img_dir))
 
     data_list = load_data_curve(data_dir, dataset_type)
+    random.shuffle(data_list)
+    for i in range(dataset_count_scale-1):
+        data_list.extend(copy.deepcopy(data_list))
     pbar = tqdm(total=len(data_list))
-    cp = CopyPaste_v2(0.5, True, 0.05, scales = [1, 2])
+    cp = CopyPaste_v2(0.5, True, 0.05, scales = [0.8, 1.5], use_shape_adaptor=use_shape_adaptor)
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
         result = cp(data)
@@ -219,11 +227,24 @@ if __name__ == '__main__':
     # i = get_intersection([[340,295], [482,295], [482,338], [340, 338]], [[345,295], [487,295], [487,338], [347, 338]])
     # print('i:', i)
 
+########################################## for test
     # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train',
     #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train_res')
 
-    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample2',
-              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res2', 'total')
+    # cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample2',
+    #           'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res2', 'total', 2, True)
 
     # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
-    #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500')
+    #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)
+##########################################
+
+
+
+    cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train',
+           'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train_cp', 1, False)
+
+    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\train',
+              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\train_cp', 'total', 1, True)
+
+    # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
+    #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)

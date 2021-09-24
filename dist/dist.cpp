@@ -134,7 +134,6 @@ namespace dist{
 
         int dx[4] = {-1, 1, 0, 0};
         int dy[4] = {0, 0, -1, 1};
-        // pse Alg
         //逐像素四邻域向外扩张
         // merge from small to large kernel progressively
         while(!q.empty())

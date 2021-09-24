@@ -17,10 +17,10 @@ import random
 import numpy as np
 from PIL import Image, ImageDraw
 from shapely.geometry import Polygon
-
+import math
 
 class CopyPaste(object):
-    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], **kwargs):
+    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], use_shape_adaptor=False, **kwargs):
         self.ext_data_num = 1
         self.objects_paste_ratio = objects_paste_ratio  # 复制百分之多少的text
         self.limit_paste = limit_paste
@@ -28,6 +28,7 @@ class CopyPaste(object):
         self.scales = scales
         self.angle = angle
         self.filt_large_text = 0.1 #大于图片面积百分比的文本不复制
+        self.use_shape_adaptor = use_shape_adaptor
 
     def __call__(self, data):
         src_img = data['image']
@@ -78,7 +79,7 @@ class CopyPaste(object):
             # getEdge(text_img)
 
         for text_img, poly, tag in zip(text_imgs, new_polys, select_ignores):
-            src_img, new_poly = self.paste_img(src_img, text_img, poly, src_polys)
+            src_img, new_poly = self.paste_img(src_img, text_img, poly, src_polys, src_ignores)
             if new_poly is not None:
                 src_polys.append(new_poly.tolist())
                 src_ignores.append(tag)
@@ -92,7 +93,10 @@ class CopyPaste(object):
         data['ignore_tags'] = np.array(src_ignores)
         return data
 
-    def paste_img(self, src_img, text_img, poly, src_polys):
+    def paste_img(self, src_img, text_img, poly, src_polys, select_ignores):
+        if self.use_shape_adaptor:
+            text_img, poly = self.shape_adaptor(text_img, np.array(poly, dtype=np.float64), np.array(src_polys), select_ignores)
+
         text_img, poly = self.resize(text_img, np.array(poly, dtype=np.float64))
 
         src_w, src_h = src_img.size
@@ -124,7 +128,10 @@ class CopyPaste(object):
         max = self.scales[-1] * 10
         rd_scale = np.random.randint(min, max, 1)
         rd_scale = rd_scale / 10
-        text_img = text_img.resize((rd_scale * text_img.size[0], rd_scale * text_img.size[1]), Image.BILINEAR)
+        return self.resize_(text_img, poly, rd_scale)
+
+    def resize_(self, text_img, poly, rd_scale):
+        text_img = text_img.resize((int(rd_scale * text_img.size[0]), int(rd_scale * text_img.size[1])), Image.BILINEAR)
         poly *= rd_scale
         return text_img, poly.tolist()   # .astype(np.uint8)
 
@@ -139,7 +146,11 @@ class CopyPaste(object):
 
                 bValid = True
                 for poly in src_polys:
-                    iou = get_intersection_over_union(poly, randn_poly.tolist())
+                    try:
+                        iou = get_intersection_over_union(poly, randn_poly.tolist())
+                    except Exception as e:
+                        print('iou cal Exception.')
+                        continue
                     # print('iou: ',iou)
                     if iou > self.iou:   # 和原多边形有交集
                         print('iou: ', iou)
@@ -152,6 +163,23 @@ class CopyPaste(object):
             paste_x = random.randint(0, endx)
             paste_y = random.randint(0, endy)
             return paste_x, paste_y
+
+    def shape_adaptor(self, text_img, text_poly, polys, select_ignores):
+        # 长边中位数
+        long_sides = []
+        for poly, tag in zip(polys, select_ignores):
+            if tag:
+                continue
+            poly = np.array(poly)
+            xmin, ymin, xmax, ymax = poly[:, 0].min(), poly[:, 1].min(), poly[:, 0].max(), poly[:, 1].max()
+            # long_side = max((xmax - xmin), (ymax - ymin))
+            long_side = (xmax - xmin) * (ymax - ymin)
+            long_sides.append(long_side)
+        long_side_media = np.median(long_sides)
+        scale = math.sqrt(long_side_media*1.0 / (text_img.size[0]*text_img.size[1]))  #max(text_img.size)
+        print('adaptor scale: ', scale)
+        text_img, text_poly = self.resize_(text_img, text_poly, scale)
+        return text_img, text_poly
 
 def get_union(pD, pG):
     return Polygon(pD).union(Polygon(pG)).area

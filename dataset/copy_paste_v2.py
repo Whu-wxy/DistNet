@@ -7,13 +7,14 @@ import random
 
 # 前面图片中的text放到后面的图片中
 class CopyPaste_v2(CopyPaste):
-    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], **kwargs):
-        super().__init__(objects_paste_ratio, limit_paste, iou, scales, angle)
+    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], use_shape_adaptor=False, **kwargs):
+        super().__init__(objects_paste_ratio, limit_paste, iou, scales, angle, use_shape_adaptor)
 
         self.max_text_region_ratio = 0.4    # 文字与图片面积的比例0-0.4---->从buffer中取出的比例: 0.4-0
         self.buffer_size = 20
         self.text_img_buffer = []
         self.refresh_ratio = 0.1
+        self.refresh_buffer_img_short_side_th = 500
 
     def __call__(self, data):
         src_img = data['image']
@@ -45,13 +46,14 @@ class CopyPaste_v2(CopyPaste):
             # paste
             indexs = [i for i in range(len(src_ignores)) if not src_ignores[i]]
             for buffer in self.text_img_buffer[:select_num]:
-                src_img, new_poly = self.paste_img(src_img, buffer['image'], buffer['polys'], src_polys)
+                src_img, new_poly = self.paste_img(src_img, buffer['image'], buffer['polys'], src_polys, src_ignores)
                 if new_poly is not None:
                     src_polys.append(new_poly.tolist())
                     src_ignores.append(False)
 
             # refresh buffer
-            if len(indexs) != 0 and len(src_polys) != 0:
+            if len(indexs) != 0 and len(src_polys) != 0 and min(src_img.size) > self.refresh_buffer_img_short_side_th \
+                    and len(self.text_img_buffer) == self.buffer_size:
                 # 随机取出self.buffer_size个文本块
                 random.shuffle(indexs)
                 random.shuffle(self.text_img_buffer)
@@ -64,6 +66,7 @@ class CopyPaste_v2(CopyPaste):
 
         src_img = cv2.cvtColor(np.array(src_img), cv2.COLOR_RGB2BGR)
         h, w = src_img.shape[:2]
+        src_polys = pad_polys(src_polys)
         src_polys = np.array(src_polys)
         src_polys[:, :, 0] = np.clip(src_polys[:, :, 0], 0, w)
         src_polys[:, :, 1] = np.clip(src_polys[:, :, 1], 0, h)
@@ -107,3 +110,16 @@ class CopyPaste_v2(CopyPaste):
             text_imgs.append(text_img)
 
         return text_imgs, new_polys
+
+def pad_polys(boxes):
+    pt_count = 0
+    for box in boxes:
+        if len(box) > pt_count:
+            pt_count = len(box)
+    for i, box in enumerate(boxes):
+        if len(box) < pt_count:
+            box2 = box
+            for j in range(len(box), pt_count):
+                box2.append(box[-1])
+            boxes[i] = box2
+    return boxes

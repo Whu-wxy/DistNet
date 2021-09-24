@@ -8,54 +8,44 @@ import matplotlib.pyplot as plt
 
 import config
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+# BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-    raise RuntimeError('Cannot compile dis: {}'.format(BASE_DIR))
-
-from .dist import dist_cpp
-
-def dist_warpper(region, center, probs=None):
-    '''
-    后处理在这里修改
-    reference https://github.com/liuheng92/tensorflow_PSENet/blob/feature_dev/pse
-    :return:
-    '''
+# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+#     raise RuntimeError('Cannot compile dis: {}'.format(BASE_DIR))
+#
+# from .dist import dist_cpp
 
 
-    start = time.time()
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), probs, 0.95, 0.988, 200)   #0.98, 0.9861
-    pred_time = time.time()
-    pred_time2 = pred_time - start
-    print('to0: ', pred_time2)
+## fast post propress in python-------------dilate_alg
+def dist_cpp(center, region, biregion, center_area_th, full_area_th, full_min_area, center_min_area=5):
+    # center = np.array(center)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))  # 椭圆结构
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
 
-    return np.array(pred)
-
-##
-def dilate_alg(center, min_area=5, probs=None):
-    center = np.array(center)
-    label_num, label_img = cv2.connectedComponents(center.astype(np.uint8), connectivity=4)
+    label_num, label_img = cv2.connectedComponents(center, connectivity=4)   #.astype(np.uint8)
 
     label_values = []
     for label_idx in range(1, label_num):
-        if np.sum(label_img == label_idx) < min_area:
+        score_i = np.mean(biregion[label_img == label_idx])  # cenver ave score
+        if np.sum(label_img == label_idx) < center_min_area or score_i < center_area_th:
             label_img[label_img == label_idx] = 0
             continue
 
-        score_i = np.mean(probs[label_img == label_idx])
-        if score_i < 0.85:
-            continue
-        label_values.append(label_idx)
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))  # 椭圆结构
-    #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
-    for label_idx in range(1, label_num):
         label_i = np.where(label_img == label_idx, 255, 0)
         label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
-        bi_label_dilation = np.where(label_dilation == 255, 0, 1)
-        label_dilation = np.where(label_dilation == 255, label_idx, 0)
-        label_img = bi_label_dilation * label_img + label_dilation
+
+        score_i = np.mean(biregion[label_dilation == 255])  # region ave score
+        if np.sum(label_dilation == 255) < full_min_area or score_i < full_area_th:
+            label_img[label_dilation == 255] = 0
+            continue
+
+        # bi_label_dilation = np.where(label_dilation == 255, 0, 1)
+        # label_dilation = np.where(label_dilation == 255, label_idx, 0)
+        # label_img = bi_label_dilation * label_img + label_dilation
+        #### label_img = np.where(label_dilation == 255, label_idx, 0)
+        label_img[label_dilation == 255] = label_idx
+        label_values.append(label_idx)
 
     return np.array(label_img), label_values
 
@@ -64,6 +54,7 @@ def decode(preds, scale):
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
     :param preds: 网络输出
+    :param scale: 图片放大倍率
     :return: 最后的输出图和文本框
     """
 
@@ -100,11 +91,10 @@ def decode(preds, scale):
     # cv2.imwrite('../region.jpg', region * 255)
     # cv2.imwrite('../center.jpg', center * 255)
     #
-    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
+    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
 
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
@@ -113,8 +103,8 @@ def decode(preds, scale):
 
     bbox_list = []
     scores_list = []
-    label_values = int(np.max(pred))
-    for label_value in range(label_values+1):
+    # label_values = int(np.max(pred))
+    for label_value in range(label_values): # +1
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
@@ -138,7 +128,6 @@ def decode(preds, scale):
         bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
     return pred, np.array(bbox_list), scores_list  # , preds
-
 
 
 def decode_curve(preds, scale):
@@ -182,15 +171,15 @@ def decode_curve(preds, scale):
 
     #CTW
     # area_threld = int(220 * scale)
-    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)
+    # pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)
 
     #Total
     area_threld = int(250 * scale)
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
+    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
 
     bbox_list = []
-    label_values = int(np.max(pred))
-    for label_value in range(label_values+1):
+    # label_values = int(np.max(pred))
+    for label_value in range(label_values):   # +1
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
@@ -374,7 +363,6 @@ def decode_dist(preds, scale):  # origin=0.7311
     # input()
 
 
-    #pred = dist_warpper(region, center, bi_region)   #概率图改为传bi_region
     area_threld = int(250*scale)
     # print('in cpp')
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), preds, 0.6, 0.6, area_threld)   # 0.95, 0.988, 200
@@ -429,8 +417,8 @@ if __name__ == '__main__':
                            [[0.3, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
                             [0.3, 0.3, 0.61, 0.7, 0.61, 0.3, 0],
                             [0.3, 0.3, 0.61, 0.61, 0.61, 0.3, 0],
-                            [0.3, 0.5, 0.5, 0, 0, 0, 0]]
-                           ])
+                            [0.3, 0.5, 0.5, 0, 0, 0, 0]]])
+
     preds, boxes_list = decode(logits, 1)
     print('preds:', preds)
     print('boxes_list:', boxes_list)

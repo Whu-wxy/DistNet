@@ -40,6 +40,7 @@ class CopyPaste_v2(CopyPaste):
                 select_polys = [src_polys[idx] for idx in select_idxs]
                 text_imgs, polys = self.get_text_imgs(src_img, select_polys)
                 for i, p in zip(text_imgs, polys):
+                    # i.show()
                     self.text_img_buffer.append({'image': i, 'polys': p})
 
         if len(self.text_img_buffer) > 0:

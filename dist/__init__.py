@@ -104,16 +104,14 @@ def decode(preds, scale):
     bbox_list = []
     scores_list = []
     # label_values = int(np.max(pred))
-    for label_value in range(label_values): # +1
+    for label_value in label_values:   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-
         # score = np.where(pred == label_value, preds, 0)
         # score = np.mean(score)
         scores_list.append(1)
-
 
         rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
@@ -124,7 +122,6 @@ def decode(preds, scale):
         #         continue
 
         bbox = cv2.boxPoints(rect)
-
         bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
     return pred, np.array(bbox_list), scores_list  # , preds
@@ -179,7 +176,7 @@ def decode_curve(preds, scale):
 
     bbox_list = []
     # label_values = int(np.max(pred))
-    for label_value in range(label_values):   # +1
+    for label_value in label_values:   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
@@ -204,7 +201,6 @@ def decode_curve(preds, scale):
 
         bbox = bbox*1.0 / scale
         bbox = bbox.astype('int32')
-
         bbox_list.append(bbox.reshape(-1))
     return pred, bbox_list  # , preds
 
@@ -257,7 +253,6 @@ def decode_biregion(preds, scale):
         #         continue
 
         bbox = cv2.boxPoints(rect)
-
         bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
     return preds, np.array(bbox_list)  #, scores_list  # , preds
@@ -313,7 +308,6 @@ def decode_curve_biregion(preds, scale):
 
         bbox = bbox * 1.0 / scale
         bbox = bbox.astype('int32')
-
         bbox_list.append(bbox.reshape(-1))
     return label_img, bbox_list  # , preds
 
@@ -393,7 +387,6 @@ def decode_dist(preds, scale):  # origin=0.7311
         # score = np.mean(score)
         scores_list.append(1)
 
-
         rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
         #     if rect[1][1] <= 10*scale:
@@ -403,7 +396,6 @@ def decode_dist(preds, scale):  # origin=0.7311
         #         continue
 
         bbox = cv2.boxPoints(rect)
-
         bbox_list.append([bbox[1], bbox[2], bbox[3], bbox[0]])
 
     return pred, np.array(bbox_list), scores_list  # , preds

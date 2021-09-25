@@ -231,8 +231,8 @@ if __name__ == '__main__':
     # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train',
     #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train_res')
 
-    # cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample2',
-    #           'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res2', 'total', 2, True)
+    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample2',
+              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res2', 'total', 1, True)
 
     # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
     #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)
@@ -240,11 +240,11 @@ if __name__ == '__main__':
 
 
 
-    cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train',
-           'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train_cp', 1, False)
-
-    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\train',
-              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\train_cp', 'total', 1, True)
+    # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train',
+    #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train_cp', 1, False)
+    #
+    # cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\train',
+    #           'F:\\zzxs\\Experiments\\dl-data\\TotalText\\train_cp', 'total', 1, True)
 
     # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
     #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)

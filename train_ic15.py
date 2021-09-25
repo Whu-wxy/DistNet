@@ -406,9 +406,9 @@ if __name__ == '__main__':
 
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=2)
 
-    # model = CRAFT(num_out=2, pretrained=True)
+    model = CRAFT(num_out=2, pretrained=True)
 
-    model = CRAFT_test(num_out=2, pretrained=True)
+    # model = CRAFT_test(num_out=2, pretrained=True)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

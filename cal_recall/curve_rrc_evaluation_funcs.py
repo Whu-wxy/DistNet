@@ -182,6 +182,7 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
 	if LTRB:
 		# do not use
 		raise Exception('Not implemented.')
+		print('Exception000: ', "Not implemented.")
 
 	else:
 		if withTranscription and withConfidence:
@@ -191,6 +192,7 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
 				points = [float(ic) for ic in cors[:-2]]
 			except Exception as e:
 				raise (e)
+				print('Exception111: ', e)
 		elif withConfidence:
 			cors = line.split(',')
 			assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'
@@ -198,13 +200,26 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
 				points = [float(ic) for ic in cors[:-1]]
 			except Exception as e:
 				raise (e)
+				print('Exception222: ', e)
 		elif withTranscription:
+			# print(line, '\n')
 			cors = line.split(',')
-			assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'
+			# if len(cors) % 2 != 1:
+			# 	raise AssertionError("")
+			# assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'
 			try:
-				points = [float(ic) for ic in cors[:-1]]
+				points = []
+				# points = [float(ic) for ic in cors[:-1]]
+				for i in cors[:-1]:
+					if not i.isdigit():
+						# print('not digit:', i)
+						break
+					else:
+						points.append(float(i))
 			except Exception as e:
 				raise (e)
+				print('Exception333: ', e)
+
 		else:
 			cors = line.split(',')
 			assert (len(cors) % 2 == 0), 'num cors should be even.'
@@ -212,6 +227,7 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
 				points = [float(ic) for ic in cors[:]]
 			except Exception as e:
 				raise (e)
+				print('Exception444: ', e)
 
 		# validate_clockwise_points(points)
 
@@ -224,6 +240,7 @@ def get_tl_line_values(line, LTRB=True, withTranscription=False, withConfidence=
 			confidence = 1.0
 		except ValueError:
 			raise Exception("Confidence value must be a float")
+			print('Exception555: ', "Confidence value must be a float")
 
 	if withTranscription:
 		# posTranscription = numPoints + (2 if withConfidence else 1)

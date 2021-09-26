@@ -69,8 +69,10 @@ def validate_data(gtFilePath, submFilePath, evaluationParams):
 
     # Validate format of GroundTruth
     for k in gt:
-        validate_lines_in_file(k, gt[k], evaluationParams['CRLF'], evaluationParams['LTRB'], True)
-
+        try:
+            validate_lines_in_file(k, gt[k], evaluationParams['CRLF'], evaluationParams['LTRB'], True)
+        except Exception as e:
+            print('Exception666: ', e)
     # Validate format of results
     for k in subm:
         if (k in gt) == False:
@@ -253,7 +255,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     totalNumGtPols = 0
     totalNumDetPols = 0
 
-    fper_ = open('per_sample_result.txt', 'w')
+    # fper_ = open('per_sample_result.txt', 'w')
 
     for resFile in gt:
         gtFile = decode_utf8(gt[resFile])
@@ -292,6 +294,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
 
         pointsList, _, transcriptionsList = get_tl_line_values_from_file_contents(gtFile, evaluationParams['CRLF'],
                                                                                   evaluationParams['LTRB'], True, False)
+
         for n in range(len(pointsList)):
             points = pointsList[n]
             transcription = transcriptionsList[n]
@@ -316,6 +319,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
             pointsList, confidencesList, _ = get_tl_line_values_from_file_contents(detFile, evaluationParams['CRLF'],
                                                                                    evaluationParams['LTRB'], False,
                                                                                    evaluationParams['CONFIDENCES'])
+
             for n in range(len(pointsList)):
                 points = pointsList[n]
 
@@ -335,6 +339,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
                         if (precision > evaluationParams['AREA_PRECISION_CONSTRAINT']):
                             detDontCarePolsNum.append(len(detPols) - 1)
                             break
+
 
             evaluationLog += "DET polygons: " + str(len(detPols)) + (
                 " (" + str(len(detDontCarePolsNum)) + " don't care)\n" if len(detDontCarePolsNum) > 0 else "\n")
@@ -413,7 +418,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         tiouHmean = 0 if (tiouPrecision + tiouRecall) == 0 else 2.0 * tiouPrecision * tiouRecall / (
                     tiouPrecision + tiouRecall)
         iouHmean = 0 if (iouPrecision + iouRecall) == 0 else 2.0 * iouPrecision * iouRecall / (iouPrecision + iouRecall)
-
+        print('hmean:', hmean)
         matchedSum += detMatched
         matchedSum_iou += detMatched_iou
         matchedSum_tiouGt += detMatched_tiouGt
@@ -422,7 +427,6 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         matchedSum_coverOtherGt += detMatched_coverOtherGt
         numGlobalCareGt += numGtCare
         numGlobalCareDet += numDetCare
-
         if evaluationParams['PER_SAMPLE_RESULTS']:
             perSampleMetrics[resFile] = {
                 'precision': precision,
@@ -448,19 +452,21 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         #     resFile + '\t"IoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})",\t"TIoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})".\n'.format(
         #         precision, recall, hmean, tiouPrecision, tiouRecall, tiouHmean))
 
-        fper_.writelines('{:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
+        # fper_.writelines('{:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
+        print('pass9')
         try:
             totalNumGtPols += len(gtPols)
             totalNumDetPols += len(detPols)
+            print('pass10')
         except Exception as e:
             raise e
-    fper_.close()
+            print('error here')
+    # fper_.close()
 
     # Compute MAP and MAR
     AP = 0
     if evaluationParams['CONFIDENCES']:
         AP = compute_ap(arrGlobalConfidences, arrGlobalMatches, numGlobalCareGt)
-
     print('num_gt, num_det: ', numGlobalCareGt, totalNumDetPols)
     methodRecall = 0 if numGlobalCareGt == 0 else float(matchedSum) / numGlobalCareGt
     methodPrecision = 0 if numGlobalCareDet == 0 else float(matchedSum) / numGlobalCareDet
@@ -471,7 +477,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     methodPrecision_iou = 0 if numGlobalCareDet == 0 else float(matchedSum_iou) / numGlobalCareDet
     iouMethodHmean = 0 if methodRecall_iou + methodPrecision_iou == 0 else 2 * methodRecall_iou * methodPrecision_iou / (
                 methodRecall_iou + methodPrecision_iou)
-
+    print('pass2')
     methodRecall_tiouGt = 0 if numGlobalCareGt == 0 else float(matchedSum_tiouGt) / numGlobalCareGt
     methodPrecision_tiouDt = 0 if numGlobalCareDet == 0 else float(matchedSum_tiouDt) / numGlobalCareDet
     tiouMethodHmean = 0 if methodRecall_tiouGt + methodPrecision_tiouDt == 0 else 2 * methodRecall_tiouGt * methodPrecision_tiouDt / (
@@ -512,10 +518,17 @@ if __name__ == '__main__':
     save_path = '../../test_resultCTW/result'
 
     type = 'total'
-    gt_path = '../../data/totaltext/test/gt'  # data/totaltext/test/gt'  # gt_2pts, gt
-    save_path = '../../test_resultTotal/result2'
+    gt_path = 'F:\zzxs\Experiments\dl-data\TotalText\sample2\gt'  # data/totaltext/test/gt'  # gt_2pts, gt
+    save_path = 'F:\zzxs\Experiments\dl-data\TotalText\sample2\\res'
 
     result = curve_cal_recall_precison_f1(type, gt_path, save_path)
     print(result)
     print(result['recall'])
 
+    # cors = ['664', '162', '835', '250', '874', '421', '820', '421', '764', '292', '646', '226', 'PERMIT']
+	# 		# print('\ncors:', cors)
+    # if len(cors) % 2 - 1 == 0:
+    #     print('even')
+    # else:
+    #     print('odd')
+    # # assert (len(cors) % 2 - 1 == 0), 'num cors should be even.'

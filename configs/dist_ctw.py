@@ -5,7 +5,7 @@ dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py
 
 trainroot = '../data/ctw1500/train'
 testroot = '../data/ctw1500/test'
-output_dir = '../save/CTW/distv2_CTW_exdata333'
+output_dir = '../save/CTW/dist_CTW'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 

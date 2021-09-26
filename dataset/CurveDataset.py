@@ -25,7 +25,7 @@ time_sum = 0
 class CurveDataset(data.Dataset):
     def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None, target_transform=None):
         self.dataset_type = dataset_type
-        self.data_list = self.load_data(data_dir)
+        self.data_list = self.load_data(data_dir)[:50]
         self.data_shape = data_shape
         self.transform = transform
         self.target_transform = target_transform

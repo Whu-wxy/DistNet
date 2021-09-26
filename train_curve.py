@@ -346,7 +346,7 @@ def main(model, criterion):
             # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
             #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
                 result_dict = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
-
+                print('result_dict:', result_dict)
                 recall = result_dict['recall']
                 precision = result_dict['precision']
                 f1 = result_dict['hmean']

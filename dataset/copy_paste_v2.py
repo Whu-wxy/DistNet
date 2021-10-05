@@ -13,7 +13,7 @@ class CopyPaste_v2(CopyPaste):
         self.max_text_region_ratio = 0.4    # 文字与图片面积的比例0-0.4---->从buffer中取出的比例: 0.4-0
         self.buffer_size = 20
         self.text_img_buffer = []
-        self.refresh_ratio = 0.1
+        self.refresh_ratio = 0.2
         self.refresh_buffer_img_short_side_th = 500
 
     def __call__(self, data):

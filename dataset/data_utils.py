@@ -333,7 +333,7 @@ def get_distance_map_v2(text_polys, h, w):
 import timeit
 
 def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
-                degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
+                degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0]), for_test=False) -> tuple:
     '''
     get image's corresponding matrix and ground truth
     return
@@ -365,7 +365,12 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     # 检查越界
 
     text_polys = check_and_validate_polys(text_polys, (h, w))
-    im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
+    if not for_test:
+        im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
+    else:
+        maxVal = max(w, h)
+        if maxVal > 2000:
+            im = cv2.resize(im, (0, 0), fx=2000.0/maxVal, fy=2000.0/maxVal)
 
     intersection_threld *= im.shape[0] / h
     h, w, _ = im.shape
@@ -399,8 +404,11 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     # global dur
     # dur += time.time() - start
 
+    if for_test:
+        return im, training_mask, distance_map
+
     ##############################
-    imgs = data_aug.random_crop_author([im,training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
 
     #return im, training_mask, distance_map
     return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#

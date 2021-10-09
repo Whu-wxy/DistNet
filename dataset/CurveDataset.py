@@ -23,12 +23,13 @@ from dataset.data_utils import image_label, image_label_v2, image_label_v3, Data
 time_sum = 0
 
 class CurveDataset(data.Dataset):
-    def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None, target_transform=None):
+    def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None, target_transform=None, for_test=False):
         self.dataset_type = dataset_type
         self.data_list = self.load_data(data_dir)
         self.data_shape = data_shape
         self.transform = transform
         self.target_transform = target_transform
+        self.for_test=for_test
 
         #self.aug = augument()  #20200302增加新augument方式
 
@@ -37,7 +38,7 @@ class CurveDataset(data.Dataset):
         img_path, text_polys, text_tags = self.data_list[index]
         img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
-                                                                   scales = np.array(config.random_scales))
+                                                                   scales = np.array(config.random_scales), for_test = self.for_test)
 
         # global time_sum
         # time_sum += dur
@@ -81,16 +82,26 @@ class CurveDataset(data.Dataset):
                 try:
                     if self.dataset_type == 'ctw1500':
                         text_tags.append(False)
-                        xmin, ymin, w, h = list(map(float, params[:4]))
                         box = []
-                        x = 0
-                        y = 0
-                        for i, val in enumerate(params[4:]):
-                            if i % 2 == 0:
-                                x = xmin + int(val)
-                            elif i % 2 == 1:
-                                y = ymin + int(val)
-                                box.append([x, y])
+                        if len(params) % 2 == 1:
+                            x = 0
+                            y = 0
+                            for i, val in enumerate(params[:-1]):
+                                if i % 2 == 0:
+                                    x = int(val)
+                                elif i % 2 == 1:
+                                    y = int(val)
+                                    box.append([x, y])
+                        else:
+                            xmin, ymin, w, h = list(map(float, params[:4]))
+                            x = 0
+                            y = 0
+                            for i, val in enumerate(params[4:]):
+                                if i % 2 == 0:
+                                    x = xmin + int(val)
+                                elif i % 2 == 1:
+                                    y = ymin + int(val)
+                                    box.append([x, y])
                         boxes.append(box)
                     elif self.dataset_type == 'total':
                         box = []
@@ -104,6 +115,9 @@ class CurveDataset(data.Dataset):
                             params.pop(-1)
                         else:
                             text_tags.append(False)
+                        if len(params) % 2 == 1:
+                            params.pop(-1)
+
                         for i, val in enumerate(params):
                             if i % 2 == 0:
                                 x = int(val)

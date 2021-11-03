@@ -418,7 +418,6 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
             tiouHmean = 0 if (tiouPrecision + tiouRecall) == 0 else 2.0 * tiouPrecision * tiouRecall / (
                         tiouPrecision + tiouRecall)
             iouHmean = 0 if (iouPrecision + iouRecall) == 0 else 2.0 * iouPrecision * iouRecall / (iouPrecision + iouRecall)
-            print('hmean:', hmean)
             matchedSum += detMatched
             matchedSum_iou += detMatched_iou
             matchedSum_tiouGt += detMatched_tiouGt

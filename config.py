@@ -31,6 +31,8 @@ start_test_epoch = 200      #绝对值
 test_inteval = 2
 always_test_threld = 0.75
 
+test_for_loss_inteval = 5
+
 # Learning rate
 optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4

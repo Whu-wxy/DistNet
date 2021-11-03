@@ -26,7 +26,7 @@ class CopyPaste_v2(CopyPaste):
 
         text_ratio = self.cal_text_ratio(src_img, np.array(src_polys))
         # 文本面积比例比较大，不添加
-        select_num = int((self.max_text_region_ratio-text_ratio)*self.buffer_size) if text_ratio<self.max_text_region_ratio else 0
+        select_num = int((self.max_text_region_ratio - text_ratio)*self.buffer_size) if text_ratio<self.max_text_region_ratio else 0
 
         # 需要填满buffer
         if len(self.text_img_buffer) < self.buffer_size:

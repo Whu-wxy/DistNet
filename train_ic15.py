@@ -157,6 +157,83 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     return train_loss / all_step, lr
 
 
+def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, logger):
+
+    net.eval()
+    test_loss, dice_center_ave, dice_region_ave, weighted_mse_region_ave, dice_bi_region_ave = 0., 0., 0., 0., 0.
+    start = time.time()
+
+    for i, (images, training_mask, distance_map) in enumerate(test_loader):
+        cur_batch = images.size()[0]
+        non_blocking = False
+        if config.pin_memory and config.workers > 1:
+            non_blocking = True
+
+        #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
+        images = images.to(device, non_blocking=non_blocking)
+
+        # Forward
+        outputs = net(images)   #B1HW
+
+        # labels, training_mask后面放到gpu是否会占用更少一些显存？
+        training_mask = training_mask.to(device, non_blocking=non_blocking)
+        distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
+        distance_map = distance_map.to(torch.float)
+
+        #outputs = torch.squeeze(outputs, dim=1)
+
+        #
+        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
+
+        # Backward
+        dice_center = dice_center.item()
+        dice_region = dice_region.item()
+        weighted_mse_region = weighted_mse_region.item()
+        dice_bi_region = dice_bi_region.item()
+        loss = loss.item()
+        test_loss += loss
+        dice_center_ave += dice_center
+        dice_region_ave += dice_region
+        weighted_mse_region_ave += weighted_mse_region
+        dice_bi_region_ave += dice_bi_region
+
+        cur_step = epoch * all_step + i
+
+        batch_time = time.time() - start
+        logger.info(
+            '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
+
+        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
+            # show images on tensorboard
+            if config.display_input_images:
+                ######image
+                x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
+                writer.add_image(tag='Test_input/image', img_tensor=x, global_step=cur_step)
+                ######distance_map
+                show_distance_map = distance_map * training_mask
+                show_distance_map = show_distance_map.detach().cpu()
+                show_distance_map = show_distance_map[:8, :, :]
+                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
+                                              pad_value=1)
+                writer.add_image(tag='Test_input/distmap', img_tensor=show_distance_map, global_step=cur_step)
+
+            if config.display_output_images:
+                ######output
+                outputs = outputs[:, 0, :, :]
+                outputs = torch.sigmoid(outputs)
+                show_y = outputs.detach().cpu()
+                show_y = show_y[:8, :, :]
+                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
+                writer.add_image(tag='Test_output/preds', img_tensor=show_y, global_step=cur_step)
+
+    writer.add_scalar(tag='Test_epoch/loss', scalar_value=test_loss / all_step, global_step=epoch)
+    writer.add_scalar(tag='Test_epoch/dice_center', scalar_value=dice_center_ave / all_step, global_step=epoch)
+    writer.add_scalar(tag='Test_epoch/dice_region', scalar_value=dice_region_ave / all_step, global_step=epoch)
+    writer.add_scalar(tag='Test_epoch/dice_bi_region', scalar_value=dice_bi_region_ave / all_step, global_step=epoch)
+    writer.add_scalar(tag='Test_epoch/weighted_mse_region', scalar_value=weighted_mse_region_ave / all_step, global_step=epoch)
+
+
 def eval(model, save_path, test_path, device):
     model.eval()
     # torch.cuda.empty_cache()  # speed up evaluating after training finished
@@ -232,6 +309,10 @@ def main(model, criterion):
 
     train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                num_workers=int(config.workers), pin_memory=config.pin_memory)
+    test_data = IC15Dataset(config.testroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor())
+
+    test_loader = DataLoaderX(dataset=test_data, batch_size=config.train_batch_size, shuffle=True,
+                               num_workers=int(config.workers), pin_memory=config.pin_memory) 
 
     writer = SummaryWriter(config.output_dir)
 
@@ -332,6 +413,9 @@ def main(model, criterion):
             elif (epoch > config.start_test_epoch and epoch > max(config.try_test_epoch)):
                 if epoch % config.test_inteval == 0:
                     bTest = True
+
+            if epoch % config.test_for_loss_inteval == 0 and epoch != 0:
+                eval_for_loss(model, test_loader, device, criterion, epoch, len(test_loader), writer, logger)
 
             # if epoch > max(config.try_test_epoch):
             #     net_save_path = '{}/train_PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)

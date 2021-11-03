@@ -4,6 +4,7 @@ from shapely.geometry import Polygon
 import cv2
 from dataset.copy_paste import CopyPaste
 import random
+import os
 
 # 前面图片中的text放到后面的图片中
 class CopyPaste_v2(CopyPaste):
@@ -88,6 +89,8 @@ class CopyPaste_v2(CopyPaste):
     def get_text_imgs(self, src_img, polys):
         text_imgs = []
         new_polys = []
+        # text_img_save_path = 'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res\\blocks'
+        # num = len(os.listdir(text_img_save_path))
         for poly in polys:
             src_img_rgba = np.asarray(src_img)
             maskIm = Image.new('L', (src_img_rgba.shape[1], src_img_rgba.shape[0]), 0)
@@ -108,6 +111,7 @@ class CopyPaste_v2(CopyPaste):
             new_poly[:, 1] -= ymin
             new_polys.append(new_poly.tolist())
             text_img = text_img.crop((xmin, ymin, xmax, ymax))
+            # text_img.save(os.path.join(text_img_save_path, str(num)+'.png'))
             text_imgs.append(text_img)
 
         return text_imgs, new_polys

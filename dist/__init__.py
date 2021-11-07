@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 
 import config
 
-# BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-# if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
-#     raise RuntimeError('Cannot compile dis: {}'.format(BASE_DIR))
-#
-# from .dist import dist_cpp
+if subprocess.call(['make', '-C', BASE_DIR]) != 0:  # return value
+    raise RuntimeError('Cannot compile dis: {}'.format(BASE_DIR))
+
+from .dist import dist_cpp
 
 
 
 ## fast post propress in python-------------dilate_alg
-def dist_cpp(center, region, biregion, center_area_th, full_area_th, full_min_area, center_min_area=5):
+def dilate_alg(center, region, biregion, center_area_th, full_area_th, full_min_area, center_min_area=5):
     # center = np.array(center)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))  # 椭圆结构
     # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
@@ -36,7 +36,8 @@ def dist_cpp(center, region, biregion, center_area_th, full_area_th, full_min_ar
         label_dilation = cv2.dilate(label_i.astype(np.uint8), kernel)
 
         score_i = np.mean(biregion[label_dilation == 255])  # region ave score
-        if np.sum(label_dilation == 255) < full_min_area or score_i < full_area_th:
+        area = np.sum(label_dilation == 255)
+        if np.sum(label_dilation == 255) < 50 or score_i < full_area_th: # full_min_area
             label_img[label_dilation == 255] = 0
             continue
 
@@ -75,27 +76,30 @@ def decode(preds, scale):
     preds = torch.add(preds, -1)
     #preds = preds + bi_region - 1
 
+
+
     # region = preds >= 0.295
     # center = preds >= 0.56
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
+
+    # plt.imshow(preds.cpu().numpy() * 255)
+    # plt.show()
     region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
+    # plt.imshow(region.cpu().numpy() * 255)
+    # plt.show()
+
     center = torch.where(preds >= 0.64, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
-    
 
-    region = region.to(device='cpu', non_blocking=True).numpy()
-    center = center.to(device='cpu', non_blocking=True).numpy()
-    bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
 
-    # pred2 = np.where((preds>=0.295) & (preds<=0.56), 1, 0)
-    # cv2.imwrite('../region.jpg', region * 255)
-    # cv2.imwrite('../center.jpg', center * 255)
-    #
+    region = region.to(device='cpu', non_blocking=False).numpy()
+    center = center.to(device='cpu', non_blocking=False).numpy()
+    bi_region = bi_region.to(device='cpu', non_blocking=False).numpy()
+
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
-    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
-
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.8, 0.8, area_threld)
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
     # print('label_num: ', label_num)
@@ -103,8 +107,8 @@ def decode(preds, scale):
 
     bbox_list = []
     scores_list = []
-    # label_values = int(np.max(pred))
-    for label_value in label_values:   # range(label_values+1)
+    label_values = int(np.max(pred))
+    for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
@@ -149,6 +153,9 @@ def decode_curve(preds, scale):
     preds = torch.add(preds, bi_region)
     preds = torch.add(preds, -1)
 
+    # plt.imshow(preds.cpu().numpy()*255)
+    # plt.show()
+
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
 
@@ -158,13 +165,17 @@ def decode_curve(preds, scale):
 
     #Total
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.62, ones_tensor, zeros_tensor)
 
 
-    region = region.to(device='cpu', non_blocking=True).numpy()
-    center = center.to(device='cpu', non_blocking=True).numpy()
-    bi_region = bi_region.to(device='cpu', non_blocking=True).numpy()
+    region = region.to(device='cpu', non_blocking=False).numpy()
+    center = center.to(device='cpu', non_blocking=False).numpy()
+    bi_region = bi_region.to(device='cpu', non_blocking=False).numpy()
 
+    # plt.imshow(region * 255)
+    # plt.show()
+    # plt.imshow(center * 255)
+    # plt.show()
 
     #CTW
     # area_threld = int(220 * scale)
@@ -172,11 +183,11 @@ def decode_curve(preds, scale):
 
     #Total
     area_threld = int(250 * scale)
-    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.97, area_threld)  # 0.95, 0.98
 
     bbox_list = []
-    # label_values = int(np.max(pred))
-    for label_value in label_values:   # range(label_values+1)
+    label_values = int(np.max(pred))
+    for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]

@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import logging
-from torchvision.models.utils import load_state_dict_from_url
+# from torchvision.models.utils import load_state_dict_from_url
+import torch.utils.model_zoo as model_zoo
 
 logger = logging.getLogger('project')
 
@@ -137,7 +138,8 @@ def _shufflenetv2(arch, pretrained, progress, *args, **kwargs):
         if model_url is None:
             raise NotImplementedError('pretrained {} is not supported as of now'.format(arch))
         else:
-            state_dict = load_state_dict_from_url(model_url, progress=progress)
+            # state_dict = load_state_dict_from_url(model_url, progress=progress)
+            state_dict = model_zoo.load_url(model_url)
             model.load_state_dict(state_dict,strict=False)
             logger.info('load pretrained models from imagenet')
     return model

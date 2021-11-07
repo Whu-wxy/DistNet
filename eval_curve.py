@@ -13,6 +13,7 @@ import timeit
 from cal_recall.curve_script import curve_cal_recall_precison_f1
 from utils import draw_bbox
 from dist import decode_curve
+import matplotlib.pyplot as plt
 
 from turbojpeg import TurboJPEG
 jpeg = TurboJPEG()
@@ -179,12 +180,13 @@ if __name__ == '__main__':
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_resultCTW/result'  # 2/result
+    save_path = '../test_resultCTW/'  # 2/result
 
 
-    long_size = 1050
+    long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
-    model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    model_path = '../total/total_Best_240_r0.093637_p0.838710_f10.168467.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../test_resultTotal'
@@ -192,7 +194,7 @@ if __name__ == '__main__':
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
-    fast_test=False
+    fast_test = True
 
     from models.craft import CRAFT
 
@@ -202,10 +204,10 @@ if __name__ == '__main__':
 
 
     # ctw1500/total
-    # result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
-    # print(result)
-    # print('scale:', scale)
-    # print('long_size: ', long_size)
+    result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
+    print(result)
+    print('scale:', scale)
+    print('long_size: ', long_size)
     #
     # ############################################
     # import time

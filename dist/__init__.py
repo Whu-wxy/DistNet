@@ -18,7 +18,7 @@ import config
 
 
 ## fast post propress in python-------------dilate_alg
-def dist_cpp(center, region, biregion, center_area_th, full_area_th, full_min_area, center_min_area=5):
+def dilate_alg(center, region, biregion, center_area_th, full_area_th, full_min_area, center_min_area=5):
     # center = np.array(center)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))  # 椭圆结构
     # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (25, 25))  # 椭圆结构
@@ -94,7 +94,7 @@ def decode(preds, scale):
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
-    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
 
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
@@ -103,8 +103,8 @@ def decode(preds, scale):
 
     bbox_list = []
     scores_list = []
-    # label_values = int(np.max(pred))
-    for label_value in label_values:   # range(label_values+1)
+    label_values = int(np.max(pred))
+    for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
@@ -172,11 +172,11 @@ def decode_curve(preds, scale):
 
     #Total
     area_threld = int(250 * scale)
-    pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
 
     bbox_list = []
-    # label_values = int(np.max(pred))
-    for label_value in label_values:   # range(label_values+1)
+    label_values = int(np.max(pred))
+    for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
         points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]

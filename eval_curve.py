@@ -179,20 +179,20 @@ if __name__ == '__main__':
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_resultCTW/result'  # 2/result
+    save_path = '../test_CTW/result'  # 2/result
 
 
     long_size = 1050
     data_type = 'total'  # ctw1500/total
-    model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    model_path = '../save/Total/dist_Total_record_test_loss/Best_100_r0.080432_p0.807229_f10.146288.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../test_resultTotal'
+    save_path = '../test_Total'
 #
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
-    fast_test=False
+    fast_test = True
 
     from models.craft import CRAFT
 
@@ -202,19 +202,19 @@ if __name__ == '__main__':
 
 
     # ctw1500/total
-    # result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
-    # print(result)
-    # print('scale:', scale)
-    # print('long_size: ', long_size)
-    #
-    # ############################################
-    # import time
-    # device = torch.device('cuda:0')  #cuda:0
-    # x = torch.randn(1, 3, 512, 512).to(device)
-    # start = time.time()
-    # y = net(x)
-    # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
-    #
+    result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
+    print(result)
+    print('scale:', scale)
+    print('long_size: ', long_size)
+    
+    ############################################
+    import time
+    device = torch.device('cuda:0')  #cuda:0
+    x = torch.randn(1, 3, 512, 512).to(device)
+    start = time.time()
+    y = net(x)
+    print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
+    
     # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
     #
     # print_model_parm_flops(net, x)

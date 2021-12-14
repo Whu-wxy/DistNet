@@ -99,7 +99,12 @@ def decode(preds, scale):
     area_threld = int(250*scale)
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
+<<<<<<< HEAD
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.8, 0.8, area_threld)
+=======
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
+
+>>>>>>> refs/remotes/origin/cp
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
     # print('label_num: ', label_num)
@@ -183,7 +188,11 @@ def decode_curve(preds, scale):
 
     #Total
     area_threld = int(250 * scale)
+<<<<<<< HEAD
     pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.97, area_threld)  # 0.95, 0.98
+=======
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.98, area_threld)
+>>>>>>> refs/remotes/origin/cp
 
     bbox_list = []
     label_values = int(np.max(pred))

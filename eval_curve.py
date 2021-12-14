@@ -185,12 +185,14 @@ if __name__ == '__main__':
 
     long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
+
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
     model_path = '../.save/Total/origin_adam/Best_165_r0.546522_p0.696603_f10.612503.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../.save/test/origin_adam'
-    #
+
+
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
@@ -217,13 +219,6 @@ if __name__ == '__main__':
     # y = net(x)
     # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
     #
-    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
-    #
-    # print_model_parm_flops(net, x)
-    # print_model_parm_nums(net)
-
-    #show_summary(net, 'E:/summery.xlsx')
-    # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 
 
 

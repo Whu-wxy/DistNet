@@ -173,9 +173,9 @@ if __name__ == '__main__':
     long_size = 800
     data_type = 'ctw1500'   # ctw1500/total
     model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
-#../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
-#../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
-#../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
+    #../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
+    #../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
+    #../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
 
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
@@ -186,11 +186,11 @@ if __name__ == '__main__':
     long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../total/total_Best_240_r0.093637_p0.838710_f10.168467.pth'
+    model_path = '../.save/Total/origin_adam/Best_165_r0.546522_p0.696603_f10.612503.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../test_resultTotal'
-#
+    save_path = '../.save/test/origin_adam'
+    #
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
@@ -199,9 +199,9 @@ if __name__ == '__main__':
     from models.craft import CRAFT
 
     net = CRAFT(num_out=2, pretrained=False)
-
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
+    print('save path:', save_path)
 
     # ctw1500/total
     result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
@@ -222,7 +222,16 @@ if __name__ == '__main__':
     # print_model_parm_flops(net, x)
     # print_model_parm_nums(net)
 
-
     #show_summary(net, 'E:/summery.xlsx')
     # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 
+
+
+# origin2
+# 1200  0.285 0.62    0.93, 0.978
+# tiouRecall: 0.477 tiouPrecision: 0.63 tiouHmean: 0.543
+# {'precision': 0.8304836345872008, 'recall': 0.7678410117434508, 'hmean': 0.7979347570992724}
+
+# origin_adam
+# tiouRecall: 0.31 tiouPrecision: 0.484 tiouHmean: 0.378
+# {'precision': 0.6842105263157895, 'recall': 0.5636856368563685, 'hmean': 0.6181277860326895}

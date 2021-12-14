@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/origin_adam'
+output_dir = '../.save/Total/origin2'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -24,15 +24,15 @@ epochs = 250   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [25, 75, 100, 125, 150, 175, 200, 225, 249]
+try_test_epoch = [0, 25, 75, 100, 125, 150, 175, 200, 225, 249]
 start_test_epoch = 150      #绝对值
 test_inteval = 3
-always_test_threld = 0.74
+always_test_threld = 0.75
 
 test_for_loss_inteval = 5
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
@@ -109,5 +109,6 @@ def print():
     with open(output_dir+'/config.json', 'w') as f:
         json.dump(tem_d, f, indent=4)
     return pformat(tem_d)
+
 
 

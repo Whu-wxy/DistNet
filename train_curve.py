@@ -162,7 +162,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     return train_loss / all_step, lr
 
 
-
 def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, logger):
     net.eval()
     test_loss, dice_center_ave, dice_region_ave, weighted_mse_region_ave, dice_bi_region_ave = 0., 0., 0., 0., 0.
@@ -189,18 +188,6 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
 
         #
         dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
-
-        # Backward
-        # dice_center = dice_center.item()
-        # dice_region = dice_region.item()
-        # weighted_mse_region = weighted_mse_region.item()
-        # dice_bi_region = dice_bi_region.item()
-        # loss = loss.item()
-        # test_loss += loss
-        # dice_center_ave += dice_center
-        # dice_region_ave += dice_region
-        # weighted_mse_region_ave += weighted_mse_region
-        # dice_bi_region_ave += dice_bi_region
 
         test_loss += float(loss)
         dice_center_ave += float(dice_center)
@@ -301,7 +288,7 @@ def main(model, criterion):
     logger.info(config.print())
 
     torch.manual_seed(config.seed)  # 为CPU设置随机种子
-    torch.set_default_tensor_type(torch.DoubleTensor)
+    torch.set_default_tensor_type(torch.FloatTensor)   # DoubleTensor
     if config.gpu_id is not None and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))
@@ -419,14 +406,15 @@ def main(model, criterion):
                 eval_for_loss(model, test_loader, device, criterion, epoch, all_step_test, writer, logger)
 
             bTest = False
-            if last_f1 > config.always_test_threld:
+            if last_f1 > config.always_test_threld: # 大于某个值之后就一直测试
                 if epoch % config.test_inteval == 0:
                     bTest = True
-            elif epoch in config.try_test_epoch:
-                bTest = True
-            elif (epoch > config.start_test_epoch and epoch > max(config.try_test_epoch)):
-                if epoch % config.test_inteval == 0:
+            else:
+                if epoch in config.try_test_epoch:
                     bTest = True
+                elif epoch > config.start_test_epoch or epoch > max(config.try_test_epoch):
+                    if epoch % config.test_inteval == 0:
+                        bTest = True
 
             # if epoch > max(config.try_test_epoch):
             #     net_save_path = '{}/train_PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)

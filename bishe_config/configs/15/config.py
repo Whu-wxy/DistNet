@@ -1,15 +1,17 @@
-name = 'distv2_total_exdata'
+﻿name = 'distv2_IC15'
 
 # data config
-dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/totaltext/train'
-testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/origin_adam'
+mdConv = [True, True, False, False, False]
+
+trainroot = '../data/IC15/train'
+testroot = '../data/IC15/test'
+output_dir = '../.save/ic15/IC15_ori'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
-long_size = 1200  # 2240/None
+long_size = None  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
@@ -17,22 +19,22 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 9
+workers = 10
 pin_memory = True
 start_epoch = 0
-epochs = 250   #600
+epochs = 275   #600
 early_stop=20  #test F1
 
 train_batch_size = 6
-try_test_epoch = [25, 75, 100, 125, 150, 175, 200, 225, 249]
-start_test_epoch = 150      #绝对值
-test_inteval = 3
-always_test_threld = 0.74
+try_test_epoch = [0, 50, 100, 125, 150, 175, 200, 225, 250, 274]
+start_test_epoch = 180      #绝对值
+test_inteval = 2
+always_test_threld = 0.75
 
 test_for_loss_inteval = 5
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 
@@ -70,10 +72,9 @@ show_images_interval = 5000  #显示结果图片的iter间隔
 
 # check points
 pretrained = True   #backbone
-restart_training = True # begin from 0 epoch
+restart_training = False   # begin from 0 epoch
 load_lr = False
 checkpoint = ''   #full model ckpt
-#../save/dist_IC17_3/DistNet_IC17_150_loss1.043292.pth
 if len(checkpoint) != 0:
     pretrained = False
 

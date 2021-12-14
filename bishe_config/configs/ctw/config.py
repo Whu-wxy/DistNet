@@ -1,15 +1,15 @@
-name = 'distv2_total_exdata'
+name = 'distv2_ctw_exdata'
 
 # data config
-dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/totaltext/train'
-testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/origin_adam'
+trainroot = '../data/ctw1500/train'
+testroot = '../data/ctw1500/test'
+output_dir = '../save/CTW/dist_CTW_record_test_loss'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
-long_size = 1200  # 2240/None
+long_size = 800  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
@@ -17,22 +17,22 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 9
+workers = 14
 pin_memory = True
 start_epoch = 0
-epochs = 250   #600
+epochs = 201   #600
 early_stop=20  #test F1
 
-train_batch_size = 6
-try_test_epoch = [25, 75, 100, 125, 150, 175, 200, 225, 249]
-start_test_epoch = 150      #绝对值
-test_inteval = 3
-always_test_threld = 0.74
+train_batch_size = 9
+try_test_epoch = [0, 20, 60, 80, 90, 100, 105, 110, 115, 120, 140, 150, 156, 160, 170, 180, 190, 200]
+start_test_epoch = 130      #绝对值
+test_inteval = 1
+always_test_threld = 0.77
 
 test_for_loss_inteval = 5
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 

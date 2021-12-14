@@ -179,7 +179,7 @@ def decode_curve(preds, scale):
 
     #CTW
     # area_threld = int(220 * scale)
-    # pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.978, area_threld)
+    # pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.97, area_threld)
 
     #Total
     area_threld = int(250 * scale)

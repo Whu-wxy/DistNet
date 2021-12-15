@@ -66,14 +66,18 @@ class FaPNHead(nn.Module):
     def __init__(self, in_channels, channel=128, num_classes=19):
         super().__init__()
         in_channels = in_channels[::-1]
-        self.align_modules = nn.ModuleList([ConvModule(in_channels[0], channel, 1)])
+        if isinstance(channel, list):
+            channel = channel[::-1]
+        elif isinstance(channel, int):
+            channel = [channel for i in in_channels]
+        self.align_modules = nn.ModuleList([ConvModule(in_channels[0], channel[0], 1)])
         self.output_convs = nn.ModuleList([])
 
-        for ch in in_channels[1:]:
-            self.align_modules.append(FAM(ch, channel))
-            self.output_convs.append(ConvModule(channel, channel, 3, 1, 1))
+        for idx, ch in enumerate(in_channels[1:], start=1):
+            self.align_modules.append(FAM(ch, channel[idx-1]))
+            self.output_convs.append(ConvModule(channel[idx-1], channel[idx], 3, 1, 1))
 
-        self.conv_seg = nn.Conv2d(channel, num_classes, 1)
+        self.conv_seg = nn.Conv2d(channel[-1], num_classes, 1)
         self.dropout = nn.Dropout2d(0.1)
 
     def forward(self, features) -> Tensor:
@@ -89,7 +93,7 @@ class FaPNHead(nn.Module):
 
 if __name__ == '__main__':
 
-    from resnet import resnet18, resnet34, resnet50
+    from models.resnet import resnet18, resnet34, resnet50
     d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
     'resnet34': {'models': resnet34, 'out': [64, 128, 256, 512]},
     'resnet50': {'models': resnet50, 'out': [256, 512, 1024, 2048]}

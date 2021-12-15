@@ -9,7 +9,7 @@ from models.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
 from utils import show_feature_map
 import math
 import config
-from fapn import FaPNHead
+from models.fapn import FaPNHead
 
 d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
      'resnet34': {'models': resnet34, 'out': [64, 128, 256, 512]},
@@ -41,6 +41,8 @@ class FaPN_ResNet(nn.Module):
                 m.bias.data.zero_()
 
         temp_channels = 128
+        # [256, 512, 1024, 2048]
+        temp_channels = [64, 128, 256, 512]
         self.head = FaPNHead(out, temp_channels, result_num)
 
     def forward(self, input: torch.Tensor):
@@ -83,9 +85,9 @@ if __name__ == '__main__':
     #show_summary(net, 'E:/summery.xlsx')
 
 # resnet50
-# 2.20060396194458
-#   + Number of FLOPs: 7.93G
-#   + Number of params: 26.72M
+# 0.9950568675994873
+#   + Number of FLOPs: 8.93G
+#   + Number of params: 30.99M
 
 # resnet34
 # 0.6864011287689209

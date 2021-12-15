@@ -131,6 +131,11 @@ if __name__ == '__main__':
 
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
-    # print_model_parm_flops(model, data)
-    # print_model_parm_nums(model)
-    show_summary(model, input_shape=(3, 256, 256), save_path='E:/mysummery.xlsx')
+    print_model_parm_flops(model, data)
+    print_model_parm_nums(model)
+    # show_summary(model, input_shape=(3, 256, 256), save_path='E:/mysummery.xlsx')
+
+# 1.803102970123291
+# torch.Size([512, 8, 8])
+#   + Number of FLOPs: 20.11G
+#   + Number of params: 14.72M

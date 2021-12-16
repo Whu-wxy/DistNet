@@ -9,7 +9,7 @@ from models.resnet import resnet18, resnet34, resnet50, resnet101, resnet152
 from utils import show_feature_map
 import math
 import config
-from fapn import FaPNHead
+from models.fapn import FaPNHead
 
 d = {'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},
      'resnet34': {'models': resnet34, 'out': [64, 128, 256, 512]},
@@ -40,7 +40,7 @@ class FaPN_ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        temp_channels = 128
+        temp_channels = 256
         self.head = FaPNHead(out, temp_channels, result_num)
 
     def forward(self, input: torch.Tensor):

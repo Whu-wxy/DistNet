@@ -186,11 +186,13 @@ if __name__ == '__main__':
     long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
 
+    name = 'origin_adam'
+
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/origin_adam/Best_165_r0.546522_p0.696603_f10.612503.pth'
+    model_path = '../.save/Total/'+name+'/Best_165_r0.546522_p0.696603_f10.612503.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../.save/test/origin_adam'
+    save_path = '../.save/test/' + name
 
 
     gpu_id = 0
@@ -199,8 +201,10 @@ if __name__ == '__main__':
     fast_test = True
 
     from models.craft import CRAFT
+    from models.fapn_resnet import FaPN_ResNet
 
     net = CRAFT(num_out=2, pretrained=False)
+    # net = FaPN_ResNet("resnet50", 2, 1, True)
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
     print('save path:', save_path)
@@ -228,5 +232,11 @@ if __name__ == '__main__':
 # {'precision': 0.8304836345872008, 'recall': 0.7678410117434508, 'hmean': 0.7979347570992724}
 
 # origin_adam
-# tiouRecall: 0.31 tiouPrecision: 0.484 tiouHmean: 0.378
-# {'precision': 0.6842105263157895, 'recall': 0.5636856368563685, 'hmean': 0.6181277860326895}
+# 1200  0.285   0.62   0.93 0.97
+# tiouRecall: 0.304 tiouPrecision: 0.478 tiouHmean: 0.372
+# {'precision': 0.6879781420765028, 'recall': 0.568654019873532, 'hmean': 0.6226508407517308}
+
+# fapn_res50  128
+# 1400  0.285   0.62   0.93 0.97
+# tiouRecall: 0.384 tiouPrecision: 0.571 tiouHmean: 0.459
+# {'precision': 0.8006198347107438, 'recall': 0.7000903342366757, 'hmean': 0.746987951807229}

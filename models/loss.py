@@ -83,8 +83,8 @@ class Loss(nn.Module):
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
         weighted_mse_region = self.weighted_regression(output, dist_label, training_masks)
 
-        loss = dice_center + dice_region + weighted_mse_region + dice_bi_region
-        return dice_center, dice_region, weighted_mse_region, loss, dice_bi_region
+        loss = dice_center + dice_region + weighted_mse_region *10+ dice_bi_region
+        return dice_center, dice_region, weighted_mse_region*10, loss, dice_bi_region
 
 
     def dice_loss(self, input, target, mask):

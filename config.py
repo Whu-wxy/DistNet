@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/origin_adam'
+output_dir = '../.save/Total/origin_balance'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -27,12 +27,12 @@ train_batch_size = 6
 try_test_epoch = [25, 75, 100, 125, 150, 175, 200, 225, 249]
 start_test_epoch = 150      #绝对值
 test_inteval = 3
-always_test_threld = 0.74
+always_test_threld = 0.73
 
 test_for_loss_inteval = 5
 
 # Learning rate
-optim = 'adam'   #  sgd/adam/adamw/radam/ranger/adabound
+optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
 weight_decay = 5e-4    #5e-4
 amsgrad = False
 

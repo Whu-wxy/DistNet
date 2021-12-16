@@ -203,28 +203,28 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
             '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
                 epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
 
-        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            # show images on tensorboard
-            if config.display_input_images:
-                ######image
-                x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
-                writer.add_image(tag='Test_input/image', img_tensor=x, global_step=cur_step)
-                ######distance_map
-                show_distance_map = distance_map * training_mask
-                show_distance_map = show_distance_map.detach().cpu()
-                show_distance_map = show_distance_map[:8, :, :]
-                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                            pad_value=1)
-                writer.add_image(tag='Test_input/distmap', img_tensor=show_distance_map, global_step=cur_step)
-
-            if config.display_output_images:
-                ######output
-                outputs = outputs[:, 0, :, :]
-                outputs = torch.sigmoid(outputs)
-                show_y = outputs.detach().cpu()
-                show_y = show_y[:8, :, :]
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='Test_output/preds', img_tensor=show_y, global_step=cur_step)
+        # if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
+        #     # show images on tensorboard
+        #     if config.display_input_images:
+        #         ######image
+        #         x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
+        #         writer.add_image(tag='Test_input/image', img_tensor=x, global_step=cur_step)
+        #         ######distance_map
+        #         show_distance_map = distance_map * training_mask
+        #         show_distance_map = show_distance_map.detach().cpu()
+        #         show_distance_map = show_distance_map[:8, :, :]
+        #         show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
+        #                                     pad_value=1)
+        #         writer.add_image(tag='Test_input/distmap', img_tensor=show_distance_map, global_step=cur_step)
+        #
+        #     if config.display_output_images:
+        #         ######output
+        #         outputs = outputs[:, 0, :, :]
+        #         outputs = torch.sigmoid(outputs)
+        #         show_y = outputs.detach().cpu()
+        #         show_y = show_y[:8, :, :]
+        #         show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
+        #         writer.add_image(tag='Test_output/preds', img_tensor=show_y, global_step=cur_step)
 
     writer.add_scalar(tag='Test_epoch/loss', scalar_value=test_loss / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_center', scalar_value=dice_center_ave / all_step, global_step=epoch)
@@ -307,7 +307,8 @@ def main(model, criterion):
                                num_workers=int(config.workers), pin_memory=config.pin_memory)
     test_data = CurveDataset(config.testroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor(), for_test=True)
 
-    test_loader = Data.DataLoader(dataset=test_data, batch_size=1, shuffle=False, num_workers=0, pin_memory=False)               
+    test_loader = Data.DataLoader(dataset=test_data, batch_size=1, shuffle=False,
+                                  num_workers=0, pin_memory=False)
 
     writer = SummaryWriter(config.output_dir)
 
@@ -487,11 +488,13 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+    from models.fapn_resnet import FaPN_ResNet
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
     model = CRAFT(num_out=2, pretrained=True)
+    # model = FaPN_ResNet("resnet50", 2, 1, True)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

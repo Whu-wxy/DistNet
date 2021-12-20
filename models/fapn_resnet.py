@@ -40,7 +40,10 @@ class FaPN_ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        temp_channels = 256
+
+        # temp_channels = 128
+        # [256, 512, 1024, 2048]
+        temp_channels = [64, 128, 256, 256]
         self.head = FaPNHead(out, temp_channels, result_num)
 
     def forward(self, input: torch.Tensor):
@@ -83,9 +86,9 @@ if __name__ == '__main__':
     #show_summary(net, 'E:/summery.xlsx')
 
 # resnet50
-# 2.20060396194458
-#   + Number of FLOPs: 7.93G
-#   + Number of params: 26.72M
+# 0.9950568675994873
+#   + Number of FLOPs: 8.93G
+#   + Number of params: 30.99M
 
 # resnet34
 # 0.6864011287689209

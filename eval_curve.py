@@ -186,10 +186,10 @@ if __name__ == '__main__':
     long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
 
-    name = 'origin_adam'
+    name = 'FaPN_VGG16_bn'
 
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/'+name+'/Best_165_r0.546522_p0.696603_f10.612503.pth'
+    model_path = '../.save/Total/'+name+'/Best_150_r0.719512_p0.790963_f10.753548.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../.save/test/' + name
@@ -202,10 +202,13 @@ if __name__ == '__main__':
 
     from models.craft import CRAFT
     from models.fapn_resnet import FaPN_ResNet
+    from models.fapn_vgg16 import FaPN_VGG16_bn
 
-    net = CRAFT(num_out=2, pretrained=False)
+    # net = CRAFT(num_out=2, pretrained=False)
     # net = FaPN_ResNet("resnet50", 2, 1, True)
-    save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
+    net = FaPN_VGG16_bn(num_out=2, pretrained=False)
+    save_path = main(net, model_path, long_size,
+                     scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
     print('save path:', save_path)
 
@@ -240,3 +243,8 @@ if __name__ == '__main__':
 # 1400  0.285   0.62   0.93 0.97
 # tiouRecall: 0.384 tiouPrecision: 0.571 tiouHmean: 0.459
 # {'precision': 0.8006198347107438, 'recall': 0.7000903342366757, 'hmean': 0.746987951807229}
+
+# FaPN_VGG16_bn   [16, 64, 128, 128, 256]
+# fps:1.4376
+# tiouRecall: 0.425 tiouPrecision: 0.591 tiouHmean: 0.495
+# {'precision': 0.8015794669299111, 'recall': 0.7335140018066847, 'hmean': 0.7660377358490565}

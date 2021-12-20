@@ -344,6 +344,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     '''
 
     #start = time.time()
+    im = None
     if im_fn.endswith('jpg'):
         try:
             in_file = open(im_fn, 'rb')
@@ -369,10 +370,13 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
     else:
         maxVal = max(w, h)
+        scale = 2000 / maxVal
         if maxVal > 2000:
-            im = cv2.resize(im, (0, 0), fx=2000.0/maxVal, fy=2000.0/maxVal)
+            im = cv2.resize(im, (0, 0), fx=scale, fy=scale)
+            text_polys *= scale
 
-    intersection_threld *= im.shape[0] / h
+
+    # intersection_threld *= im.shape[0] / h
     h, w, _ = im.shape
     short_edge = min(h, w)
     if short_edge < input_size:
@@ -380,6 +384,17 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         scale = input_size / short_edge
         im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
         text_polys *= scale
+
+    # pad
+    h, w = im.shape[:2]
+    h_pad, w_pad = 0, 0
+    pad_to_scale = 32
+    if h % pad_to_scale != 0:
+        h_pad = (h // pad_to_scale + 1) * pad_to_scale - h
+    if w % pad_to_scale != 0:
+        w_pad = (w // pad_to_scale + 1) * pad_to_scale - w
+    im = np.pad(im, ((0, h_pad), (0, w_pad), (0, 0)))
+    h, w, _ = im.shape
 
     intersection_threld *= im.shape[0] / h
     h, w, _ = im.shape

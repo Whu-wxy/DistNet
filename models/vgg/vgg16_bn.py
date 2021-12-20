@@ -106,14 +106,12 @@ if __name__ == '__main__':
     # 20.98G
     # 18.13M
 
-
-
     from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
     print_model_parm_flops(model, data)
     print_model_parm_nums(model)
 
-    show_summary(model, input_shape=(3, 256, 256), save_path='../../summery.xlsx')
+    # show_summary(model, input_shape=(3, 256, 256), save_path='../../summery.xlsx')
 
     # net = models.vgg16_bn(pretrained=False)
     # show_summary(net, input_shape=(3, 256, 256), save_path='E:/vgg.xlsx')

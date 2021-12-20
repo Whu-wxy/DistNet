@@ -138,7 +138,6 @@ if __name__ == '__main__':
     print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
 
-
-# 0.356372594833374
+# 0.9630551338195801
 #   + Number of FLOPs: 19.32G
 #   + Number of params: 28.77M

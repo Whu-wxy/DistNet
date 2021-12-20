@@ -1,0 +1,12 @@
+tqdm>=4.35.0
+torch>=1.4.0
+pyclipper>=1.1.0.post1
+numpy>=1.16.4
+torchvision>=0.4.0
+matplotlib>=3.1.1
+opencv_python==3.4.2.17
+colorlog>=4.0.2
+scikit_image>=0.15.0
+Polygon3>=3.0.0
+tensorboard>=2.2.0
+prefetch_generator>=1.0.1

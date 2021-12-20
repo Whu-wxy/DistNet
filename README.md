@@ -10,7 +10,9 @@ PyTorch >= 1.2
 cmake and GCC >= 4.9
 
 **other:**
+
 Download and compile opencv(3.x) source code.
+
 pck-config: apt-get install pck-config
 
 # Datasets

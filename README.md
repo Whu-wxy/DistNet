@@ -7,7 +7,11 @@ Python3
 
 PyTorch >= 1.2
 
-GCC >= 4.9
+cmake and GCC >= 4.9
+
+**other:**
+Download and compile opencv(3.x) source code.
+pck-config: apt-get install pck-config
 
 # Datasets
 Download datasets from [Scene-Text-Detection](https://github.com/HCIILAB/Scene-Text-Detection).
@@ -23,6 +27,7 @@ There are some conversion and reading tools in the **datasets** folder.
 Execute **eval_ic15.py/eval_ReCTS.py/eval_curve.py** to test
 
 # Result
+**VGG16**
 dataset | pretrained on | precision | recall | F-measure
 ---- | --------- | --------- | ------ | ---------
 IC17 | None | 75.6 |  61.9 | 68.1

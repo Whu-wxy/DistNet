@@ -40,5 +40,10 @@ CTW1500 | IC17 | 84.0 | 77.2 | 80.4
 Total-Text | None | 81.2 | 80.1 | 80.6
 Total-Text | IC17 | 84.4 | 78.9 | 81.6
 
+**DLA34 without pretrain**
+dataset | precision | recall | F-measure
+----  | --------- | ------ | ---------
+Total-Text | 84.1 | 78.55 | 81.22
+
 # Visualization
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")

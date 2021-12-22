@@ -51,5 +51,3 @@ Total-Text | 84.1 | 78.55 | 81.22
 # Citation
 Please cite the related works in your publications if it helps your research:
 TODO
-
-# License

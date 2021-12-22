@@ -47,3 +47,9 @@ Total-Text | 84.1 | 78.55 | 81.22
 
 # Visualization
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")
+
+# Citation
+Please cite the related works in your publications if it helps your research:
+TODO
+
+# License

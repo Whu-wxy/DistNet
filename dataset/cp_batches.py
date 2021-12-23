@@ -228,11 +228,11 @@ if __name__ == '__main__':
     # print('i:', i)
 
 ########################################## for test
-    # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train',
-    #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\sample_IC15\\train_res')
+    cvt_15('../../data/IC15/train',
+           '../../data/IC15/train_cp')
 
-    cvt_curve('F:\\zzxs\\Experiments\\dl-data\\TotalText\\sample',
-              'F:\\zzxs\\Experiments\\dl-data\\TotalText\\res', 'total', 1, True)
+    # cvt_curve('../../data/totaltext/train',
+              # '../../data/totaltext/train_cp', 'total', 1, True)
 
     # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
     #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)

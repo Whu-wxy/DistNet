@@ -9,6 +9,7 @@ from models import FPN_ResNet
 from predict_ic15 import Pytorch_model
 from cal_recall.script import cal_recall_precison_f1
 from utils import draw_bbox
+import matplotlib.pyplot as plt
 
 torch.backends.cudnn.benchmark = True
 
@@ -42,6 +43,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         model_total_time += model_time
         decode_total_time += decode_time
         img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
 
@@ -55,7 +57,9 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     long_size = 2000     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
-    model_path = '../save/ic15/vgg_test_distv2_IC15/Best_488_r0.482427_p0.904332_f10.629199.pth' #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
+    # model_path = '../save/ic15/vgg_test_distv2_IC15/Best_488_r0.482427_p0.904332_f10.629199.pth'
+    model_path = '../Best_340_r0.773712_p0.847574_f10.808960.pth'
+    #save/dist_IC17_3/DistNet_IC17_130_loss1.029557.pth
 #../save/abla_onlydist_IC15_2/Best_470_r0.518055_p0.871255_f10.649758.pth
 #../save/distv2_IC15_exdata/Best_250_r0.490611_p0.888405_f10.632134.pth
     #../Best_340_r0.773712_p0.847574_f10.808960.pth
@@ -64,7 +68,7 @@ if __name__ == '__main__':
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt
-    save_path = '../test_result'
+    save_path = '../test_result_15'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 

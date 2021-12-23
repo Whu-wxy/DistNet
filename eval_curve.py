@@ -13,6 +13,7 @@ import timeit
 from cal_recall.curve_script import curve_cal_recall_precison_f1
 from utils import draw_bbox
 from dist import decode_curve
+import matplotlib.pyplot as plt
 
 from turbojpeg import TurboJPEG
 jpeg = TurboJPEG()
@@ -172,55 +173,78 @@ if __name__ == '__main__':
     long_size = 800
     data_type = 'ctw1500'   # ctw1500/total
     model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
-#../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
-#../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
-#../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
+    #../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
+    #../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
+    #../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
 
 
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_CTW/result'  # 2/result
+    save_path = '../test_resultCTW/'  # 2/result
 
 
-    long_size = 1050
+    long_size = 1200  # 1050
     data_type = 'total'  # ctw1500/total
-    model_path = '../save/Total/dist_Total_record_test_loss/Best_100_r0.080432_p0.807229_f10.146288.pth'
+
+    name = 'FaPN_VGG16_bn'
+
+    # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    model_path = '../.save/Total/'+name+'/Best_150_r0.719512_p0.790963_f10.753548.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../test_Total'
-#
+    save_path = '../.save/test/' + name
+
+
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
     fast_test = True
 
     from models.craft import CRAFT
+    from models.fapn_resnet import FaPN_ResNet
+    from models.fapn_vgg16 import FaPN_VGG16_bn
 
-    net = CRAFT(num_out=2, pretrained=False)
+    # net = CRAFT(num_out=2, pretrained=False)
+    # net = FaPN_ResNet("resnet50", 2, 1, True)
+    net = FaPN_VGG16_bn(num_out=2, pretrained=False)
+    save_path = main(net, model_path, long_size,
+                     scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
-    save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
-
+    print('save path:', save_path)
 
     # ctw1500/total
     result = curve_cal_recall_precison_f1(type=data_type, gt_path=gt_path, result_path=save_path)
     print(result)
     print('scale:', scale)
     print('long_size: ', long_size)
-    
-    ############################################
-    import time
-    device = torch.device('cuda:0')  #cuda:0
-    x = torch.randn(1, 3, 512, 512).to(device)
-    start = time.time()
-    y = net(x)
-    print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
-    
-    # from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
     #
-    # print_model_parm_flops(net, x)
-    # print_model_parm_nums(net)
+    # ############################################
+    # import time
+    # device = torch.device('cuda:0')  #cuda:0
+    # x = torch.randn(1, 3, 512, 512).to(device)
+    # start = time.time()
+    # y = net(x)
+    # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
+    #
 
 
-    #show_summary(net, 'E:/summery.xlsx')
-    # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
 
+# origin2
+# 1200  0.285 0.62    0.93, 0.978
+# tiouRecall: 0.477 tiouPrecision: 0.63 tiouHmean: 0.543
+# {'precision': 0.8304836345872008, 'recall': 0.7678410117434508, 'hmean': 0.7979347570992724}
+
+# origin_adam
+# 1200  0.285   0.62   0.93 0.97
+# tiouRecall: 0.304 tiouPrecision: 0.478 tiouHmean: 0.372
+# {'precision': 0.6879781420765028, 'recall': 0.568654019873532, 'hmean': 0.6226508407517308}
+
+# fapn_res50  128
+# 1400  0.285   0.62   0.93 0.97
+# tiouRecall: 0.384 tiouPrecision: 0.571 tiouHmean: 0.459
+# {'precision': 0.8006198347107438, 'recall': 0.7000903342366757, 'hmean': 0.746987951807229}
+
+# FaPN_VGG16_bn   [16, 64, 128, 128, 256]
+# fps:1.4376
+# tiouRecall: 0.425 tiouPrecision: 0.591 tiouHmean: 0.495
+# {'precision': 0.8015794669299111, 'recall': 0.7335140018066847, 'hmean': 0.7660377358490565}

@@ -40,9 +40,10 @@ class FaPN_ResNet(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-        temp_channels = 128
+
+        # temp_channels = 128
         # [256, 512, 1024, 2048]
-        temp_channels = [64, 128, 256, 512]
+        temp_channels = [64, 128, 256, 256]
         self.head = FaPNHead(out, temp_channels, result_num)
 
     def forward(self, input: torch.Tensor):

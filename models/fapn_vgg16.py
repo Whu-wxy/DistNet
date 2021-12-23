@@ -24,7 +24,7 @@ class FaPN_VGG16_bn(nn.Module):
         self.scale = scale
         temp_channels = 128
         # temp_channels = [32, 128, 128, 128, 256]
-        temp_channels = [16, 64, 128, 128, 512]   # 2      26.28   23
+        temp_channels = [16, 64, 128, 128, 256]   # 2      26.28   23
         # temp_channels = [16, 64, 128, 256, 512]   # 2.45    27     24
 
         """ U network """

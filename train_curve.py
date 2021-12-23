@@ -162,7 +162,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
     return train_loss / all_step, lr
 
 
-
 def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, logger):
     net.eval()
     test_loss, dice_center_ave, dice_region_ave, weighted_mse_region_ave, dice_bi_region_ave = 0., 0., 0., 0., 0.
@@ -190,18 +189,6 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
         #
         dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
 
-        # Backward
-        # dice_center = dice_center.item()
-        # dice_region = dice_region.item()
-        # weighted_mse_region = weighted_mse_region.item()
-        # dice_bi_region = dice_bi_region.item()
-        # loss = loss.item()
-        # test_loss += loss
-        # dice_center_ave += dice_center
-        # dice_region_ave += dice_region
-        # weighted_mse_region_ave += weighted_mse_region
-        # dice_bi_region_ave += dice_bi_region
-
         test_loss += float(loss)
         dice_center_ave += float(dice_center)
         dice_region_ave += float(dice_region)
@@ -216,34 +203,12 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
             '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
                 epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
 
-        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            # show images on tensorboard
-            if config.display_input_images:
-                ######image
-                x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
-                writer.add_image(tag='Test_input/image', img_tensor=x, global_step=cur_step)
-                ######distance_map
-                show_distance_map = distance_map * training_mask
-                show_distance_map = show_distance_map.detach().cpu()
-                show_distance_map = show_distance_map[:8, :, :]
-                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                            pad_value=1)
-                writer.add_image(tag='Test_input/distmap', img_tensor=show_distance_map, global_step=cur_step)
-
-            if config.display_output_images:
-                ######output
-                outputs = outputs[:, 0, :, :]
-                outputs = torch.sigmoid(outputs)
-                show_y = outputs.detach().cpu()
-                show_y = show_y[:8, :, :]
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='Test_output/preds', img_tensor=show_y, global_step=cur_step)
-
     writer.add_scalar(tag='Test_epoch/loss', scalar_value=test_loss / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_center', scalar_value=dice_center_ave / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_region', scalar_value=dice_region_ave / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_bi_region', scalar_value=dice_bi_region_ave / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/weighted_mse_region', scalar_value=weighted_mse_region_ave / all_step, global_step=epoch)
+    return test_loss / all_step
 
 def eval(model, save_path, test_path, device):
     model.eval()
@@ -267,6 +232,16 @@ def eval(model, save_path, test_path, device):
         if config.long_size != None:
             scale = config.long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
+
+            # pad
+            h, w = img.shape[:2]
+            h_pad, w_pad = 0, 0
+            pad_to_scale = 32
+            if h % pad_to_scale != 0:
+                h_pad = (h // pad_to_scale+1) * pad_to_scale - h
+            if w % pad_to_scale != 0:
+                w_pad = (w // pad_to_scale+1) * pad_to_scale -w
+            img = np.pad(img, ((0, h_pad), (0, w_pad), (0, 0)))
 
         # if config.long_size != None:
         #     scale1 = config.long_size / h
@@ -301,7 +276,7 @@ def main(model, criterion):
     logger.info(config.print())
 
     torch.manual_seed(config.seed)  # 为CPU设置随机种子
-    torch.set_default_tensor_type(torch.DoubleTensor)
+    torch.set_default_tensor_type(torch.FloatTensor)   # DoubleTensor
     if config.gpu_id is not None and torch.cuda.is_available():
         torch.backends.cudnn.benchmark = True
         logger.info('train with gpu {} and pytorch {}'.format(config.gpu_id, torch.__version__))
@@ -320,7 +295,8 @@ def main(model, criterion):
                                num_workers=int(config.workers), pin_memory=config.pin_memory)
     test_data = CurveDataset(config.testroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor(), for_test=True)
 
-    test_loader = Data.DataLoader(dataset=test_data, batch_size=1, shuffle=False, num_workers=0, pin_memory=False)               
+    test_loader = Data.DataLoader(dataset=test_data, batch_size=1, shuffle=False,
+                                  num_workers=0, pin_memory=False)
 
     writer = SummaryWriter(config.output_dir)
 
@@ -400,6 +376,7 @@ def main(model, criterion):
     best_model = {'recall': 0, 'precision': 0, 'f1': 0, 'models': ''}
     decrease_number = 0
     last_f1 = 0
+    min_test_loss = 99999
     try:
         for epoch in range(start_epoch, config.epochs):
             start = time.time()
@@ -415,17 +392,24 @@ def main(model, criterion):
             if config.always_test_threld <= 0 or config.always_test_threld==None:
                 raise ValueError('always_test_threld must be zhengshishu.')
 
-            if epoch % config.test_for_loss_inteval == 0:  #  and epoch != 0
-                eval_for_loss(model, test_loader, device, criterion, epoch, all_step_test, writer, logger)
+            test_loss = min_test_loss
+            if epoch % config.test_for_loss_inteval == 0 and epoch != 0:#
+                test_loss = eval_for_loss(model, test_loader, device, criterion, epoch, all_step_test, writer, logger)
 
             bTest = False
-            if last_f1 > config.always_test_threld:
+            if last_f1 > config.always_test_threld: # 大于某个值之后就一直测试
                 if epoch % config.test_inteval == 0:
                     bTest = True
-            elif epoch in config.try_test_epoch:
-                bTest = True
-            elif (epoch > config.start_test_epoch and epoch > max(config.try_test_epoch)):
-                if epoch % config.test_inteval == 0:
+            else:
+                if epoch in config.try_test_epoch:
+                    bTest = True
+                elif epoch > config.start_test_epoch or epoch > max(config.try_test_epoch):
+                    if epoch % config.test_inteval == 0:
+                        bTest = True
+
+            if test_loss < min_test_loss:
+                min_test_loss = test_loss
+                if epoch >= 100:
                     bTest = True
 
             # if epoch > max(config.try_test_epoch):
@@ -499,11 +483,17 @@ def main(model, criterion):
 
 if __name__ == '__main__':
     import utils
+    from models.fapn_resnet import FaPN_ResNet
+    from models.fapn_vgg16 import FaPN_VGG16_bn
+    from models.dla_seg import get_dlaseg_net
 
     #model = GFF_FPN(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 
-    model = CRAFT(num_out=2, pretrained=True)
+    # model = CRAFT(num_out=2, pretrained=True)
+    # model = FaPN_ResNet("resnet50", 2, 1, True)
+    # model = FaPN_VGG16_bn(2, True)
+    model = get_dlaseg_net(34, heads={'seg_hm': 2})
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

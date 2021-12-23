@@ -33,11 +33,9 @@ if __name__ == '__main__':
 
 
 
-    # cvt_15('F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train',
-    #        'F:\\zzxs\\Experiments\\dl-data\\ICDAR\\ICDAR2015\\train_cp', 1, False)
-    #
-    cvt_curve('../data/total/train',
-              '../data/total/train_cp', 'total', 1, True)
+    # cvt_15('../data/IC15/train', '../data/IC15/train_cp')
 
-    cvt_curve('../data/ctw1500/train',
-              '../data/ctw1500/train_cp', 'ctw1500', 1, True)
+    # cvt_curve('../data/totaltext/train', '../data/totaltext/train_cp', 'total', 1, True)
+    cvt_curve('../data/ctw1500/train', '../data/ctw1500/train_cp', 'ctw1500', 1, True)
+
+    print('finished.')

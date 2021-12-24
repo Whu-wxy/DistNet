@@ -450,12 +450,15 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     # aug = ElasticTransform(p=1, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03)
     # augmented = aug(image=image, mask=mask)
     # image_elastic = augmented['image']
     # mask_elastic = augmented['mask']
 
 <<<<<<< HEAD
+=======
+>>>>>>> parent of 3650319 (Merge branch 'cp' of https://github.com/Whu-wxy/DistNet into cp)
 =======
 >>>>>>> parent of 3650319 (Merge branch 'cp' of https://github.com/Whu-wxy/DistNet into cp)
     #return im, training_mask, distance_map

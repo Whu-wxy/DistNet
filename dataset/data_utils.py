@@ -25,6 +25,8 @@ from Polygon.Utils import pointList
 from albumentations import ElasticTransform
 
 data_aug = PSEDataAugment()
+elastic_aug = ElasticTransform(p=1, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
+                         border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
 
 dur = 0
 
@@ -87,226 +89,6 @@ def augmentation(im: object, text_polys: object, scales: object, degrees: object
         im, text_polys = data_aug.random_rotate90_img_bbox(im, text_polys)
 
     return im, text_polys
-
-
-def image_label(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
-                degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
-    '''
-    get image's corresponding matrix and ground truth
-    return
-    images [512, 512, 3]
-    score  [128, 128, 1]
-    geo    [128, 128, 5]
-    mask   [128, 128, 1]
-    '''
-
-    im = cv2.imread(im_fn)
-    im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-    h, w, _ = im.shape
-    # 检查越界
-    text_polys = check_and_validate_polys(text_polys, (h, w))
-    im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
-
-    h, w, _ = im.shape
-    short_edge = min(h, w)
-    if short_edge < input_size:
-        # 保证短边 >= inputsize
-        scale = input_size / short_edge
-        im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
-        text_polys *= scale
-
-    h, w, _ = im.shape
-
-    #####################################
-    #start = time.time()
-
-    overlap_map = np.zeros((h, w), dtype=np.uint8)
-    for (i, text_poly) in enumerate(text_polys):
-        p = Polygon.Polygon(text_poly.astype(np.int))
-        for tempPoly in text_polys[i+1:]:
-            p2 = Polygon.Polygon(tempPoly)
-            if p.overlaps(p2):
-                pts = pointList(p&p2)
-                pts2 = []
-                for pt in pts:
-                    pts2.append([int(pt[0]), int(pt[1])])
-                overlap_poly = np.array([pts2])
-                cv2.fillPoly(overlap_map, overlap_poly, 1)
-
-    score_maps_line = np.zeros((h, w), dtype=np.uint8)
-    for text_poly in text_polys:
-        pts = []
-        for pt in text_poly:
-            pts.append([int(pt[0]), int(pt[1])])
-        cv2.polylines(score_maps_line, np.array([pts]), True, 1, 1, lineType=cv2.LINE_8)
-
-    #mid = time.time()
-    #####################################
-
-    # normal images
-    if config.img_norm:
-        im = im.astype(np.float32)
-        im /= 255.0
-        im -= np.array((0.485, 0.456, 0.406))
-        im /= np.array((0.229, 0.224, 0.225))
-
-    h, w, _ = im.shape
-    training_mask = np.ones((h, w), dtype=np.uint8)
-    score_maps = []
-    score_map, training_mask = generate_rbox((h, w), text_polys, text_tags, training_mask)
-    score_maps.append(score_map)
-    score_maps = np.array(score_maps, dtype=np.float32)
-
-    ##############################
-    #mid2 = time.time() - mid
-    distance_map = get_distance_map(score_maps, overlap_map, score_maps_line)
-    #global dur
-    #dur += time.time() - start - mid2
-
-    ##############################
-    imgs = data_aug.random_crop_author([im,training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
-    #score_maps = np.squeeze(imgs[1], 2)
-
-
-    #return im, training_mask, distance_map
-    return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #im,training_mask#
-
-
-def get_distance_map(label, overlap_map, score_maps_line):
-    masklarge = label[0].astype(np.uint8)  # .transpose((1, 2, 0))
-    overlap_map = overlap_map.astype(np.uint8)  # .transpose((1, 2, 0))
-    score_maps_line = score_maps_line.astype(np.uint8)
-    interMask = masklarge - score_maps_line - overlap_map
-
-    #距离图
-    distance_inter_map = cv2.distanceTransform(interMask, distanceType=cv2.DIST_L2, maskSize=5)
-
-    #找到所有子区域
-    connect_num, connect_img = cv2.connectedComponents(distance_inter_map.astype(np.uint8), connectivity=4)
-
-    #子区域内部0.4-1
-    for lab in range(connect_num):
-        if lab == 0:
-            continue
-        lab_img_i = np.where(connect_img == lab, 1, 0)
-        cv2.normalize(distance_inter_map, distance_inter_map, 0.4, 1, cv2.NORM_MINMAX, mask=lab_img_i.astype(np.uint8))
-
-    #相交区域
-    score_maps_line2 = np.where(overlap_map == 1, 0.3, 0)
-    distance_map = (1 - overlap_map) * distance_inter_map + score_maps_line2
-
-    #边界
-    score_maps_line2 = np.where(score_maps_line == 1, 0.3, 0)
-    distance_map = (1 - score_maps_line) * distance_map + score_maps_line2
-
-    #
-    # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
-    # input()
-    return distance_map
-
-
-
-def image_label_v2(im_fn: str, text_polys: np.ndarray, text_tags: list, input_size: int,
-                degrees: int = 10, scales: np.ndarray = np.array([0.5, 1, 2.0, 3.0])) -> tuple:
-    '''
-    get image's corresponding matrix and ground truth
-    return
-    images [512, 512, 3]
-    score  [128, 128, 1]
-    geo    [128, 128, 5]
-    mask   [128, 128, 1]
-    '''
-
-    im = cv2.imread(im_fn)
-    im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
-    h, w, _ = im.shape
-    # 检查越界
-    text_polys = check_and_validate_polys(text_polys, (h, w))
-    im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
-
-    h, w, _ = im.shape
-    short_edge = min(h, w)
-    if short_edge < input_size:
-        # 保证短边 >= inputsize
-        scale = input_size / short_edge
-        im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
-        text_polys *= scale
-
-    h, w, _ = im.shape
-
-    # normal images
-    if config.img_norm:
-        im = im.astype(np.float32)
-        im /= 255.0
-        im -= np.array((0.485, 0.456, 0.406))
-        im /= np.array((0.229, 0.224, 0.225))
-
-    h, w, _ = im.shape
-    training_mask = np.ones((h, w), dtype=np.uint8)
-    for poly, tag in zip(text_polys, text_tags):
-        poly = poly.astype(np.int)
-        if tag:
-            cv2.fillPoly(training_mask, [poly], 0)
-
-    #####################################
-    # start = time.time()
-    distance_map = get_distance_map_v2(text_polys, h, w)
-    # global dur
-    # dur += time.time() - start
-
-    ##############################
-    imgs = data_aug.random_crop_author([im,training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
-
-    #return im, training_mask, distance_map
-    return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#
-
-
-def get_distance_map_v2(text_polys, h, w):
-    dist_map = np.zeros((h, w), dtype=np.float)
-
-    for (i, text_poly) in enumerate(text_polys, start=1):
-        temp_map = np.zeros((h, w), dtype=np.float)
-        pts = []
-        for pt in text_poly:
-            pts.append([int(pt[0]), int(pt[1])])
-        cv2.fillPoly(temp_map, np.array([pts]), i)
-
-        Intersection = np.where((dist_map > 0.01) & (temp_map > 0.01), 1, 0)
-        Inter_count = np.sum(Intersection)
-        if Inter_count == 0:
-            dist_map[temp_map==i] = i
-            continue
-
-        for j in range(1, i):
-            inter = np.where((dist_map == j) & (temp_map > 0.01), 1, 0)
-            inter_sum = np.sum(inter)
-            if inter_sum == 0:       # 找出已绘制box中和当前box有交集的
-                continue
-
-            inter_region = np.where(dist_map==j, 1, 0)
-            inter_region_sum = np.sum(inter_region)
-            temp_map_sum = np.sum(temp_map)
-            rate_temp = float(inter_sum) / temp_map_sum
-            rate_inter_region = float(inter_sum) / inter_region_sum
-            if rate_temp > rate_inter_region:
-                dist_map[temp_map==i] = i
-            else:
-                dist_map[(temp_map==i)&(inter!=1)] = i
-            if inter_sum == Inter_count:  # 当前box只与这个box相交
-                break
-
-    for (i, text_poly) in enumerate(text_polys, start=1):
-        text_i = np.where(dist_map == i, 1, 0)
-        text_i = text_i.astype(np.uint8)
-        # 距离图
-        distance_map_i = cv2.distanceTransform(text_i, distanceType=cv2.DIST_L2, maskSize=5)
-        cv2.normalize(distance_map_i, distance_map_i, 0.3, 1, cv2.NORM_MINMAX, mask=text_i.astype(np.uint8))
-        dist_map = dist_map * (1 - text_i) + distance_map_i
-    #
-    # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
-    # input()
-    return dist_map
-
 
 #import jpeg4py as jpeg
 import timeit
@@ -387,32 +169,32 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         im /= np.array((0.229, 0.224, 0.225))
 
     h, w, _ = im.shape
-    training_mask = np.ones((h, w), dtype=np.uint8)
+    # training_mask = np.ones((h, w), dtype=np.uint8)
+    valid_text_polys = []
     for poly, tag in zip(text_polys, text_tags):
         poly = poly.astype(np.int)
         if tag:
-            cv2.fillPoly(training_mask, [poly], 0)
+            valid_text_polys.append(poly)
+            # cv2.fillPoly(training_mask, [poly], 0)
 
     #####################################
-    # start = time.time()
-    distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
-    # global dur
-    # dur += time.time() - start
+    distance_map = get_distance_map_v3(valid_text_polys, h, w, intersection_threld)
 
     if for_test:
+        training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
         return im, training_mask, distance_map
 
     ##############################
-    imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    imgs = data_aug.random_crop_author([im, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    im = imgs[0]
+    distance_map = imgs[-1]
+    if config.elastic:
+        elastic_imgs = elastic_aug(image=im, mask=distance_map)
+        im = elastic_imgs['image']
+        distance_map = elastic_imgs['mask']
 
-    # aug = ElasticTransform(p=1, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03)
-    # augmented = aug(image=image, mask=mask)
-    # image_elastic = augmented['image']
-    # mask_elastic = augmented['mask']
-
-    #return im, training_mask, distance_map
-    return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#
-
+    training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
+    return im, np.squeeze(training_mask, 2), np.squeeze(distance_map, 2)
 
 def get_distance_map_v3(text_polys, h, w, intersection_threld):
     dist_map = np.zeros((h, w), dtype=np.float)
@@ -492,7 +274,6 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
     return dist_map
 
 
-
 #############################################################################
 class IC15Dataset(data.Dataset):
     def __init__(self, data_dir, data_shape: int = 640, transform=None, target_transform=None):
@@ -566,16 +347,12 @@ class IC15Dataset(data.Dataset):
         return img
 
 
-
-
 from torch.utils.data import DataLoader
 from prefetch_generator import BackgroundGenerator
 
 class DataLoaderX(DataLoader):
     def __iter__(self):
         return BackgroundGenerator(super().__iter__())
-
-
 
 if __name__ == '__main__':
     import torch
@@ -590,7 +367,7 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\sample_IC15\\train_res', data_shape=config.data_shape,
+    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\sample_IC15\\train', data_shape=config.data_shape,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 

@@ -173,7 +173,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     valid_text_polys = []
     for poly, tag in zip(text_polys, text_tags):
         poly = poly.astype(np.int)
-        if tag:
+        if not tag:
             valid_text_polys.append(poly)
             # cv2.fillPoly(training_mask, [poly], 0)
 

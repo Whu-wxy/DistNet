@@ -92,6 +92,18 @@ class Pytorch_model_curve:
             scale = long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
+        # pad
+        if config.dla_model:
+            h, w = img.shape[:2]
+            h_pad, w_pad = 0, 0
+            pad_to_scale = 32
+            if h % pad_to_scale != 0:
+                h_pad = (h // pad_to_scale + 1) * pad_to_scale - h
+            if w % pad_to_scale != 0:
+                w_pad = (w // pad_to_scale + 1) * pad_to_scale - w
+            img = np.pad(img, ((0, h_pad), (0, w_pad), (0, 0)))
+            h, w, _ = img.shape
+
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)
         tensor = tensor.unsqueeze_(0)
@@ -183,13 +195,13 @@ if __name__ == '__main__':
     save_path = '../test_resultCTW/'  # 2/result
 
 
-    long_size = 1200  # 1050
+    long_size = 1350  # 1050
     data_type = 'total'  # ctw1500/total
 
-    name = 'FaPN_VGG16_bn'
+    name = 'dla34_3'
 
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/'+name+'/Best_150_r0.719512_p0.790963_f10.753548.pth'
+    model_path = '../.save/Total/'+name+'/Best_162_r0.762421_p0.838549_f10.798675.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../.save/test/' + name
@@ -203,10 +215,12 @@ if __name__ == '__main__':
     from models.craft import CRAFT
     from models.fapn_resnet import FaPN_ResNet
     from models.fapn_vgg16 import FaPN_VGG16_bn
+    from models.dla_seg import get_dlaseg_net
 
     # net = CRAFT(num_out=2, pretrained=False)
     # net = FaPN_ResNet("resnet50", 2, 1, True)
-    net = FaPN_VGG16_bn(num_out=2, pretrained=False)
+    # net = FaPN_VGG16_bn(num_out=2, pretrained=False)
+    net = get_dlaseg_net(34, heads={'seg_hm': 2})
     save_path = main(net, model_path, long_size,
                      scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
@@ -248,3 +262,9 @@ if __name__ == '__main__':
 # fps:1.4376
 # tiouRecall: 0.425 tiouPrecision: 0.591 tiouHmean: 0.495
 # {'precision': 0.8015794669299111, 'recall': 0.7335140018066847, 'hmean': 0.7660377358490565}
+
+#dla_3
+# 1350  0.285   0.56   0.93 0.97
+#  2.1467
+# tiouRecall: 0.451 tiouPrecision: 0.624 tiouHmean: 0.524
+# {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}

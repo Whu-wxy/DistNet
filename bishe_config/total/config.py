@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/origin2'
+output_dir = '../.save/Total/dla34_4'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -17,19 +17,20 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 9
+workers = 10
 pin_memory = True
 start_epoch = 0
 epochs = 250   #600
 early_stop=20  #test F1
 
-train_batch_size = 6
-try_test_epoch = [0, 25, 75, 100, 125, 150, 175, 200, 225, 249]
+train_batch_size = 14
+try_test_epoch = [0, 25, 50, 75, 100, 115, 125, 150, 175, 200, 225, 249]
 start_test_epoch = 150      #绝对值
 test_inteval = 3
-always_test_threld = 0.75
+always_test_threld = 0.73
 
 test_for_loss_inteval = 5
+dla_model = True
 
 # Learning rate
 optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
@@ -40,11 +41,11 @@ lr = 1e-3
 end_lr = 1e-7
 
 
-lr_scheduler=''
+lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
-    lr_gamma = 0.1
-    lr_decay_step = [200, 400]    #[250, 400]
+    lr_gamma = 0.1     # 0.1
+    lr_decay_step = [10, 170]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5
@@ -91,7 +92,7 @@ clip_value = 50
 
 OHEM_ratio = 3
 scale = 4
-scale_model = 'nearest'
+scale_model = 'bilinear'
 # mode:   'nearest' | 'linear'(3D) | 'bilinear' | 'bicubic' | 'trilinear'(5D) | 'area'
 #align_corners:None,   true,          true,          true,      true,            None
 seed = 2
@@ -109,6 +110,5 @@ def print():
     with open(output_dir+'/config.json', 'w') as f:
         json.dump(tem_d, f, indent=4)
     return pformat(tem_d)
-
 
 

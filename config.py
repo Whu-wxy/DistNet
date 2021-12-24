@@ -1,15 +1,15 @@
 name = 'distv2_total_exdata'
 
 # data config
-dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/totaltext/train'
-testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/dla34_2'
+trainroot = '../data/ctw1500/train'
+testroot = '../data/ctw1500/test'
+output_dir = '../.save/ctw1500/dla'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
-long_size = 1200  # 2240/None
+long_size = 900  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
@@ -17,7 +17,7 @@ uniform_scales = False
 
 # train config
 gpu_id = '0'
-workers = 12
+workers = 10
 pin_memory = True
 start_epoch = 0
 epochs = 250   #600
@@ -30,6 +30,7 @@ test_inteval = 3
 always_test_threld = 0.73
 
 test_for_loss_inteval = 5
+dla_model = True
 
 # Learning rate
 optim = 'ranger'   #  sgd/adam/adamw/radam/ranger/adabound
@@ -43,8 +44,8 @@ end_lr = 1e-7
 lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
-    lr_gamma = 0.1
-    lr_decay_step = [10, 100]    #[250, 400]
+    lr_gamma = 0.1     # 0.1
+    lr_decay_step = [20, 170]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5

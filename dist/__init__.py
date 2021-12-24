@@ -161,12 +161,12 @@ def decode_curve(preds, scale):
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
 
     #CTW
-    # region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
-    # center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
 
     #Total
-    region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.62, ones_tensor, zeros_tensor)
+    # region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
+    # center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()

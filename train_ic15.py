@@ -396,7 +396,7 @@ def main(model, criterion):
                                          writer, logger)
             logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
                 epoch, config.epochs, train_loss, time.time() - start, lr))
-            # net_save_path = '{}/PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
+            # net_save_path = '{}/DistNet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
             #                                                                               train_loss)
             # save_checkpoint(net_save_path, models, optimizer, epoch, logger)
             if config.test_inteval <= 0 or config.test_inteval==None:
@@ -418,7 +418,7 @@ def main(model, criterion):
                 eval_for_loss(model, test_loader, device, criterion, epoch, len(test_loader), writer, logger)
 
             # if epoch > max(config.try_test_epoch):
-            #     net_save_path = '{}/train_PSENet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)
+            #     net_save_path = '{}/train_DistNet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)
             #     save_checkpoint(net_save_path, model, optimizer, epoch, logger)
 
             if bTest:
@@ -428,7 +428,7 @@ def main(model, criterion):
 
                 logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
 
-                net_save_path = '{}/PSENet_{}_loss{:.6f}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
+                net_save_path = '{}/DistNet_{}_loss{:.6f}_r{:.6f}_p{:.6f}_f1{:.6f}.pth'.format(config.output_dir, epoch,
                                                                                               train_loss,
                                                                                               recall,
                                                                                               precision,
@@ -455,7 +455,7 @@ def main(model, criterion):
                         save_checkpoint(best_save_path, model, optimizer, epoch, logger)
 
                     if epoch > config.start_test_epoch:
-                        pse_path = glob.glob(config.output_dir + '/PSENet_*.pth')
+                        pse_path = glob.glob(config.output_dir + '/DistNet_*.pth')
                         for p_path in pse_path:
                             if os.path.exists(p_path):
                                 os.remove(p_path)

@@ -40,18 +40,8 @@ class Loss(nn.Module):
         dice_center = self.dice_loss(center_map, center_gt, selected_masks)
         weighted_mse_region = self.weighted_regression(output, dist_label, region_mask)  #有加权，不用OHEM的mask
 
-        # boundary loss with OHEM
-        if config.bd_loss:
-            mask = training_masks.unsqueeze(dim=1)  #bchw
-            bd_loss = self.boundary_loss_batch(region_map.unsqueeze(dim=1), dist_maps, mask)
-            bd_loss = bd_loss_weight * bd_loss
-
-            loss = dice_center + dice_region + weighted_mse_region + bd_loss
-            return dice_center, dice_region, weighted_mse_region, bd_loss, loss
-        else:
-            loss = dice_center + dice_region + weighted_mse_region + dice_full
-
-            return dice_center, dice_region, weighted_mse_region, dice_full, loss
+        loss = dice_center + dice_region + weighted_mse_region + dice_full
+        return dice_center, dice_region, weighted_mse_region, dice_full, loss
 
 
     def forward(self, output, dist_label, training_masks):

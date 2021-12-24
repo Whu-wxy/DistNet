@@ -22,7 +22,12 @@ import config
 import Polygon
 from Polygon.Utils import pointList
 
-from albumentations import ElasticTransform
+# from albumentations import (
+#     Compose, RGBShift, RandomBrightness, RandomContrast,
+#     HueSaturationValue, ChannelShuffle, CLAHE,
+#     RandomContrast, Blur, ToGray, JpegCompression,
+#     CoarseDropout, RandomRotate90
+# )
 
 data_aug = PSEDataAugment()
 <<<<<<< HEAD
@@ -39,6 +44,22 @@ dur = 0
 
 # from turbojpeg import TurboJPEG
 # jpeg = TurboJPEG()
+
+
+# def augument():
+#     augm = Compose([
+#         RGBShift(),
+#         RandomBrightness(),
+#         RandomContrast(),
+#         HueSaturationValue(p=0.2),
+#         ChannelShuffle(),
+#         CLAHE(),
+#         Blur(),
+#         ToGray(),
+#         CoarseDropout()
+#     ],
+#     p=0.5)
+#     return augm
 
 def check_and_validate_polys(polys, xxx_todo_changeme):
     '''
@@ -428,12 +449,15 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     ##############################
     imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
 
+<<<<<<< HEAD
     # aug = ElasticTransform(p=1, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03)
     # augmented = aug(image=image, mask=mask)
     # image_elastic = augmented['image']
     # mask_elastic = augmented['mask']
 
 <<<<<<< HEAD
+=======
+>>>>>>> parent of 3650319 (Merge branch 'cp' of https://github.com/Whu-wxy/DistNet into cp)
     #return im, training_mask, distance_map
     return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#
 
@@ -533,6 +557,8 @@ class IC15Dataset(data.Dataset):
         self.transform = transform
         self.target_transform = target_transform
 
+        #self.aug = augument()  #20200302增加新augument方式
+
     def __getitem__(self, index):
         img_path, text_polys, text_tags = self.data_list[index]
         img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
@@ -540,6 +566,7 @@ class IC15Dataset(data.Dataset):
                                                                    scales = np.array(config.random_scales))
 
         #img = draw_bbox(img,text_polys)
+        #img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
 
         if self.transform:
             img = self.transform(img)

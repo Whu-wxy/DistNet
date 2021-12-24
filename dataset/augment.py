@@ -290,7 +290,7 @@ class PSEDataAugment():
             return im, polys
         return im, text_polys
 
-    def random_crop_author(self,imgs, img_size):
+    def random_crop_author(self, imgs, img_size):
         #return imgs   #测试中加这个，不使用crop
 
         h, w = imgs[0].shape[0:2]
@@ -299,12 +299,12 @@ class PSEDataAugment():
             return imgs
 
         # label中存在文本实例，并且按照概率进行裁剪
-        if np.max(imgs[2][:,:,-1]) > 0 and random.random() > 3.0 / 8.0:
+        if np.max(imgs[-1][:,:,-1]) > 0 and random.random() > 3.0 / 8.0:
             # 文本实例的top left点
-            tl = np.min(np.where(imgs[2][:,:,-1] > 0), axis=1) - img_size
+            tl = np.min(np.where(imgs[-1][:,:,-1] > 0), axis=1) - img_size
             tl[tl < 0] = 0
             # 文本实例的 bottom right 点
-            br = np.max(np.where(imgs[2][:,:,-1] > 0), axis=1) - img_size
+            br = np.max(np.where(imgs[-1][:,:,-1] > 0), axis=1) - img_size
             br[br < 0] = 0
             # 保证选到右下角点是，有足够的距离进行crop
             br[0] = min(br[0], h - th)
@@ -313,7 +313,7 @@ class PSEDataAugment():
                 i = random.randint(tl[0], br[0])
                 j = random.randint(tl[1], br[1])
                 # 保证最小的图有文本
-                if imgs[2][:,:,-1][i:i + th, j:j + tw].sum() <= 0:
+                if imgs[-1][:,:,-1][i:i + th, j:j + tw].sum() <= 0:
                     continue
                 else:
                     break

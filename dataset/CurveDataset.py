@@ -18,7 +18,7 @@ import config
 import Polygon
 from Polygon.Utils import pointList
 
-from dataset.data_utils import image_label_v3, DataLoaderX
+from dataset.data_utils import image_label, image_label_v2, image_label_v3, DataLoaderX
 
 time_sum = 0
 
@@ -177,8 +177,8 @@ if __name__ == '__main__':
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
     # F:\zzxs\Experiments\dl-data\TotalText\\train
-    train_data = CurveDataset('F:\zzxs\Experiments\dl-data\TotalText\\train', data_shape=config.data_shape,
-                            dataset_type='total', transform=transforms.ToTensor())
+    train_data = CurveDataset('F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', data_shape=config.data_shape,
+                            dataset_type='ctw1500', transform=transforms.ToTensor())
     train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
     pbar = tqdm(total=len(train_loader))
@@ -196,9 +196,9 @@ if __name__ == '__main__':
 
         cv2.namedWindow("img", cv2.WINDOW_NORMAL)
         cv2.namedWindow("dist_map", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
+        #cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
         cv2.imshow('img', img.squeeze(0).numpy().transpose((1, 2, 0)))
-        cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
+        #cv2.imshow('mask', mask.numpy().transpose((1, 2, 0))*255)
         distance_map = distance_map.numpy().transpose((1, 2, 0))
         cv2.imshow('dist_map', distance_map)
         cv2.waitKey()

@@ -26,7 +26,11 @@ from albumentations import ElasticTransform
 
 data_aug = PSEDataAugment()
 <<<<<<< HEAD
+<<<<<<< HEAD
 elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
+=======
+elastic_aug = ElasticTransform(p=1, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
+>>>>>>> parent of 1ed8be3 (fix bug)
                          border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
 =======
 >>>>>>> parent of b8c31c9 (update dataloader and add elastic)
@@ -412,9 +416,13 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
 
     if for_test:
 <<<<<<< HEAD
+<<<<<<< HEAD
         training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
 =======
 >>>>>>> parent of b8c31c9 (update dataloader and add elastic)
+=======
+        training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
+>>>>>>> parent of 1ed8be3 (fix bug)
         return im, training_mask, distance_map
 
     ##############################
@@ -425,11 +433,15 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     # image_elastic = augmented['image']
     # mask_elastic = augmented['mask']
 
+<<<<<<< HEAD
     #return im, training_mask, distance_map
     return imgs[0], imgs[1], np.squeeze(imgs[2], 2)   #, time.time() - start   #im,training_mask#
 
 <<<<<<< HEAD
     training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
+=======
+    training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
+>>>>>>> parent of 1ed8be3 (fix bug)
     return im, np.squeeze(training_mask, 2), np.squeeze(distance_map, 2)
 =======
 >>>>>>> parent of b8c31c9 (update dataloader and add elastic)

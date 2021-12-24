@@ -25,7 +25,7 @@ from Polygon.Utils import pointList
 from albumentations import ElasticTransform
 
 data_aug = PSEDataAugment()
-elastic_aug = ElasticTransform(p=1, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
+elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
                          border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
 
 dur = 0
@@ -181,7 +181,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     distance_map = get_distance_map_v3(valid_text_polys, h, w, intersection_threld)
 
     if for_test:
-        training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
+        training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
         return im, training_mask, distance_map
 
     ##############################
@@ -193,7 +193,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         im = elastic_imgs['image']
         distance_map = elastic_imgs['mask']
 
-    training_mask = np.where(distance_map > 0, 0, 1).astype(np.uint8)
+    training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
     return im, np.squeeze(training_mask, 2), np.squeeze(distance_map, 2)
 
 def get_distance_map_v3(text_polys, h, w, intersection_threld):

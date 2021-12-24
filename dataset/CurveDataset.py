@@ -18,7 +18,7 @@ import config
 import Polygon
 from Polygon.Utils import pointList
 
-from dataset.data_utils import image_label, image_label_v2, image_label_v3, DataLoaderX
+from dataset.data_utils import image_label_v3, DataLoaderX
 
 time_sum = 0
 

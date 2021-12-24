@@ -117,9 +117,6 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
             im = cv2.imread(im_fn)
     else:
         im = cv2.imread(im_fn)
-    # global dur
-    # dur += time.time() - start
-    # return im, 0, 0
 
     im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
     h, w, _ = im.shape
@@ -169,38 +166,35 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         im /= np.array((0.229, 0.224, 0.225))
 
     h, w, _ = im.shape
-    # training_mask = np.ones((h, w), dtype=np.uint8)
-    valid_text_polys = []
+    training_mask = np.ones((h, w), dtype=np.uint8)
     for poly, tag in zip(text_polys, text_tags):
         poly = poly.astype(np.int)
-        if not tag:
-            valid_text_polys.append(poly)
-            # cv2.fillPoly(training_mask, [poly], 0)
+        if tag:
+            cv2.fillPoly(training_mask, [poly], 0)
 
     #####################################
-    distance_map = get_distance_map_v3(valid_text_polys, h, w, intersection_threld)
+    distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
 
     if for_test:
-        training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
         return im, training_mask, distance_map
 
     ##############################
-    imgs = data_aug.random_crop_author([im, np.expand_dims(distance_map, 2)], (input_size, input_size))
+    imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
     im = imgs[0]
-    distance_map = imgs[-1]
+    training_mask = imgs[1]
+    distance_map = imgs[2]
     if config.elastic:
-        elastic_imgs = elastic_aug(image=im, mask=distance_map)
+        elastic_imgs = elastic_aug(image=im, masks=[1-training_mask, distance_map])
         im = elastic_imgs['image']
-        distance_map = elastic_imgs['mask']
+        training_mask = 1-elastic_imgs['masks'][0]
+        distance_map = elastic_imgs['masks'][1]
 
-    training_mask = np.where(distance_map > 0, 1, 0).astype(np.uint8)
-    return im, np.squeeze(training_mask, 2), np.squeeze(distance_map, 2)
+    return im, training_mask, np.squeeze(distance_map, 2)
+
 
 def get_distance_map_v3(text_polys, h, w, intersection_threld):
     dist_map = np.zeros((h, w), dtype=np.float)
-    #print('th: ', intersection_threld)
     inter_area_threld = 50 * intersection_threld
-   # print('val: ', inter_area_threld)
 
     undraw_list = []
     for (i, text_poly) in enumerate(text_polys, start=1):

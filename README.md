@@ -44,6 +44,7 @@ Total-Text | IC17 | 84.4 | 78.9 | 81.6
 dataset | precision | recall | F-measure
 ----  | --------- | ------ | ---------
 Total-Text | 84.1 | 78.55 | 81.22
+CTW1500 | 84.07 | 76.53 | 80.12
 
 # Visualization
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")

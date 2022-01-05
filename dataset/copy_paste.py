@@ -67,7 +67,7 @@ class CopyPaste(object):
             poly = np.array(poly)
             xmin, ymin, xmax, ymax = poly[:, 0].min(), poly[:, 1].min(), poly[:, 0].max(), poly[:, 1].max()
             if (xmax-xmin)*(ymax-ymin) > src_img_rgba.shape[1]*src_img_rgba.shape[0]*self.filt_large_text:
-                print('filt large text')
+                # print('filt large text')
                 continue
             new_poly = poly.copy()
             new_poly[:, 0] -= xmin
@@ -109,12 +109,12 @@ class CopyPaste(object):
         if src_w - box_w < 0 or src_h - box_h < 0:
             # print(src_w - box_w)
             # print(src_h - box_h)
-            print('after rotate failed')
+            # print('after rotate failed')
             return src_img, None
 
         paste_x, paste_y = self.select_coord(src_polys, new_poly, src_w - box_w, src_h - box_h)# 平移确定位置,src_w - box_w防止超出图像
         if paste_x is None:
-            print('select_coord failed')
+            # print('select_coord failed')
             return src_img, None
         new_poly[:, 0] += paste_x
         new_poly[:, 1] += paste_y
@@ -137,7 +137,7 @@ class CopyPaste(object):
 
     def select_coord(self, src_polys, new_poly, endx, endy):
         if self.limit_paste:
-            for _ in range(50):
+            for _ in range(10):
                 randn_poly = new_poly.copy()
                 paste_x = random.randint(0, endx)
                 paste_y = random.randint(0, endy)
@@ -149,11 +149,11 @@ class CopyPaste(object):
                     try:
                         iou = get_intersection_over_union(poly, randn_poly.tolist())
                     except Exception as e:
-                        print('iou cal Exception.')
+                        # print('iou cal Exception.')
                         continue
                     # print('iou: ',iou)
                     if iou > self.iou:   # 和原多边形有交集
-                        print('iou: ', iou)
+                        # print('iou: ', iou)
                         bValid = False
                         break
                 if bValid:
@@ -177,7 +177,7 @@ class CopyPaste(object):
             long_sides.append(long_side)
         long_side_media = np.median(long_sides)
         scale = math.sqrt(long_side_media*1.0 / (text_img.size[0]*text_img.size[1]))  #max(text_img.size)
-        print('adaptor scale: ', scale)
+        # print('adaptor scale: ', scale)
         text_img, text_poly = self.resize_(text_img, text_poly, scale)
         return text_img, text_poly
 

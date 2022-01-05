@@ -15,6 +15,7 @@ from dist import decode as dist_decode
 from dist import decode_curve as dist_decode_curve
 from dist import decode_biregion
 from dist import decode_dist
+import config
 
 class Pytorch_model:
     def __init__(self, model_path, net, scale, gpu_id=None):
@@ -76,6 +77,17 @@ class Pytorch_model:
             scale = long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
+        # pad
+        h_pad, w_pad = 0, 0
+        if config.dla_model:
+            h2, w2 = img.shape[:2]
+            pad_to_scale = 32
+            if h2 % pad_to_scale != 0:
+                h_pad = (h2 // pad_to_scale + 1) * pad_to_scale - h2
+            if w2 % pad_to_scale != 0:
+                w_pad = (w2 // pad_to_scale + 1) * pad_to_scale - w2
+            img = np.pad(img, ((0, h_pad), (0, w_pad), (0, 0)))
+
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)
         tensor = tensor.unsqueeze_(0)
@@ -102,7 +114,7 @@ class Pytorch_model:
 
             t = model_time + decode_time
 
-            scale = (res_preds.shape[1] / w, res_preds.shape[0] / h)
+            scale = ((res_preds.shape[1]-w_pad) / w, (res_preds.shape[0]-h_pad) / h)
 
             if len(boxes_list):
                 boxes_list = boxes_list / scale

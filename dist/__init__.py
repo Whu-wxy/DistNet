@@ -76,8 +76,6 @@ def decode(preds, scale):
     preds = torch.add(preds, -1)
     #preds = preds + bi_region - 1
 
-
-
     # region = preds >= 0.295
     # center = preds >= 0.56
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
@@ -89,7 +87,7 @@ def decode(preds, scale):
     # plt.imshow(region.cpu().numpy() * 255)
     # plt.show()
 
-    center = torch.where(preds >= 0.64, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()
@@ -100,7 +98,7 @@ def decode(preds, scale):
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.98, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.95, area_threld)
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
     # print('label_num: ', label_num)
@@ -161,12 +159,12 @@ def decode_curve(preds, scale):
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
 
     #CTW
-    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)
+    # region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    # center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)
 
     #Total
-    # region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
-    # center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
+    region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()
@@ -179,8 +177,8 @@ def decode_curve(preds, scale):
     # plt.show()
 
     #CTW
-    # area_threld = int(220 * scale)
-    # pred, label_values = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.95, 0.97, area_threld)
+    # area_threld = int(180 * scale)
+    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.972, area_threld)
 
     #Total
     area_threld = int(250 * scale)

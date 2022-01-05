@@ -158,7 +158,6 @@ def train_epoch(net, optimizer, scheduler, train_loader, device, criterion, epoc
 
 
 def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, logger):
-
     net.eval()
     test_loss, dice_center_ave, dice_region_ave, weighted_mse_region_ave, dice_bi_region_ave = 0., 0., 0., 0., 0.
     start = time.time()
@@ -168,70 +167,46 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
         non_blocking = False
         if config.pin_memory and config.workers > 1:
             non_blocking = True
-
-        #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
+        # print('img shape: ', images.shape)
+        # images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
         images = images.to(device, non_blocking=non_blocking)
 
         # Forward
-        outputs = net(images)   #B1HW
-
+        with torch.no_grad():
+            outputs = net(images)  # B1HW
         # labels, training_mask后面放到gpu是否会占用更少一些显存？
         training_mask = training_mask.to(device, non_blocking=non_blocking)
-        distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
+        distance_map = distance_map.to(device, non_blocking=non_blocking)  # label
         distance_map = distance_map.to(torch.float)
 
-        #outputs = torch.squeeze(outputs, dim=1)
+        # outputs = torch.squeeze(outputs, dim=1)
 
         #
-        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
+        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map,
+                                                                                        training_mask)
 
-        # Backward
-        dice_center = dice_center.item()
-        dice_region = dice_region.item()
-        weighted_mse_region = weighted_mse_region.item()
-        dice_bi_region = dice_bi_region.item()
-        loss = loss.item()
-        test_loss += loss
-        dice_center_ave += dice_center
-        dice_region_ave += dice_region
-        weighted_mse_region_ave += weighted_mse_region
-        dice_bi_region_ave += dice_bi_region
+        test_loss += float(loss)
+        dice_center_ave += float(dice_center)
+        dice_region_ave += float(dice_region)
+        weighted_mse_region_ave += float(weighted_mse_region)
+        dice_bi_region_ave += float(dice_bi_region)
+        torch.cuda.empty_cache()
 
         cur_step = epoch * all_step + i
 
         batch_time = time.time() - start
         logger.info(
             '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
-
-        if cur_step == 500 or (cur_step % config.show_images_interval == 0 and  cur_step != 0):
-            # show images on tensorboard
-            if config.display_input_images:
-                ######image
-                x = vutils.make_grid(images.detach().cpu(), nrow=4, normalize=True, scale_each=True, padding=20)
-                writer.add_image(tag='Test_input/image', img_tensor=x, global_step=cur_step)
-                ######distance_map
-                show_distance_map = distance_map * training_mask
-                show_distance_map = show_distance_map.detach().cpu()
-                show_distance_map = show_distance_map[:8, :, :]
-                show_distance_map = vutils.make_grid(show_distance_map.unsqueeze(1), nrow=4, normalize=False, padding=20,
-                                              pad_value=1)
-                writer.add_image(tag='Test_input/distmap', img_tensor=show_distance_map, global_step=cur_step)
-
-            if config.display_output_images:
-                ######output
-                outputs = outputs[:, 0, :, :]
-                outputs = torch.sigmoid(outputs)
-                show_y = outputs.detach().cpu()
-                show_y = show_y[:8, :, :]
-                show_y = vutils.make_grid(show_y.unsqueeze(1), nrow=4, normalize=False, padding=20, pad_value=1)
-                writer.add_image(tag='Test_output/preds', img_tensor=show_y, global_step=cur_step)
+                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region,
+                weighted_mse_region, dice_bi_region, batch_time))
 
     writer.add_scalar(tag='Test_epoch/loss', scalar_value=test_loss / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_center', scalar_value=dice_center_ave / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_region', scalar_value=dice_region_ave / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_bi_region', scalar_value=dice_bi_region_ave / all_step, global_step=epoch)
-    writer.add_scalar(tag='Test_epoch/weighted_mse_region', scalar_value=weighted_mse_region_ave / all_step, global_step=epoch)
+    writer.add_scalar(tag='Test_epoch/weighted_mse_region', scalar_value=weighted_mse_region_ave / all_step,
+                      global_step=epoch)
+    return test_loss / all_step
 
 
 def eval(model, save_path, test_path, device):
@@ -257,10 +232,17 @@ def eval(model, save_path, test_path, device):
             scale = config.long_size / max(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
-        # if config.long_size != None:
-        #     scale1 = config.long_size / h
-        #     scale2 = config.long_size / w
-        #     img = cv2.resize(img, None, fx=scale2, fy=scale1)
+        # pad
+        h_pad, w_pad = 0, 0
+        if config.dla_model:
+            h2, w2 = img.shape[:2]
+            pad_to_scale = 32
+            if h2 % pad_to_scale != 0:
+                h_pad = (h2 // pad_to_scale + 1) * pad_to_scale - h2
+            if w2 % pad_to_scale != 0:
+                w_pad = (w2 // pad_to_scale + 1) * pad_to_scale - w2
+            img = np.pad(img, ((0, h_pad), (0, w_pad), (0, 0)))
+
         # 将图片由(w,h)变为(1,img_channel,h,w)
         tensor = transforms.ToTensor()(img)
         tensor = tensor.unsqueeze_(0)
@@ -268,7 +250,7 @@ def eval(model, save_path, test_path, device):
         with torch.no_grad():
             preds = model(tensor)
             preds, boxes_list, scores_list = dist_decode(preds[0], config.scale)
-            scale = (preds.shape[1] * 1.0 / w, preds.shape[0] * 1.0 / h)
+            scale = ((preds.shape[1] * 1.0-w_pad) / w, (preds.shape[0]* 1.0 -h_pad) / h)
             if len(boxes_list):
                 boxes_list = boxes_list / scale
         np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
@@ -309,10 +291,9 @@ def main(model, criterion):
 
     train_loader = DataLoaderX(dataset=train_data, batch_size=config.train_batch_size, shuffle=True,
                                num_workers=int(config.workers), pin_memory=config.pin_memory)
-    test_data = IC15Dataset(config.testroot, data_shape=config.data_shape, dataset_type=config.dataset_type, transform=transforms.ToTensor())
-
-    test_loader = DataLoaderX(dataset=test_data, batch_size=config.train_batch_size, shuffle=True,
-                               num_workers=int(config.workers), pin_memory=config.pin_memory) 
+    test_data = IC15Dataset(config.testroot, data_shape=config.data_shape, transform=transforms.ToTensor(), for_test=True)
+    test_loader = Data.DataLoader(dataset=test_data, batch_size=1, shuffle=False,
+                                  num_workers=0, pin_memory=False)
 
     writer = SummaryWriter(config.output_dir)
 
@@ -389,6 +370,7 @@ def main(model, criterion):
     best_model = {'recall': 0, 'precision': 0, 'f1': 0, 'models': ''}
     decrease_number = 0
     last_f1 = 0
+    min_test_loss = 99999
     try:
         for epoch in range(start_epoch, config.epochs):
             start = time.time()
@@ -396,9 +378,7 @@ def main(model, criterion):
                                          writer, logger)
             logger.info('[{}/{}], train_loss: {:.4f}, time: {:.4f}, lr: {}'.format(
                 epoch, config.epochs, train_loss, time.time() - start, lr))
-            # net_save_path = '{}/DistNet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch,
-            #                                                                               train_loss)
-            # save_checkpoint(net_save_path, models, optimizer, epoch, logger)
+
             if config.test_inteval <= 0 or config.test_inteval==None:
                 raise ValueError('test_inteval must be zhengzhengshu.')
             if config.always_test_threld <= 0 or config.always_test_threld==None:
@@ -414,16 +394,16 @@ def main(model, criterion):
                 if epoch % config.test_inteval == 0:
                     bTest = True
 
+            test_loss = min_test_loss
             if epoch % config.test_for_loss_inteval == 0 and epoch != 0:
-                eval_for_loss(model, test_loader, device, criterion, epoch, len(test_loader), writer, logger)
+                test_loss = eval_for_loss(model, test_loader, device, criterion, epoch, len(test_loader), writer, logger)
 
-            # if epoch > max(config.try_test_epoch):
-            #     net_save_path = '{}/train_DistNet_{}_loss{:.6f}.pth'.format(config.output_dir, epoch, train_loss)
-            #     save_checkpoint(net_save_path, model, optimizer, epoch, logger)
+            if test_loss < min_test_loss:
+                min_test_loss = test_loss
+                if epoch >= 100:
+                    bTest = True
 
             if bTest:
-            # if epoch != 0 and (epoch > (start_epoch + config.start_test_epoch) and epoch > max(try_test_epoch)):
-            #     if epoch % config.test_inteval == 0 or best_model['f1'] > config.always_test_threld:
                 recall, precision, f1 = eval(model, os.path.join(config.output_dir, 'output'), config.testroot, device)
 
                 logger.info('test: recall: {:.6f}, precision: {:.6f}, f1: {:.6f}'.format(recall, precision, f1))
@@ -483,6 +463,7 @@ if __name__ == '__main__':
     import utils
     from models.fpn_scnet import FPN_SCNet
     from models.craft_test import CRAFT_test
+    from models.dla_seg import get_dlaseg_net
 
     # model = FPN_SCNet('scnet50_v1d', 2, pretrained=True)
 
@@ -490,7 +471,8 @@ if __name__ == '__main__':
 
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=2)
 
-    model = CRAFT(num_out=2, pretrained=True)
+    # model = CRAFT(num_out=2, pretrained=True)
+    model = get_dlaseg_net(34, heads={'seg_hm': 2})
 
     # model = CRAFT_test(num_out=2, pretrained=True)
 

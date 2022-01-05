@@ -30,6 +30,10 @@ elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affin
 
 dur = 0
 
+from dataset.copy_paste_v2 import CopyPaste_v2
+
+cp = CopyPaste_v2(0.2, True, 0.1, scales=[0.8, 1.2], use_shape_adaptor=True)
+
 # from turbojpeg import TurboJPEG
 # jpeg = TurboJPEG()
 
@@ -104,7 +108,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     mask   [128, 128, 1]
     '''
 
-    #start = time.time()
+    # start = time.time()
     im = None
     if im_fn.endswith('jpg'):
         try:
@@ -117,6 +121,15 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
             im = cv2.imread(im_fn)
     else:
         im = cv2.imread(im_fn)
+
+    if config.cp and not for_test:
+        # start2 = time.time()
+        cp_data = {'image': im, "polys": text_polys, "ignore_tags": text_tags}
+        cp_data = cp(cp_data)
+        im, text_polys, text_tags = cp_data['image'], \
+                                    np.array(cp_data['polys'], dtype=np.float32), \
+                                    np.array(cp_data['ignore_tags'], dtype=np.bool)
+        # print('cp time: ', (time.time()-start2)*1000)
 
     im = cv2.cvtColor(im,cv2.COLOR_BGR2RGB)
     h, w, _ = im.shape
@@ -132,7 +145,6 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         if maxVal > 2000:
             im = cv2.resize(im, (0, 0), fx=scale, fy=scale)
             text_polys *= scale
-
 
     # intersection_threld *= im.shape[0] / h
     h, w, _ = im.shape
@@ -175,6 +187,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     #####################################
     distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
 
+    # print('all time: ', (time.time() - start) * 1000)
     if for_test:
         return im, training_mask, distance_map
 
@@ -183,7 +196,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     im = imgs[0]
     training_mask = imgs[1]
     distance_map = imgs[2]
-    if config.elastic:
+    if config.elastic and not for_test:
         elastic_imgs = elastic_aug(image=im, masks=[1-training_mask, distance_map])
         im = elastic_imgs['image']
         training_mask = 1-elastic_imgs['masks'][0]
@@ -267,10 +280,10 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
     # input()
     return dist_map
 
-
 #############################################################################
 class IC15Dataset(data.Dataset):
-    def __init__(self, data_dir, data_shape: int = 640, transform=None, target_transform=None):
+    def __init__(self, data_dir, data_shape: int = 640, transform=None, target_transform=None, for_test=False):
+        self.for_test = for_test
         self.data_list = self.load_data(data_dir)
         self.data_shape = data_shape
         self.transform = transform
@@ -280,7 +293,8 @@ class IC15Dataset(data.Dataset):
         img_path, text_polys, text_tags = self.data_list[index]
         img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
                                                                    input_size=self.data_shape,
-                                                                   scales = np.array(config.random_scales))
+                                                                   scales = np.array(config.random_scales),
+                                                                    for_test = self.for_test)
 
         #img = draw_bbox(img,text_polys)
 
@@ -327,7 +341,10 @@ class IC15Dataset(data.Dataset):
                     boxes.append([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
                 except:
                     print('load label failed on {}'.format(label_path))
-        return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
+        if not config.cp or self.for_test:
+            return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
+        else:
+            return boxes, text_tags
 
     def __len__(self):
         return len(self.data_list)
@@ -361,8 +378,8 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-
-    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\sample_IC15\\train', data_shape=config.data_shape,
+    # F:\zzxs\Experiments\dl - data\ICDAR\ICDAR2015\sample_IC15\\train
+    train_data = IC15Dataset('../../data/IC15/train', data_shape=config.data_shape,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 

@@ -23,136 +23,139 @@ from dataset.data_utils import image_label_v3, DataLoaderX
 time_sum = 0
 
 class CurveDataset(data.Dataset):
-    def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None, target_transform=None, for_test=False):
-        self.dataset_type = dataset_type
-        self.data_list = self.load_data(data_dir)
-        self.data_shape = data_shape
-        self.transform = transform
-        self.target_transform = target_transform
-        self.for_test=for_test
+	def __init__(self, data_dir, data_shape: int = 640, dataset_type='ctw1500', transform=None,
+				 target_transform=None, for_test=False):
+		self.for_test = for_test
+		self.dataset_type = dataset_type
+		self.data_list = self.load_data(data_dir)
+		self.data_shape = data_shape
+		self.transform = transform
+		self.target_transform = target_transform
+		#self.aug = augument()  #20200302增加新augument方式
 
-        #self.aug = augument()  #20200302增加新augument方式
+	def __getitem__(self, index):
+		# print(self.image_list[index])
+		img_path, text_polys, text_tags = self.data_list[index]
+		img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
+																   input_size=self.data_shape,
+																   scales = np.array(config.random_scales),
+																	for_test = self.for_test)
 
-    def __getitem__(self, index):
-        # print(self.image_list[index])
-        img_path, text_polys, text_tags = self.data_list[index]
-        img, training_mask, distance_map = image_label_v3(img_path, text_polys, text_tags,
-                                                                   input_size=self.data_shape,
-                                                                   scales = np.array(config.random_scales), for_test = self.for_test)
+		# global time_sum
+		# time_sum += dur
 
-        # global time_sum
-        # time_sum += dur
+		#img = draw_bbox(img,text_polys)
+		#img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
 
-        #img = draw_bbox(img,text_polys)
-        #img = self.aug(image=np.array(img))['image']  #20200302增加新augument方式
+		if self.transform:
+			img = self.transform(img)
+		if self.target_transform:
+			training_mask = self.target_transform(training_mask)
 
-        if self.transform:
-            img = self.transform(img)
-        if self.target_transform:
-            training_mask = self.target_transform(training_mask)
+		return img, training_mask, distance_map
 
-        return img, training_mask, distance_map
+	def load_data(self, data_dir: str) -> list:
+		data_list = []
 
-    def load_data(self, data_dir: str) -> list:
-        data_list = []
+		for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
+			d = pathlib.Path(x)
+			if self.dataset_type == 'ctw1500':
+				label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
+			elif self.dataset_type == 'total':
+				label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
+				# label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
+			else:
+				raise Exception('数据集类型必须是ctw1500或total！')
+			bboxs, text = self._get_annotation(label_path)
+			if len(bboxs) > 0:
+				data_list.append((x, bboxs, text))
+			else:
+				print('there is no suit bbox on {}'.format(label_path))
+		return data_list
 
-        for x in glob.glob(data_dir + '/img/*.jpg', recursive=True):
-            d = pathlib.Path(x)
-            if self.dataset_type == 'ctw1500':
-                label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
-            elif self.dataset_type == 'total':
-                label_path = os.path.join(data_dir, 'gt', 'poly_gt_' + (str(d.stem) + '.txt'))
-                # label_path = os.path.join(data_dir, 'gt', (str(d.stem) + '.txt'))
-            else:
-                raise Exception('数据集类型必须是ctw1500或total！')
-            bboxs, text = self._get_annotation(label_path)
-            if len(bboxs) > 0:
-                data_list.append((x, bboxs, text))
-            else:
-                print('there is no suit bbox on {}'.format(label_path))
-        return data_list
+	def _get_annotation(self, label_path: str) -> tuple:
+		boxes = []
+		text_tags = []
+		with open(label_path, encoding='utf-8', mode='r') as f:
+			for line in f.readlines():
+				line = line.strip().replace('\n', '').strip('\ufeff').strip('\xef\xbb\xbf')
+				params = line.split(',')
+				try:
+					if self.dataset_type == 'ctw1500':
+						text_tags.append(False)
+						box = []
+						if len(params) % 2 == 1:
+							x = 0
+							y = 0
+							for i, val in enumerate(params[:-1]):
+								if i % 2 == 0:
+									x = int(val)
+								elif i % 2 == 1:
+									y = int(val)
+									box.append([x, y])
+						else:
+							xmin, ymin, w, h = list(map(float, params[:4]))
+							x = 0
+							y = 0
+							for i, val in enumerate(params[4:]):
+								if i % 2 == 0:
+									x = xmin + int(val)
+								elif i % 2 == 1:
+									y = ymin + int(val)
+									box.append([x, y])
+						boxes.append(box)
+					elif self.dataset_type == 'total':
+						box = []
+						x = 0
+						y = 0
+						if not params[-1].isdigit():
+							if line.endswith('#'):
+								text_tags.append(True)
+							else:
+								text_tags.append(False)
+							params.pop(-1)
+						else:
+							text_tags.append(False)
+						if len(params) % 2 == 1:
+							params.pop(-1)
 
-    def _get_annotation(self, label_path: str) -> tuple:
-        boxes = []
-        text_tags = []
-        with open(label_path, encoding='utf-8', mode='r') as f:
-            for line in f.readlines():
-                line = line.strip().replace('\n', '').strip('\ufeff').strip('\xef\xbb\xbf')
-                params = line.split(',')
-                try:
-                    if self.dataset_type == 'ctw1500':
-                        text_tags.append(False)
-                        box = []
-                        if len(params) % 2 == 1:
-                            x = 0
-                            y = 0
-                            for i, val in enumerate(params[:-1]):
-                                if i % 2 == 0:
-                                    x = int(val)
-                                elif i % 2 == 1:
-                                    y = int(val)
-                                    box.append([x, y])
-                        else:
-                            xmin, ymin, w, h = list(map(float, params[:4]))
-                            x = 0
-                            y = 0
-                            for i, val in enumerate(params[4:]):
-                                if i % 2 == 0:
-                                    x = xmin + int(val)
-                                elif i % 2 == 1:
-                                    y = ymin + int(val)
-                                    box.append([x, y])
-                        boxes.append(box)
-                    elif self.dataset_type == 'total':
-                        box = []
-                        x = 0
-                        y = 0
-                        if not params[-1].isdigit():
-                            if line.endswith('#'):
-                                text_tags.append(True)
-                            else:
-                                text_tags.append(False)
-                            params.pop(-1)
-                        else:
-                            text_tags.append(False)
-                        if len(params) % 2 == 1:
-                            params.pop(-1)
+						for i, val in enumerate(params):
+							if i % 2 == 0:
+								x = int(val)
+							elif i % 2 == 1:
+								y = int(val)
+								box.append([x, y])
+						boxes.append(box)
 
-                        for i, val in enumerate(params):
-                            if i % 2 == 0:
-                                x = int(val)
-                            elif i % 2 == 1:
-                                y = int(val)
-                                box.append([x, y])
-                        boxes.append(box)
+				except:
+					print('load label failed on {}'.format(label_path))
 
-                except:
-                    print('load label failed on {}'.format(label_path))
+		if self.dataset_type == 'total':   # padding
+			pt_count = 0
+			for box in boxes:
+				if len(box) > pt_count:
+					pt_count = len(box)
+			for i, box in enumerate(boxes):
+				if len(box) < pt_count:
+					box2 = box
+					for j in range(len(box), pt_count):
+						box2.append(box[-1])
+					boxes[i] = box2
+		if self.for_test or not config.cp:
+			return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
+		else:
+			return boxes, text_tags
 
-        if self.dataset_type == 'total':   # padding
-            pt_count = 0
-            for box in boxes:
-                if len(box) > pt_count:
-                    pt_count = len(box)
-            for i, box in enumerate(boxes):
-                if len(box) < pt_count:
-                    box2 = box
-                    for j in range(len(box), pt_count):
-                        box2.append(box[-1])
-                    boxes[i] = box2
+	def __len__(self):
+		return len(self.data_list)
 
-        return np.array(boxes, dtype=np.float32), np.array(text_tags, dtype=np.bool)
-
-    def __len__(self):
-        return len(self.data_list)
-
-    def save_label(self, img_path, label):
-        save_path = img_path.replace('img', 'save')
-        if not os.path.exists(os.path.split(save_path)[0]):
-            os.makedirs(os.path.split(save_path)[0])
-        img = draw_bbox(img_path, label)
-        cv2.imwrite(save_path, img)
-        return img
+	def save_label(self, img_path, label):
+		save_path = img_path.replace('img', 'save')
+		if not os.path.exists(os.path.split(save_path)[0]):
+			os.makedirs(os.path.split(save_path)[0])
+		img = draw_bbox(img_path, label)
+		cv2.imwrite(save_path, img)
+		return img
 
 
 
@@ -177,8 +180,8 @@ if __name__ == '__main__':
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
     # F:\zzxs\Experiments\dl-data\TotalText\\train
-    train_data = CurveDataset('F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', data_shape=config.data_shape,
-                            dataset_type='ctw1500', transform=transforms.ToTensor())
+    train_data = CurveDataset('../../data/totaltext/train', data_shape=config.data_shape,
+                            dataset_type='total', transform=transforms.ToTensor())
     train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 
     pbar = tqdm(total=len(train_loader))

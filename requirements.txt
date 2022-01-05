@@ -16,5 +16,4 @@ Pillow==8.4.0
 Polygon==0.9.7
 albumentations==1.1.0
 graphviz==0.19.1
-skimage==0.0
 typing==3.10.0.0

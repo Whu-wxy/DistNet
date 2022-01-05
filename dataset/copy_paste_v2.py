@@ -22,7 +22,8 @@ class CopyPaste_v2(CopyPaste):
         src_img = data['image']
         src_polys = data['polys']
         src_ignores = data['ignore_tags']
-        src_img = cv2.imread(src_img)
+        if isinstance(src_img, str):
+            src_img = cv2.imread(src_img)
         src_img = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
         src_img = Image.fromarray(src_img).convert('RGBA')
 
@@ -105,7 +106,7 @@ class CopyPaste_v2(CopyPaste):
             poly = np.array(poly)
             xmin, ymin, xmax, ymax = poly[:, 0].min(), poly[:, 1].min(), poly[:, 0].max(), poly[:, 1].max()
             if (xmax - xmin) * (ymax - ymin) > src_img_rgba.shape[1] * src_img_rgba.shape[0] * self.filt_large_text:
-                print('filt large text')
+                # print('filt large text')
                 continue
             new_poly = poly.copy()
             new_poly[:, 0] -= xmin

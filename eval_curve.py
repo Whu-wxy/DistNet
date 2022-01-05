@@ -182,26 +182,20 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     scale = 1
 
-    long_size = 800
+    long_size = 1000
+    name = 'dla'
     data_type = 'ctw1500'   # ctw1500/total
-    model_path = '../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth'
-    #../save/distv2_CTW_exdata3/PSENet_106_loss0.815862_r0.692960_p0.874897_f10.773372.pth
-    #../save/distv2_Total_exdata2/Best_115_r0.628975_p0.793069_f10.701555.pth
-    #../save/distv2_CTW_exdata2/PSENet_110_loss0.778872_r0.728488_p0.840226_f10.780377.pth
-
-
+    model_path = '../.save/ctw1500/'+name+'/Best_93_r0.745763_p0.839633_f10.789919.pth'
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
-    save_path = '../test_resultCTW/'  # 2/result
+    save_path = '../.save/test/ctw1500/' + name
 
 
     long_size = 1350  # 1050
     data_type = 'total'  # ctw1500/total
-
-    name = 'dla34_3'
-
+    name = 'dla_cp'
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/'+name+'/Best_162_r0.762421_p0.838549_f10.798675.pth'
+    model_path = '../.save/Total/'+name+'/Best_201_r0.747967_p0.840609_f10.791587.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../.save/test/' + name
@@ -242,7 +236,7 @@ if __name__ == '__main__':
     #
 
 
-
+### Total
 # origin2
 # 1200  0.285 0.62    0.93, 0.978
 # tiouRecall: 0.477 tiouPrecision: 0.63 tiouHmean: 0.543
@@ -253,18 +247,15 @@ if __name__ == '__main__':
 # tiouRecall: 0.304 tiouPrecision: 0.478 tiouHmean: 0.372
 # {'precision': 0.6879781420765028, 'recall': 0.568654019873532, 'hmean': 0.6226508407517308}
 
-# fapn_res50  128
-# 1400  0.285   0.62   0.93 0.97
-# tiouRecall: 0.384 tiouPrecision: 0.571 tiouHmean: 0.459
-# {'precision': 0.8006198347107438, 'recall': 0.7000903342366757, 'hmean': 0.746987951807229}
-
-# FaPN_VGG16_bn   [16, 64, 128, 128, 256]
-# fps:1.4376
-# tiouRecall: 0.425 tiouPrecision: 0.591 tiouHmean: 0.495
-# {'precision': 0.8015794669299111, 'recall': 0.7335140018066847, 'hmean': 0.7660377358490565}
-
 #dla_3
 # 1350  0.285   0.56   0.93 0.97
 #  2.1467
 # tiouRecall: 0.451 tiouPrecision: 0.624 tiouHmean: 0.524
 # {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}
+
+###
+### CTW1500
+# 1000 0.295   0.56   0.93  0.972 180
+# 4.4671
+# tiouRecall: 0.452 tiouPrecision: 0.63 tiouHmean: 0.526
+# {'precision': 0.840673111349803, 'recall': 0.7653194263363755, 'hmean': 0.8012284593072855}

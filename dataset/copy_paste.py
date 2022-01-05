@@ -18,9 +18,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 from shapely.geometry import Polygon
 import math
+import albumentations as A
 
 class CopyPaste(object):
-    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], use_shape_adaptor=False, **kwargs):
+    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2],
+                 angle=[-45,45], use_shape_adaptor=False, colorjit=True, **kwargs):
         self.ext_data_num = 1
         self.objects_paste_ratio = objects_paste_ratio  # 复制百分之多少的text
         self.limit_paste = limit_paste
@@ -29,6 +31,8 @@ class CopyPaste(object):
         self.angle = angle
         self.filt_large_text = 0.1 #大于图片面积百分比的文本不复制
         self.use_shape_adaptor = use_shape_adaptor
+        self.colorjit = colorjit
+        self.colorjitter = A.ColorJitter(always_apply=True, p=1)
 
     def __call__(self, data):
         src_img = data['image']
@@ -94,6 +98,11 @@ class CopyPaste(object):
         return data
 
     def paste_img(self, src_img, text_img, poly, src_polys, select_ignores):
+        if self.colorjit:
+            text_img = cv2.cvtColor(np.array(text_img), cv2.COLOR_RGB2BGR)
+            text_img = self.colorjitter(image=text_img)
+            text_img = Image.fromarray(text_img['image']).convert('RGBA')
+
         if self.use_shape_adaptor:
             text_img, poly = self.shape_adaptor(text_img, np.array(poly, dtype=np.float64), np.array(src_polys), select_ignores)
 

@@ -8,8 +8,9 @@ import os
 
 # 前面图片中的text放到后面的图片中
 class CopyPaste_v2(CopyPaste):
-    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2], angle=[-45,45], use_shape_adaptor=False, **kwargs):
-        super().__init__(objects_paste_ratio, limit_paste, iou, scales, angle, use_shape_adaptor)
+    def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2],
+                 angle=[-45,45], use_shape_adaptor=False, colorjit=True, **kwargs):
+        super().__init__(objects_paste_ratio, limit_paste, iou, scales, angle, use_shape_adaptor, colorjit)
 
         self.max_text_region_ratio = 0.4    # 文字与图片面积的比例0-0.4---->从buffer中取出的比例: 0.4-0
         self.buffer_size = 20

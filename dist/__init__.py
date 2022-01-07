@@ -110,13 +110,13 @@ def decode(preds, scale):
     for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
-        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
         # score = np.where(pred == label_value, preds, 0)
         # score = np.mean(score)
         scores_list.append(1)
 
-        rect = cv2.minAreaRect(points)
+        # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        # rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
         #     if rect[1][1] <= 10*scale:
         #         continue
@@ -166,7 +166,6 @@ def decode_curve(preds, scale):
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
     center = torch.where(preds >= 0.7, ones_tensor, zeros_tensor)   # 0.62
 
-
     region = region.to(device='cpu', non_blocking=False).numpy()
     center = center.to(device='cpu', non_blocking=False).numpy()
     bi_region = bi_region.to(device='cpu', non_blocking=False).numpy()
@@ -189,9 +188,9 @@ def decode_curve(preds, scale):
     for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
             continue
-        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
 
-        rect = cv2.minAreaRect(points)
+        # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        # rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
         #     if rect[1][1] <= 10:
         #         continue
@@ -214,7 +213,123 @@ def decode_curve(preds, scale):
         bbox_list.append(bbox.reshape(-1))
     return pred, bbox_list  # , preds
 
+def fast_decode_curve(preds, scale):
+    """
+    在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
+    :param preds: 网络输出
+    :return: 最后的输出图和文本框
+    """
+    #
+    bi_region = preds[1, :, :]
+    preds = preds[0, :, :]
+    bi_region = torch.sigmoid(bi_region)
+    if len(bi_region.shape) == 3:
+        bi_region = bi_region.squeeze(0)
 
+    preds = torch.sigmoid(preds)
+
+    if len(preds.shape) == 3:
+        preds = preds.squeeze(0)
+
+    #
+    preds = torch.add(preds, bi_region)
+    preds = torch.add(preds, -1)
+
+    # plt.imshow(preds.cpu().numpy()*255)
+    # plt.show()
+
+    ones_tensor = torch.ones_like(preds, dtype=torch.float32)
+    zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
+
+    #CTW
+    # region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)
+    # center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)
+
+    #Total
+    region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
+
+    region = region.to(device='cpu', non_blocking=False).numpy()
+    center = center.to(device='cpu', non_blocking=False).numpy()
+    bi_region = bi_region.to(device='cpu', non_blocking=False).numpy()
+
+    # plt.imshow(region * 255)
+    # plt.show()
+    # plt.imshow(center * 255)
+    # plt.show()
+
+    center_label_num, center_label_img, center_stats, center_centroids = cv2.connectedComponentsWithStats(center, connectivity=8)  # .astype(np.uint8)
+    region_label_num, region_label_img = cv2.connectedComponents(region, connectivity=8)  # .astype(np.uint8)
+
+    bbox_list = []
+
+    # 孤立区域直接输出box
+    intersect_labels = []
+    for i in range(region_label_num):
+        intersect_labels.append([])
+    for lab, centroid in enumerate(center_centroids, start=1):
+        center_value = region_label_img[centroid[0]][centroid[1]]
+        intersect_labels[center_value].append(lab)
+
+    isolated = np.zeros(region.shape, dtype='uint8')
+    all_isolate = True
+    for i, region_labs in enumerate(intersect_labels, start=1):
+        if len(region_labs) == 1:   # 孤立区域
+            if np.mean(region == i) >=  0.97 and np.mean(center == region_labs[0]) >= 0.93:
+                isolated[region_label_img == i] = 1
+        elif len(region_labs) > 1:  # 有连接区域
+            all_isolate = False
+            region[region_label_img == i] = 0
+            for j in region_labs:
+                center[center_label_img == j] = 0
+
+    isolated_contours, _ = cv2.findContours(isolated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for contour in isolated_contours:
+        bbox = contour
+        if bbox.shape[0] <= 2:
+            continue
+        bbox = bbox * 1.0 / scale
+        bbox = bbox.astype('int32')
+        bbox_list.append(bbox.reshape(-1))
+    if all_isolate:
+        return isolated, bbox_list
+
+    # 有连接区域继续处理
+    #CTW
+    # area_threld = int(180 * scale)
+    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.972, area_threld)
+
+    #Total
+    area_threld = int(250 * scale)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.97, area_threld)
+
+    label_values = int(np.max(pred))
+    for label_value in range(label_values+1):   # range(label_values+1)
+        if label_value == 0:
+            continue
+
+        # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        # rect = cv2.minAreaRect(points)
+        # if rect[1][0] > rect[1][1]:
+        #     if rect[1][1] <= 10:
+        #         continue
+        # else:
+        #     if rect[1][0] <= 10:
+        #         continue
+
+        binary = np.zeros(pred.shape, dtype='uint8')
+        binary[pred == label_value] = 1
+
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contour = contours[0]
+        bbox = contour
+        if bbox.shape[0] <= 2:
+            continue
+
+        bbox = bbox*1.0 / scale
+        bbox = bbox.astype('int32')
+        bbox_list.append(bbox.reshape(-1))
+    return pred, bbox_list  # , preds
 
 def decode_biregion(preds, scale):
     preds = preds[0, :, :]

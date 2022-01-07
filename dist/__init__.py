@@ -272,11 +272,13 @@ def fast_decode_curve(preds, scale):
         intersect_labels[center_value].append(lab)
 
     isolated = np.zeros(region.shape, dtype='uint8')
+    all_isolate = True
     for i, region_labs in enumerate(intersect_labels, start=1):
         if len(region_labs) == 1:   # 孤立区域
             if np.mean(region == i) >=  0.97 and np.mean(center == region_labs[0]) >= 0.93:
                 isolated[region_label_img == i] = 1
         elif len(region_labs) > 1:  # 有连接区域
+            all_isolate = False
             region[region_label_img == i] = 0
             for j in region_labs:
                 center[center_label_img == j] = 0
@@ -289,6 +291,8 @@ def fast_decode_curve(preds, scale):
         bbox = bbox * 1.0 / scale
         bbox = bbox.astype('int32')
         bbox_list.append(bbox.reshape(-1))
+    if all_isolate:
+        return isolated, bbox_list
 
     # 有连接区域继续处理
     #CTW

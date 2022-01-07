@@ -193,12 +193,12 @@ if __name__ == '__main__':
 
     long_size = 1350  # 1050
     data_type = 'total'  # ctw1500/total
-    name = 'dla_cp'
+    name = 'dla34_3'
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/'+name+'/Best_201_r0.747967_p0.840609_f10.791587.pth'
+    model_path = '../.save/Total/'+name+'/Best_162_r0.762421_p0.838549_f10.798675.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../.save/test/' + name
+    save_path = '../.save/test/total/' + name + '_temp'
 
 
     gpu_id = 0

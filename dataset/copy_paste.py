@@ -59,6 +59,7 @@ class CopyPaste(object):
         text_imgs = []
         new_polys = []
         for poly, tag in zip(select_polys, select_ignores):
+            # poly roi
             src_img_rgba = np.asarray(src_img)
             maskIm = Image.new('L', (src_img_rgba.shape[1], src_img_rgba.shape[0]), 0)
             poly_t = [tuple(pt) for pt in poly]

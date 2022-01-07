@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/dla34_4'
+output_dir = '../.save/Total/dla_cp_jit2'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -14,7 +14,8 @@ img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
-elastic = False
+cp = True
+elastic = True
 
 # train config
 gpu_id = '0'

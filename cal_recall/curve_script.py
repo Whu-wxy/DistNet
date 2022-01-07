@@ -255,7 +255,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
     totalNumGtPols = 0
     totalNumDetPols = 0
 
-    # fper_ = open('per_sample_result.txt', 'w')
+    fper_ = open('per_sample_result.txt', 'w')
     # try:
     for resFile in gt:
         gtFile = decode_utf8(gt[resFile])
@@ -455,13 +455,13 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         #     resFile + '\t"IoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})",\t"TIoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})".\n'.format(
         #         precision, recall, hmean, tiouPrecision, tiouRecall, tiouHmean))
 
-        # fper_.writelines('{:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
+        # fper_.writelines(resFile + ', {:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
         try:
             totalNumGtPols += len(gtPols)
             totalNumDetPols += len(detPols)
         except Exception as e:
             raise e
-    # fper_.close()
+    fper_.close()
 
     # Compute MAP and MAR
     AP = 0

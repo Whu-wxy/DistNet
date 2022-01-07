@@ -164,7 +164,7 @@ def decode_curve(preds, scale):
 
     #Total
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
+    center = torch.where(preds >= 0.7, ones_tensor, zeros_tensor)   # 0.62
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()

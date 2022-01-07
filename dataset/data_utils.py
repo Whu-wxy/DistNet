@@ -32,7 +32,7 @@ dur = 0
 
 from dataset.copy_paste_v2 import CopyPaste_v2
 
-cp = CopyPaste_v2(0.2, True, 0.1, scales=[0.8, 1.2], use_shape_adaptor=True)
+cp = CopyPaste_v2(0.2, True, 0.1, scales=[0.6, 1.2], use_shape_adaptor=True, colorjit=True)
 
 # from turbojpeg import TurboJPEG
 # jpeg = TurboJPEG()
@@ -156,7 +156,7 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         text_polys *= scale
 
     # pad
-    if config.dla_model:
+    if config.dla_model and for_test:
         h, w = im.shape[:2]
         h_pad, w_pad = 0, 0
         pad_to_scale = 32

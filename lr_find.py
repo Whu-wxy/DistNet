@@ -1,5 +1,5 @@
 # pip install torch-lr-finder
-
+# https://github.com/davidtvs/pytorch-lr-finder#:~:text=PyTorch%20learning%20rate%20finder%20A%20PyTorch%20implementation%20of,provides%20valuable%20information%20about%20the%20optimal%20learning%20rate.
 from torch_lr_finder import LRFinder
 
 from models.fapn_resnet import FaPN_ResNet

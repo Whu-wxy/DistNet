@@ -12,7 +12,7 @@ import timeit
 
 from cal_recall.curve_script import curve_cal_recall_precison_f1
 from utils import draw_bbox
-from dist import decode_curve
+from dist import decode_curve, fast_decode_curve
 import matplotlib.pyplot as plt
 
 from turbojpeg import TurboJPEG
@@ -118,7 +118,7 @@ class Pytorch_model_curve:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list = decode_curve(preds[0], scale)
+            res_preds, boxes_list = fast_decode_curve(preds[0], scale)
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
@@ -179,7 +179,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
     scale = 1
 
     long_size = 1000

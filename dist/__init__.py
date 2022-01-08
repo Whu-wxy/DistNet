@@ -249,8 +249,8 @@ def fast_decode_curve(preds, scale):
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
     center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
 
-    region = region.to(device='cpu', non_blocking=False).numpy()
-    center = center.to(device='cpu', non_blocking=False).numpy()
+    region = region.to(device='cpu', non_blocking=False).numpy().astype(np.uint8)
+    center = center.to(device='cpu', non_blocking=False).numpy().astype(np.uint8)
     bi_region = bi_region.to(device='cpu', non_blocking=False).numpy()
 
     # plt.imshow(region * 255)
@@ -258,30 +258,34 @@ def fast_decode_curve(preds, scale):
     # plt.imshow(center * 255)
     # plt.show()
 
-    center_label_num, center_label_img, center_stats, center_centroids = cv2.connectedComponentsWithStats(center, connectivity=8)  # .astype(np.uint8)
-    region_label_num, region_label_img = cv2.connectedComponents(region, connectivity=8)  # .astype(np.uint8)
+    center_label_num, center_label_img = cv2.connectedComponents(center, connectivity=8)
+    region_label_num, region_label_img = cv2.connectedComponents(region, connectivity=8)
 
     bbox_list = []
 
     # 孤立区域直接输出box
     intersect_labels = []
-    for i in range(region_label_num):
+    for i in range(region_label_num+1):
         intersect_labels.append([])
-    for lab, centroid in enumerate(center_centroids, start=1):
-        center_value = region_label_img[centroid[0]][centroid[1]]
-        intersect_labels[center_value].append(lab)
+    for lab in range(1, center_label_num, 1):
+        center_value = region_label_img[np.where(center_label_img==lab)][0]
+        if center_value <= region_label_num and center_value != 0:
+            intersect_labels[center_value].append(lab)
 
+    print(intersect_labels)
     isolated = np.zeros(region.shape, dtype='uint8')
     all_isolate = True
-    for i, region_labs in enumerate(intersect_labels, start=1):
+    for i, region_labs in enumerate(intersect_labels):
         if len(region_labs) == 1:   # 孤立区域
-            if np.mean(region == i) >=  0.97 and np.mean(center == region_labs[0]) >= 0.93:
-                isolated[region_label_img == i] = 1
-        elif len(region_labs) > 1:  # 有连接区域
+            if np.mean(bi_region[region_label_img == i]) >= 0.97 and np.sum(region_label_img == i) > 250*scale \
+                                            and np.mean(bi_region[center_label_img == region_labs[0]]) >= 0.93:
+                isolated[region_label_img == i] = 255
+
+                region[region_label_img == i] = 0
+                center[center_label_img == region_labs[0]] = 0
+        if len(region_labs) > 1 and all_isolate:  # 有连接区域
             all_isolate = False
-            region[region_label_img == i] = 0
-            for j in region_labs:
-                center[center_label_img == j] = 0
+
 
     isolated_contours, _ = cv2.findContours(isolated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for contour in isolated_contours:

@@ -12,7 +12,7 @@ class CopyPaste_v2(CopyPaste):
                  angle=[-45,45], use_shape_adaptor=True, colorjit=True, elastic=True, domain_adaptation=False, **kwargs):
         super().__init__(objects_paste_ratio, limit_paste, iou, scales, angle, use_shape_adaptor, colorjit, elastic, domain_adaptation)
 
-        self.max_text_region_ratio = 0.4    # 文字与图片面积的比例0-0.4---->从buffer中取出的比例: 0.4-0
+        self.max_text_region_ratio = 0.3    # 文字与图片面积的比例0-0.4---->从buffer中取出的比例: 0.4-0
         self.buffer_size = 15
         self.text_img_buffer = []
         self.refresh_ratio = 0.2

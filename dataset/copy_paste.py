@@ -18,11 +18,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 from shapely.geometry import Polygon
 import math
-import albumentations as A
+import albumentations as Album
 
 class CopyPaste(object):
     def __init__(self, objects_paste_ratio=0.2, limit_paste=True, iou = 0.2, scales = [0.5, 2],
-                 angle=[-45,45], use_shape_adaptor=False, colorjit=True, **kwargs):
+                 angle=[-45,45], use_shape_adaptor=False, colorjit=True, elastic=True, domain_adaptation=False, **kwargs):
         self.ext_data_num = 1
         self.objects_paste_ratio = objects_paste_ratio  # 复制百分之多少的text
         self.limit_paste = limit_paste
@@ -32,7 +32,8 @@ class CopyPaste(object):
         self.filt_large_text = 0.1 #大于图片面积百分比的文本不复制
         self.use_shape_adaptor = use_shape_adaptor
         self.colorjit = colorjit
-        self.colorjitter = A.ColorJitter(always_apply=True, p=1)
+        self.domain_adaptation = domain_adaptation
+        self.elastic = elastic
 
     def __call__(self, data):
         src_img = data['image']
@@ -99,10 +100,13 @@ class CopyPaste(object):
         return data
 
     def paste_img(self, src_img, text_img, poly, src_polys, select_ignores):
-        if self.colorjit:
-            text_img = cv2.cvtColor(np.array(text_img), cv2.COLOR_RGB2BGR)
-            text_img = self.colorjitter(image=text_img)
-            text_img = Image.fromarray(text_img['image']).convert('RGBA')
+        # if self.colorjit:
+        #     r, g, b, A = text_img.split()
+        #     text_img = cv2.cvtColor(np.array(text_img), cv2.COLOR_RGB2BGR)
+        #     text_img = self.colorjitter(image=text_img)
+        #     text_img = text_img['image']
+        #     text_img = np.concatenate((text_img, np.expand_dims(np.array(A), axis=2)), axis=2)
+        #     text_img = Image.fromarray(text_img).convert('RGBA')
 
         if self.use_shape_adaptor:
             text_img, poly = self.shape_adaptor(text_img, np.array(poly, dtype=np.float64), np.array(src_polys), select_ignores)
@@ -128,7 +132,38 @@ class CopyPaste(object):
             return src_img, None
         new_poly[:, 0] += paste_x
         new_poly[:, 1] += paste_y
+
         r, g, b, A = text_img.split()
+
+        if self.domain_adaptation or self.elastic:
+            r, g, b, A = text_img.split()
+            target_img = src_img.crop((paste_x, paste_y, paste_x+box_w, paste_y+box_h))
+            target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
+            text_img = cv2.cvtColor(np.array(text_img), cv2.COLOR_RGB2BGR)
+            # domin_aug = Album.FDA([target_img], beta_limit=0.2, p=1, read_fn=lambda x: x)
+            # domin_aug = Album.PixelDistributionAdaptation([target_img], read_fn=lambda x: x, transform_type='pca', always_apply=True, p=1)
+            domin_aug = Album.HistogramMatching([target_img], read_fn=lambda x: x, always_apply=True, p=1)
+            elastic_factor = max(box_w, box_h)
+            elastic_aug =  Album.ElasticTransform(p=1, alpha=elastic_factor, sigma=elastic_factor * 0.5, alpha_affine=elastic_factor * 0.01,
+                                      interpolation=cv2.INTER_NEAREST, border_mode=cv2.BORDER_CONSTANT, value=(0, 0, 0), mask_value=(0, 0, 0))
+            grid_aug = Album.GridDistortion(5, distort_limit=0.3, interpolation=cv2.INTER_NEAREST,
+                                   border_mode=cv2.BORDER_CONSTANT, value=(0, 0, 0), mask_value=(0, 0, 0), always_apply=True, p=0.5)
+
+            transforms = []
+            if self.colorjit:
+                colorJitter_aug = Album.ColorJitter(always_apply=True, p=1)
+                transforms.append(colorJitter_aug)
+            if self.domain_adaptation:
+                transforms.append(domin_aug)
+            if self.elastic:
+                transforms.append(elastic_aug)
+                transforms.append(grid_aug)
+
+            transforms = Album.Compose(transforms)  # domin_aug,
+            text_img = transforms(image=text_img)['image']
+            text_img = np.concatenate((text_img, np.expand_dims(np.array(A), axis=2)), axis=2)
+            text_img = Image.fromarray(text_img).convert('RGBA')
+
         src_img.paste(text_img, (paste_x, paste_y), mask=A)
 
         return src_img, new_poly

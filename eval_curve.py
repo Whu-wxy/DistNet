@@ -118,13 +118,13 @@ class Pytorch_model_curve:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list = fast_decode_curve(preds[0], scale)
+            res_preds, boxes_list = fast_decode_curve(preds[0], scale)  # fast_
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
                 decode_time = timeit.default_timer()
                 for i in range(30):  # same as DBNet: https://github.com/MhLiao/DB/blob/master/eval.py
-                    preds_temp, boxes_list = decode_curve(preds[0], scale)
+                    preds_temp, boxes_list = fast_decode_curve(preds[0], scale)
                 decode_time = (timeit.default_timer() - decode_time) / 30.0
 
             t = model_time + decode_time
@@ -179,7 +179,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     scale = 1
 
     long_size = 1000
@@ -204,7 +204,7 @@ if __name__ == '__main__':
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
-    fast_test = True
+    fast_test = False
 
     from models.craft import CRAFT
     from models.fapn_resnet import FaPN_ResNet
@@ -252,6 +252,15 @@ if __name__ == '__main__':
 #  2.1467
 # tiouRecall: 0.451 tiouPrecision: 0.624 tiouHmean: 0.524
 # {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}
+
+# fps:2.46078389383591
+# average model time:0.294353057142968
+# average decode time:0.11202151418974002
+
+# fast
+# fps:2.4956803607960594
+# average model time:0.2935884022216002
+# average decode time:0.1071039363120993
 
 ###
 ### CTW1500

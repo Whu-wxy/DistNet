@@ -87,7 +87,7 @@ def decode(preds, scale):
     # plt.imshow(region.cpu().numpy() * 255)
     # plt.show()
 
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
+    center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()
@@ -98,7 +98,7 @@ def decode(preds, scale):
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.95, area_threld)
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.95, area_threld) # 93, 97
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
     # print('label_num: ', label_num)
@@ -115,8 +115,8 @@ def decode(preds, scale):
         # score = np.mean(score)
         scores_list.append(1)
 
-        # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
-        # rect = cv2.minAreaRect(points)
+        points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        rect = cv2.minAreaRect(points)
         # if rect[1][0] > rect[1][1]:
         #     if rect[1][1] <= 10*scale:
         #         continue
@@ -164,7 +164,7 @@ def decode_curve(preds, scale):
 
     #Total
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
-    center = torch.where(preds >= 0.7, ones_tensor, zeros_tensor)   # 0.62
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
 
     region = region.to(device='cpu', non_blocking=False).numpy()
     center = center.to(device='cpu', non_blocking=False).numpy()
@@ -213,6 +213,61 @@ def decode_curve(preds, scale):
         bbox_list.append(bbox.reshape(-1))
     return pred, bbox_list  # , preds
 
+import timeit
+from numba import jit, set_num_threads, prange
+from numba.typed import List
+set_num_threads(8)
+
+@jit(parallel=True, nopython=True, cache=True)
+def fast_decode_helper1(region_label_img, center_label_img, lab):
+    # res = 0
+    # count = 0
+    # for i in prange(center_label_img.shape[0]):
+    #     for j in range(center_label_img.shape[1]):
+    #         if center_label_img[i][j] == lab:
+    #             res += region_label_img[i][j]
+    #             count += 1
+    # if count == 0:
+    #     return 0
+    # return res//count
+
+    pos = np.where(center_label_img == lab)
+    num = len(pos[0])
+    return region_label_img[pos[0][num//2]][pos[1][num//2]]
+    # return region_label_img[pos[0][0]][pos[1][0]]
+
+@jit(parallel=True, nopython=True, cache=True)
+def fast_decode_helper2(isolated, region_label_img, center_label_img, center, region, bi_region, region_iso, center_iso,
+                        min_center=0.93, min_region=0.95, min_region_area=250):
+    region_ave = 0.0
+    region_num = 0
+    center_ave = 0.0
+    center_num = 0
+    isolated2 = isolated.copy()
+    for i in prange(center_label_img.shape[0]):
+        for j in range(center_label_img.shape[1]):
+            if region_label_img[i][j] == 0:
+                continue
+            for k in range(len(region_iso)):
+                if region_label_img[i][j] == region_iso[k]:
+                    region_ave += bi_region[i][j]
+                    region_num += 1
+                    region[i][j] = 0
+                    isolated2[i][j] = 255
+            for k in range(len(center_iso)):
+                if center_label_img[i][j] == center_iso[k]:
+                    center_ave += bi_region[i][j]
+                    center_num += 1
+                    center[i][j] = 0
+    if region_num == 0 or center_num == 0:
+        return isolated, center, region
+    region_ave /= region_num
+    center_ave /= center_num
+    if region_num > min_region_area and region_ave >= min_region and center_ave >= min_center:
+        return isolated2, center, region
+    else:
+        return isolated, center, region
+
 def fast_decode_curve(preds, scale):
     """
     在输出上使用sigmoid 将值转换为置信度，并使用阈值来进行文字和背景的区分
@@ -258,34 +313,47 @@ def fast_decode_curve(preds, scale):
     # plt.imshow(center * 255)
     # plt.show()
 
+    t1 = timeit.default_timer()
     center_label_num, center_label_img = cv2.connectedComponents(center, connectivity=8)
     region_label_num, region_label_img = cv2.connectedComponents(region, connectivity=8)
+    t1 = timeit.default_timer() - t1
+    # print('t0: ', t1)
 
     bbox_list = []
 
+    t1 = timeit.default_timer()
     # 孤立区域直接输出box
     intersect_labels = []
     for i in range(region_label_num+1):
         intersect_labels.append([])
     for lab in range(1, center_label_num, 1):
-        center_value = region_label_img[np.where(center_label_img==lab)][0]
-        if center_value <= region_label_num and center_value != 0:
+        # center_value = region_label_img[np.where(center_label_img==lab)][0]
+        center_value = fast_decode_helper1(region_label_img, center_label_img, lab)
+        if center_value <= region_label_num and center_value > 0:
             intersect_labels[center_value].append(lab)
+    t1 = timeit.default_timer() - t1
+    # print('t1: ', t1)
 
-    print(intersect_labels)
+    # print(intersect_labels)
+    t2 = timeit.default_timer()
     isolated = np.zeros(region.shape, dtype='uint8')
     all_isolate = True
+    region_iso = List()
+    center_iso = List()
     for i, region_labs in enumerate(intersect_labels):
         if len(region_labs) == 1:   # 孤立区域
-            if np.mean(bi_region[region_label_img == i]) >= 0.97 and np.sum(region_label_img == i) > 250*scale \
-                                            and np.mean(bi_region[center_label_img == region_labs[0]]) >= 0.93:
-                isolated[region_label_img == i] = 255
+            region_iso.append(i)
+            center_iso.append(region_labs[0])
 
-                region[region_label_img == i] = 0
-                center[center_label_img == region_labs[0]] = 0
-        if len(region_labs) > 1 and all_isolate:  # 有连接区域
-            all_isolate = False
+            if all_isolate:
+                all_isolate = False
 
+    if len(region_iso) > 0:
+        isolated, center, region = fast_decode_helper2(isolated, region_label_img, center_label_img, center, region,
+                                                   bi_region, region_iso, center_iso, 0.93, 0.97, 250 * scale)
+
+    t2 = timeit.default_timer() - t2
+    # print('t2: ', t2)
 
     isolated_contours, _ = cv2.findContours(isolated, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for contour in isolated_contours:
@@ -304,8 +372,14 @@ def fast_decode_curve(preds, scale):
     # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.972, area_threld)
 
     #Total
+    t3 = timeit.default_timer()
     area_threld = int(250 * scale)
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.97, area_threld)
+    pred = dist_cpp(center, region, bi_region, 0.93, 0.97, area_threld)
+    t3 = timeit.default_timer() - t3
+    # print('t3: ', t3)
+    # print('iso/pt: ', t1+t2, '//', t3)
+    # print(t1+t2, '//', t3)
+
 
     label_values = int(np.max(pred))
     for label_value in range(label_values+1):   # range(label_values+1)

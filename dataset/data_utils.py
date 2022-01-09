@@ -25,8 +25,8 @@ from Polygon.Utils import pointList
 from albumentations import ElasticTransform
 
 data_aug = PSEDataAugment()
-elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
-                         border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
+# elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
+#                          border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
 
 dur = 0
 
@@ -196,11 +196,11 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     im = imgs[0]
     training_mask = imgs[1]
     distance_map = imgs[2]
-    if config.elastic and not for_test:
-        elastic_imgs = elastic_aug(image=im, masks=[1-training_mask, distance_map])
-        im = elastic_imgs['image']
-        training_mask = 1-elastic_imgs['masks'][0]
-        distance_map = elastic_imgs['masks'][1]
+    # if config.elastic and not for_test:
+    #     elastic_imgs = elastic_aug(image=im, masks=[1-training_mask, distance_map])
+    #     im = elastic_imgs['image']
+    #     training_mask = 1-elastic_imgs['masks'][0]
+    #     distance_map = elastic_imgs['masks'][1]
 
     return im, training_mask, np.squeeze(distance_map, 2)
 

@@ -135,7 +135,7 @@ def cvt_15(data_dir, save_dir, dataset_count_scale=1, use_shape_adaptor=False):
     for i in range(dataset_count_scale-1):
         data_list.extend(copy.deepcopy(data_list))
     pbar = tqdm(total=len(data_list))
-    cp = CopyPaste_v2(0.5, True, 0.05, scales = [1, 2], use_shape_adaptor=use_shape_adaptor)
+    cp = CopyPaste_v2(0.5, True, 0.05, scales = [1, 1.5], use_shape_adaptor=use_shape_adaptor, colorjit=True)
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
         result = cp(data)
@@ -179,7 +179,7 @@ def cvt_curve(data_dir, save_dir, dataset_type, dataset_count_scale=1, use_shape
     for i in range(dataset_count_scale-1):
         data_list.extend(copy.deepcopy(data_list))
     pbar = tqdm(total=len(data_list))
-    cp = CopyPaste_v2(0.5, True, 0.05, scales = [0.8, 1.5], use_shape_adaptor=use_shape_adaptor)
+    cp = CopyPaste_v2(0.5, True, 0.05, scales = [0.6, 1.2], use_shape_adaptor=use_shape_adaptor, colorjit=True)
     for i, data in enumerate(data_list, cur_num+1):
         pbar.update(1)
         result = cp(data)
@@ -228,11 +228,14 @@ if __name__ == '__main__':
     # print('i:', i)
 
 ########################################## for test
-    cvt_15('../../data/IC15/train',
-           '../../data/IC15/train_cp')
+    # cvt_15('../../data/IC15/train',
+    #        '../../data/IC15/train_cp')
 
     # cvt_curve('../../data/totaltext/train',
               # '../../data/totaltext/train_cp', 'total', 1, True)
+    cvt_curve('F:\zzxs\Experiments\dl-data\TotalText\\test_sample',
+    'F:\zzxs\Experiments\dl-data\TotalText\\test_sample_cp2', 'total', 2, True)
+
 
     # cvt_curve('F:\zzxs\Experiments\dl-data\CTW\ctw1500\sample',
     #           'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\res', 'ctw1500', True)

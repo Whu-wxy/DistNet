@@ -149,10 +149,12 @@ def decode_curve(preds, scale):
         preds = preds.squeeze(0)
 
     #
+    # cv2.imwrite('../vis.jpg', preds.cpu().numpy()*255)
+
     preds = torch.add(preds, bi_region)
     preds = torch.add(preds, -1)
 
-    # plt.imshow(preds.cpu().numpy()*255)
+    # plt.imshow(p/reds.cpu().numpy()*255)
     # plt.show()
 
     ones_tensor = torch.ones_like(preds, dtype=torch.float32)
@@ -164,7 +166,7 @@ def decode_curve(preds, scale):
 
     #Total
     region = torch.where(preds >= 0.285, ones_tensor, zeros_tensor)  # 0.285
-    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.62
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)   # 0.56
 
     region = region.to(device='cpu', non_blocking=False).numpy()
     center = center.to(device='cpu', non_blocking=False).numpy()
@@ -174,6 +176,9 @@ def decode_curve(preds, scale):
     # plt.show()
     # plt.imshow(center * 255)
     # plt.show()
+    # cv2.imwrite('../region.jpg', region*255)
+    # cv2.imwrite('../center.jpg', center*255)
+    # cv2.imwrite('../bi_region.jpg', bi_region * 255)
 
     #CTW
     # area_threld = int(180 * scale)
@@ -187,7 +192,7 @@ def decode_curve(preds, scale):
     label_values = int(np.max(pred))
     for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
-            continue
+            continue7
 
         # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
         # rect = cv2.minAreaRect(points)

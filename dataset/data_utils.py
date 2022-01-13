@@ -22,17 +22,16 @@ import config
 import Polygon
 from Polygon.Utils import pointList
 
-from albumentations import ElasticTransform
+import albumentations as Album
 
 data_aug = PSEDataAugment()
-# elastic_aug = ElasticTransform(p=0.5, alpha=640*2, sigma=640 * 0.08, alpha_affine=640 * 0.08, interpolation=cv2.INTER_NEAREST,
-#                          border_mode=cv2.BORDER_CONSTANT, value=(0,0,0), mask_value=(0,0,0))
 
 dur = 0
 
 from dataset.copy_paste_v2 import CopyPaste_v2
 
-cp = CopyPaste_v2(0.2, True, 0.1, scales=[0.6, 1.2], use_shape_adaptor=True, colorjit=True)
+cp = CopyPaste_v2(0.2, True, 0.05, scales=[0.8, 1.5], use_shape_adaptor=True,
+                  colorjit=True, elastic=True, domain_adaptation=False)
 
 # from turbojpeg import TurboJPEG
 # jpeg = TurboJPEG()
@@ -139,12 +138,12 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     text_polys = check_and_validate_polys(text_polys, (h, w))
     if not for_test:
         im, text_polys = augmentation(im, text_polys, scales, degrees, input_size)
-    else:
-        maxVal = max(w, h)
-        scale = 2000 / maxVal
-        if maxVal > 2000:
-            im = cv2.resize(im, (0, 0), fx=scale, fy=scale)
-            text_polys *= scale
+    # else:
+    #     maxVal = max(w, h)
+    #     scale = 1800 / maxVal
+    #     if maxVal > 1800:
+    #         im = cv2.resize(im, (0, 0), fx=scale, fy=scale)
+    #         text_polys *= scale
 
     # intersection_threld *= im.shape[0] / h
     h, w, _ = im.shape
@@ -154,6 +153,14 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         scale = input_size / short_edge
         im = cv2.resize(im, dsize=None, fx=scale, fy=scale)
         text_polys *= scale
+
+    if for_test:
+        h, w, _ = im.shape
+        maxVal = max(w, h)
+        scale = 2000 / maxVal
+        if maxVal > 2000:
+            im = cv2.resize(im, (0, 0), fx=scale, fy=scale)
+            text_polys *= scale
 
     # pad
     if config.dla_model and for_test:
@@ -168,7 +175,6 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         h, w, _ = im.shape
 
     intersection_threld *= im.shape[0] / h
-    h, w, _ = im.shape
 
     # normal images
     if config.img_norm:
@@ -196,11 +202,19 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
     im = imgs[0]
     training_mask = imgs[1]
     distance_map = imgs[2]
-    # if config.elastic and not for_test:
-    #     elastic_imgs = elastic_aug(image=im, masks=[1-training_mask, distance_map])
-    #     im = elastic_imgs['image']
-    #     training_mask = 1-elastic_imgs['masks'][0]
-    #     distance_map = elastic_imgs['masks'][1]
+    if config.non_rigid_transform and random.random() < 0.2 and not for_test:
+        elastic_aug = Album.ElasticTransform(p=1, alpha=input_size, sigma=input_size * 0.05,
+                                             alpha_affine=input_size *0.05,
+                                             interpolation=cv2.INTER_LINEAR, border_mode=cv2.BORDER_CONSTANT,
+                                             value=(0, 0, 0), mask_value=(0, 0, 0))
+        grid_aug = Album.GridDistortion(5, distort_limit=0.3, interpolation=cv2.INTER_LINEAR,
+                                        border_mode=cv2.BORDER_CONSTANT, value=(0, 0, 0), mask_value=(0, 0, 0),
+                                        always_apply=True, p=1)
+        transforms = Album.Compose([elastic_aug, grid_aug])
+        elastic_imgs = transforms(image=im, masks=[1-training_mask, distance_map])
+        im = elastic_imgs['image']
+        training_mask = 1-elastic_imgs['masks'][0]
+        distance_map = elastic_imgs['masks'][1]
 
     return im, training_mask, np.squeeze(distance_map, 2)
 
@@ -265,7 +279,8 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
                 dist_map[temp_map==idx] = idx
             else:         
                 dist_map[(temp_map==idx)&(inter!=1)] = idx
-            if inter_sum == Inter_count:  # 当前box只与这个box相交
+            if inter_sum == Inter_count:  # 当前box
+                # 只与这个box相交
                 break
 
     for (i, text_poly) in enumerate(text_polys, start=1):

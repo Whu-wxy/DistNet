@@ -506,7 +506,7 @@ if __name__ == '__main__':
     import time
 
     device = torch.device('cpu')  #cuda:0
-    net = get_dlaseg_net(34, heads={'seg_hm': 2}).to(device)
+    net = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4).to(device)
     net.eval()
     x = torch.randn(1, 3, 256, 256).to(device)
     start = time.time()

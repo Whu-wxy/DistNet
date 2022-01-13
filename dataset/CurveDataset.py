@@ -180,7 +180,7 @@ if __name__ == '__main__':
     #F:\zzxs\Experiments\dl-data\CTW
     #F:\zzxs\Experiments\dl-data\CTW\ctw1500\\train
     # F:\zzxs\Experiments\dl-data\TotalText\\train
-    train_data = CurveDataset('../../data/totaltext/train', data_shape=config.data_shape,
+    train_data = CurveDataset('../../data/totaltext/test_tiny', data_shape=config.data_shape,
                             dataset_type='total', transform=transforms.ToTensor())
     train_loader = DataLoaderX(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 

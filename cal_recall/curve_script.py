@@ -362,12 +362,12 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
                     for detNum in range(len(detPols)):
                         pG = gtPols[gtNum]
                         pD = detPols[detNum]
+                        iou = get_intersection_over_union(pD, pG)
                         iouMat[gtNum, detNum] = get_intersection_over_union(pD, pG)
                         tiouRecallMat[gtNum, detNum] = get_text_intersection_over_union_recall(pD, pG)
                         tiouPrecisionMat[gtNum, detNum] = get_text_intersection_over_union_precision(pD, pG, gtNum,
                                                                                                     gtPols,
                                                                                                     gtDontCarePolsNum)
-
                 for gtNum in range(len(gtPols)):
                     for detNum in range(len(detPols)):
                         if gtRectMat[gtNum] == 0 and detRectMat[

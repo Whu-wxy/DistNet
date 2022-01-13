@@ -363,7 +363,6 @@ class DeformConv(nn.Module):
 		x = self.actf(x)
 		return x
 
-
 class IDAUp(nn.Module):
 
 	def __init__(self, o, channels, up_f):
@@ -488,6 +487,7 @@ class DLASeg(nn.Module):
 			# z[head] = self.__getattr__(head)(y[-1])
 			# z[head] = F.interpolate(z[head], size=(H, W), mode='bilinear', align_corners=False)
 			z = self.__getattr__(head)(y[-1])
+			print(z.shape)
 			res.append(F.interpolate(z, size=(H, W), mode='bilinear', align_corners=False))
 
 		return res[0]
@@ -495,7 +495,7 @@ class DLASeg(nn.Module):
 
 def get_dlaseg_net(num_layers, heads, head_conv=256, down_ratio=4):
 	model = DLASeg('dla{}'.format(num_layers), heads,
-				pretrained=True,
+				pretrained=False,
 				down_ratio=down_ratio,
 				final_kernel=1,
 				last_level=5,
@@ -503,25 +503,41 @@ def get_dlaseg_net(num_layers, heads, head_conv=256, down_ratio=4):
 	return model
 
 if __name__ == '__main__':
-    import time
+	import time
 
-    device = torch.device('cpu')  #cuda:0
-    net = get_dlaseg_net(34, heads={'seg_hm': 2}).to(device)
-    net.eval()
-    x = torch.randn(1, 3, 256, 256).to(device)
-    start = time.time()
-    y = net(x)
-    print(time.time() - start)  # 18->4.5  50->5.8
-    # print(y.shape)   #torch.Size([1, 5, 512, 512])
-    # # torch.save(net.state_dict(),f'{backbone}.pth')
+	device = torch.device('cpu')  #cuda:0
+	net = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4, head_conv=32).to(device)
+	# net = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=2, head_conv=16).to(device)
 
-    from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+	net.eval()
+	x = torch.randn(1, 3, 256, 256).to(device)
+	start = time.time()
+	y = net(x)
+	print(time.time() - start)  # 18->4.5  50->5.8
+	# print(y.shape)   #torch.Size([1, 5, 512, 512])
+	# # torch.save(net.state_dict(),f'{backbone}.pth')
 
-    print_model_parm_flops(net, x)
-    print_model_parm_nums(net)
-    #show_summary(net, 'E:/summery.xlsx')
+	from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
+
+	print_model_parm_flops(net, x)
+	print_model_parm_nums(net)
+	#show_summary(net, 'E:/summery.xlsx')
+
+# down_ratio=2
+# [16, 32, 64, 128, 256, 512]
+# 32
+# 3.102177619934082
+# torch.Size([1, 2, 128, 128])
+#   + Number of FLOPs: 5.22G
+#   + Number of params: 19.05M
+
+# down_ratio=4
+# [16, 32, 64, 128, 256, 512]
+# 64
+# torch.Size([1, 2, 64, 64])
+# 1.8621065616607666
+# torch.Size([1, 2, 64, 64])
+#   + Number of FLOPs: 4.49G
+#   + Number of params: 19.02M
 
 
-# 0.9587013721466064
-#   + Number of FLOPs: 5.03G
-#   + Number of params: 19.66M

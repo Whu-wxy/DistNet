@@ -17,3 +17,14 @@ for file in files:
                     points.append(float(i))
             if len(points) % 2 != 0:
                 print('not even:', file, ', end: ', datas[-1])
+
+
+# basedir = 'F:\zzxs\Experiments\dl-data\CTW\ctw1500\\test\gt'
+# files = os.listdir(basedir)
+# for file in files:
+#     with open(os.path.join(basedir, file), 'r') as f:
+#         for line in f.readlines():
+#             datas = line.split(',')
+#             datas[-1] = datas[-1].strip()
+#             if datas[-1] != 'CARE':
+#                 print(file, ',', datas[-1])

@@ -5,7 +5,7 @@ dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py
 
 trainroot = '../data/IC15/train'
 testroot = '../data/IC15/test'
-output_dir = '../.save/IC15/dla3'
+output_dir = '../.save/IC15/dla4'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -15,14 +15,13 @@ augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'ro
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 cp=False
-elastic = False
 
 # train config
 gpu_id = '0'
 workers = 10
 pin_memory = True
 start_epoch = 0
-epochs = 250   #600
+epochs = 300   #600
 early_stop=20  #test F1
 
 train_batch_size = 14
@@ -47,7 +46,7 @@ lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
     lr_gamma = 0.1     # 0.1
-    lr_decay_step = [10]    #  [10, 100]
+    lr_decay_step = [10, 170, 200]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5
@@ -112,5 +111,4 @@ def print():
     with open(output_dir+'/config.json', 'w') as f:
         json.dump(tem_d, f, indent=4)
     return pformat(tem_d)
-
 

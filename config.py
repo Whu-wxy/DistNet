@@ -1,35 +1,35 @@
 name = 'distv2_total_exdata'
 
 # data config
-dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
+dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py中不适用这个参数
 
-trainroot = '../data/IC15/train'
-testroot = '../data/IC15/test'
-output_dir = '../.save/IC15/dla4'
+trainroot = '../data/totaltext/train'
+testroot = '../data/totaltext/test'
+output_dir = '../.save/Total/dla_down_ratio4_rigid'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
-long_size = 1600  # 2240/None
+long_size = 1200  # 2240/None
 img_norm = False
 augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'rotate90']
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
-cp=False
-elastic = False
+cp = False
+non_rigid_transform = True
 
 # train config
 gpu_id = '0'
 workers = 10
 pin_memory = True
 start_epoch = 0
-epochs = 300   #600
+epochs = 250   #600
 early_stop=20  #test F1
 
-train_batch_size = 14
-try_test_epoch = [25, 50, 75, 100, 115, 125, 150, 175, 200, 225, 249]
+train_batch_size = 14 # 14
+try_test_epoch = [0, 25, 50, 75, 100, 115, 125, 150, 175, 200, 225, 249]
 start_test_epoch = 150      #绝对值
 test_inteval = 3
-always_test_threld = 0.68
+always_test_threld = 0.73
 
 test_for_loss_inteval = 5
 dla_model = True
@@ -47,7 +47,7 @@ lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
     lr_gamma = 0.1     # 0.1
-    lr_decay_step = [10, 170, 200]    #  [10, 100]
+    lr_decay_step = [10, 220]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5
@@ -112,4 +112,5 @@ def print():
     with open(output_dir+'/config.json', 'w') as f:
         json.dump(tem_d, f, indent=4)
     return pformat(tem_d)
+
 

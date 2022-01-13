@@ -118,7 +118,7 @@ class Pytorch_model_curve:
             model_time = (timeit.default_timer() - model_time)
 
             decode_time = timeit.default_timer()
-            res_preds, boxes_list = fast_decode_curve(preds[0], scale)
+            res_preds, boxes_list = decode_curve(preds[0], scale)  # fast_
             decode_time = (timeit.default_timer() - decode_time)
 
             if not fast_test:
@@ -179,7 +179,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = str('-1')
+    os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     scale = 1
 
     long_size = 1000
@@ -191,14 +191,15 @@ if __name__ == '__main__':
     save_path = '../.save/test/ctw1500/' + name
 
 
-    long_size = 1350  # 1050
+    long_size = 1400  # 1050
     data_type = 'total'  # ctw1500/total
-    name = 'dla34_3'
+    name = 'dla_down_ratio4'
     # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    model_path = '../.save/Total/'+name+'/Best_162_r0.762421_p0.838549_f10.798675.pth'
+    # Best_162_r0.762421_p0.838549_f10.798675.pth
+    model_path = '../.save/Total/'+name+'/Best_237_r0.761969_p0.832675_f10.795755.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../.save/test/total/' + name + '_temp'
+    save_path = '../.save/test/total/' + name #+ '_temp'
 
 
     gpu_id = 0
@@ -214,7 +215,7 @@ if __name__ == '__main__':
     # net = CRAFT(num_out=2, pretrained=False)
     # net = FaPN_ResNet("resnet50", 2, 1, True)
     # net = FaPN_VGG16_bn(num_out=2, pretrained=False)
-    net = get_dlaseg_net(34, heads={'seg_hm': 2})
+    net = get_dlaseg_net(34, heads={'seg_hm': 2}, head_conv=32)
     save_path = main(net, model_path, long_size,
                      scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
@@ -253,9 +254,18 @@ if __name__ == '__main__':
 # tiouRecall: 0.451 tiouPrecision: 0.624 tiouHmean: 0.524
 # {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}
 
+# head 32
+# 1400  0.285 0.56   0.93 0.97
+# tiouRecall: 0.449 tiouPrecision: 0.619 tiouHmean: 0.52
+# {'precision': 0.8408539543910722, 'recall': 0.7827461607949413, 'hmean': 0.8107602339181287}
+
+
 ###
 ### CTW1500
 # 1000 0.295   0.56   0.93  0.972 180
 # 4.4671
 # tiouRecall: 0.452 tiouPrecision: 0.63 tiouHmean: 0.526
 # {'precision': 0.840673111349803, 'recall': 0.7653194263363755, 'hmean': 0.8012284593072855}
+
+
+

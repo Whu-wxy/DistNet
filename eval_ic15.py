@@ -58,11 +58,11 @@ if __name__ == '__main__':
     long_size = 2200     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
     # model_path = '../save/ic15/vgg_test_distv2_IC15/Best_488_r0.482427_p0.904332_f10.629199.pth'
-    model_path = '../.save/IC15/dla2/Best_180_r0.610014_p0.873191_f10.718254.pth'
+    model_path = '../.save/IC15/dla4/Best_255_r0.614829_p0.872864_f10.721469.pth'
 
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt
-    save_path = '../.save/test/ic15/dla2'
+    save_path = '../.save/test/ic15/dla4'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
@@ -103,3 +103,6 @@ if __name__ == '__main__':
 # 2200  0.295 0.56 0.93  0.95 250
 # fps:3.26681
 # {'precision': 0.8624733475479744, 'recall': 0.7790081848820414, 'hmean': 0.8186187705540097, 'AP': 0}
+
+# 0.95 0.98
+# {'precision': 0.8932487016733988, 'recall': 0.745305729417429, 'hmean': 0.8125984251968504, 'AP': 0}

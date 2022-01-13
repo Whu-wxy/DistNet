@@ -166,42 +166,43 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
     net.eval()
     test_loss, dice_center_ave, dice_region_ave, weighted_mse_region_ave, dice_bi_region_ave = 0., 0., 0., 0., 0.
     start = time.time()
-    
-    for i, (images, training_mask, distance_map) in enumerate(test_loader):
-        cur_batch = images.size()[0]
-        non_blocking = False
-        if config.pin_memory and config.workers > 1:
-            non_blocking = True
-        # print('img shape: ', images.shape)
-        #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
-        images = images.to(device, non_blocking=non_blocking)
 
-        # Forward
-        with torch.no_grad():
+    with torch.no_grad():
+        for i, (images, training_mask, distance_map) in enumerate(test_loader):
+            cur_batch = images.size()[0]
+            non_blocking = False
+            if config.pin_memory and config.workers > 1:
+                non_blocking = True
+            # print('img shape: ', images.shape)
+            #images, labels, training_mask = images.to(device), labels.to(device), training_mask.to(device)
+            images = images.to(device, non_blocking=non_blocking)
+
+            # Forward
+
             outputs = net(images)   #B1HW
-        # labels, training_mask后面放到gpu是否会占用更少一些显存？
-        training_mask = training_mask.to(device, non_blocking=non_blocking)
-        distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
-        distance_map = distance_map.to(torch.float)
+            # labels, training_mask后面放到gpu是否会占用更少一些显存？
+            training_mask = training_mask.to(device, non_blocking=non_blocking)
+            distance_map = distance_map.to(device, non_blocking=non_blocking)   #label
+            distance_map = distance_map.to(torch.float)
 
-        #outputs = torch.squeeze(outputs, dim=1)
+            #outputs = torch.squeeze(outputs, dim=1)
 
-        #
-        dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
+            #
+            dice_center, dice_region, weighted_mse_region, loss, dice_bi_region = criterion(outputs, distance_map, training_mask)
 
-        test_loss += float(loss)
-        dice_center_ave += float(dice_center)
-        dice_region_ave += float(dice_region)
-        weighted_mse_region_ave += float(weighted_mse_region)
-        dice_bi_region_ave += float(dice_bi_region)
-        torch.cuda.empty_cache()
+            test_loss += float(loss)
+            dice_center_ave += float(dice_center)
+            dice_region_ave += float(dice_region)
+            weighted_mse_region_ave += float(weighted_mse_region)
+            dice_bi_region_ave += float(dice_bi_region)
+            torch.cuda.empty_cache()
 
-        cur_step = epoch * all_step + i
+            cur_step = epoch * all_step + i
 
-        batch_time = time.time() - start
-        logger.info(
-            '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
-                epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
+            batch_time = time.time() - start
+            logger.info(
+                '[TEST]:[{}/{}], [{}/{}], step: {}, {:.3f} samples/sec, loss: {:.4f}, dice_center_loss: {:.4f}, dice_region_loss: {:.4f}, weighted_mse_region_loss: {:.4f}, dice_bi_region: {:.4f}, time:{:.4f}'.format(
+                    epoch, config.epochs, i, all_step, cur_step, cur_batch / batch_time, loss, dice_center, dice_region, weighted_mse_region, dice_bi_region, batch_time))
 
     writer.add_scalar(tag='Test_epoch/loss', scalar_value=test_loss / all_step, global_step=epoch)
     writer.add_scalar(tag='Test_epoch/dice_center', scalar_value=dice_center_ave / all_step, global_step=epoch)
@@ -212,7 +213,7 @@ def eval_for_loss(net, test_loader, device, criterion, epoch, all_step, writer, 
 
 def eval(model, save_path, test_path, device):
     model.eval()
-    # torch.cuda.empty_cache()  # speed up evaluating after training finished
+    torch.cuda.empty_cache()  # speed up evaluating after training finished
     img_path = os.path.join(test_path, 'img')
     gt_path = os.path.join(test_path, 'gt')
     if os.path.exists(save_path):
@@ -484,7 +485,7 @@ if __name__ == '__main__':
     # model = CRAFT(num_out=2, pretrained=True)
     # model = FaPN_ResNet("resnet50", 2, 1, True)
     # model = FaPN_VGG16_bn(2, True)
-    model = get_dlaseg_net(34, heads={'seg_hm': 2})
+    model = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4, head_conv=32)
 
     #model = ResNet_FPEM(backbone=config.backbone, pretrained=config.pretrained, result_num=config.n)
 

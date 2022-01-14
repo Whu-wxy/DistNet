@@ -363,15 +363,32 @@ class DeformConv(nn.Module):
 		x = self.actf(x)
 		return x
 
+class FSM(nn.Module):
+	def __init__(self, in_dim, out_dim):
+		super().__init__()
+		self.conv_atten = nn.Conv2d(in_dim*2, in_dim*2, 1, bias=False)
+		self.dcnv2 = DeformConv(in_dim, out_dim)
+
+	def forward(self, x, y):
+		z = torch.cat([x, y], dim=1)
+		atten = self.conv_atten(F.avg_pool2d(z, z.shape[2:])).sigmoid()
+		x_atten, y_atten = atten.chunk(2, dim=1)
+		z = torch.mul(x, x_atten) + torch.mul(y, y_atten)
+		return self.dcnv2(z)
+
 class IDAUp(nn.Module):
 
-	def __init__(self, o, channels, up_f):
+	def __init__(self, o, channels, up_f, FSM=False):
 		super(IDAUp, self).__init__()
 		for i in range(1, len(channels)):
 			c = channels[i]
 			f = int(up_f[i])
 			proj = DeformConv(c, o)
-			node = DeformConv(o, o)
+			self.FSM = FSM
+			if FSM:
+				node = FSM(o, o)
+			else:
+				node = DeformConv(o, o)
 
 			up = nn.ConvTranspose2d(o, o, f * 2, stride=f,
 									padding=f // 2, output_padding=0,
@@ -388,11 +405,14 @@ class IDAUp(nn.Module):
 			project = getattr(self, 'proj_' + str(i - startp))
 			layers[i] = upsample(project(layers[i]))
 			node = getattr(self, 'node_' + str(i - startp))
-			layers[i] = node(layers[i] + layers[i - 1])
+			if self.FSM:
+				layers[i] = node(layers[i], layers[i - 1])
+			else:
+				layers[i] = node(layers[i] + layers[i - 1])
 
 
 class DLAUp(nn.Module):
-	def __init__(self, startp, channels, scales, in_channels=None):
+	def __init__(self, startp, channels, scales, in_channels=None, FSM=False):
 		super(DLAUp, self).__init__()
 		self.startp = startp
 		if in_channels is None:
@@ -404,7 +424,7 @@ class DLAUp(nn.Module):
 			j = -i - 2
 			setattr(self, 'ida_{}'.format(i),
 					IDAUp(channels[j], in_channels[j:],
-						  scales[j:] // scales[j]))
+						  scales[j:] // scales[j], FSM))
 			scales[j + 1:] = scales[j]
 			in_channels[j + 1:] = [channels[j] for _ in channels[j + 1:]]
 
@@ -430,7 +450,7 @@ class Interpolate(nn.Module):
 
 class DLASeg(nn.Module):
 	def __init__(self, base_name, heads, pretrained, down_ratio, final_kernel,
-				 last_level, head_conv, out_channel=0):
+				 last_level, head_conv, out_channel=0, FSM=False):
 		super(DLASeg, self).__init__()
 		assert down_ratio in [2, 4, 8, 16]
 		self.first_level = int(np.log2(down_ratio))
@@ -444,7 +464,7 @@ class DLASeg(nn.Module):
 			out_channel = channels[self.first_level]
 
 		self.ida_up = IDAUp(out_channel, channels[self.first_level:self.last_level],
-							[2 ** i for i in range(self.last_level - self.first_level)])
+							[2 ** i for i in range(self.last_level - self.first_level)], FSM=FSM)
 
 		self.heads = heads
 		for head in self.heads:
@@ -516,7 +536,9 @@ if __name__ == '__main__':
 	print(time.time() - start)  # 18->4.5  50->5.8
 	# print(y.shape)   #torch.Size([1, 5, 512, 512])
 	# # torch.save(net.state_dict(),f'{backbone}.pth')
-
+	import sys
+	sys.path.append(os.getcwd())
+	import utils
 	from utils.computation import print_model_parm_flops, print_model_parm_nums, show_summary
 
 	print_model_parm_flops(net, x)
@@ -533,12 +555,19 @@ if __name__ == '__main__':
 
 # down_ratio=4
 # [16, 32, 64, 128, 256, 512]
-# 64
-# torch.Size([1, 2, 64, 64])
 # 1.8621065616607666
 # torch.Size([1, 2, 64, 64])
 #   + Number of FLOPs: 4.49G
 #   + Number of params: 19.02M
 
 
-
+# origin
+# 0.49811244010925293
+# torch.Size([1, 2, 64, 64])
+#   + Number of FLOPs: 4.49G
+#   + Number of params: 19.02M
+# add FSM
+# 0.5271117687225342
+# torch.Size([1, 2, 64, 64])
+#   + Number of FLOPs: 4.50G
+#   + Number of params: 19.49M

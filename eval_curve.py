@@ -190,7 +190,8 @@ if __name__ == '__main__':
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
     save_path = '../.save/test/ctw1500/' + name
 
-
+# dla_down_ratio4_rigid   Best_180_r0.763324_p0.833333_f10.796794.pth
+    # dla_down_ratio4  Best_237_r0.761969_p0.832675_f10.795755.pth
     long_size = 1400  # 1050
     data_type = 'total'  # ctw1500/total
     name = 'dla_down_ratio4'
@@ -255,10 +256,14 @@ if __name__ == '__main__':
 # {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}
 
 # head 32
-# 1400  0.285 0.56   0.93 0.97
-# tiouRecall: 0.449 tiouPrecision: 0.619 tiouHmean: 0.52
-# {'precision': 0.8408539543910722, 'recall': 0.7827461607949413, 'hmean': 0.8107602339181287}
+# 1400  0.2 0.56   0.93 0.97
+# tiouRecall: 0.473 tiouPrecision: 0.657 tiouHmean: 0.55
+# {'precision': 0.8679817905918058, 'recall': 0.7750677506775068, 'hmean': 0.8188976377952757}
 
+# head 32 rigid
+# 1250  0.2  0.56   0.93 0.97
+# tiouRecall: 0.465 tiouPrecision: 0.657 tiouHmean: 0.545
+# {'precision': 0.8725140234574197, 'recall': 0.7728093947606143, 'hmean': 0.8196407185628742}
 
 ###
 ### CTW1500

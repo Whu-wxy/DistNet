@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/dla_down_ratio4_rigid'
+output_dir = '../.save/Total/dla_down_ratio4_rigid2'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -47,7 +47,7 @@ lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
     lr_gamma = 0.1     # 0.1
-    lr_decay_step = [10, 220]    #  [10, 100]
+    lr_decay_step = [10, 200]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5

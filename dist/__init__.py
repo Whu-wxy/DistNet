@@ -192,7 +192,7 @@ def decode_curve(preds, scale):
     label_values = int(np.max(pred))
     for label_value in range(label_values+1):   # range(label_values+1)
         if label_value == 0:
-            continue7
+            continue
 
         # points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
         # rect = cv2.minAreaRect(points)

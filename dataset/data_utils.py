@@ -184,20 +184,48 @@ def image_label_v3(im_fn: str, text_polys: np.ndarray, text_tags: list, input_si
         im /= np.array((0.229, 0.224, 0.225))
 
     h, w, _ = im.shape
+    distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
     training_mask = np.ones((h, w), dtype=np.uint8)
     for poly, tag in zip(text_polys, text_tags):
         poly = poly.astype(np.int)
         if tag:
             cv2.fillPoly(training_mask, [poly], 0)
+        # elif random.random() < 0.2 and 'Non_rigid_transform' in config.augment_list:
+        #     xmin, ymin, xmax, ymax = poly[:, 0].min(), poly[:, 1].min(), poly[:, 0].max(), poly[:, 1].max()
+        #     elastic_factor = max(xmax-xmin, ymax-ymin)
+        #     text_img_mask = np.zeros((ymax-ymin, xmax-xmin), dtype=np.uint8)
+        #     poly[:, 0] -= xmin
+        #     poly[:, 1] -= ymin
+        #     cv2.fillPoly(text_img_mask, [poly], 1)
+        #     elastic_aug = Album.ElasticTransform(p=1, alpha=elastic_factor, sigma=elastic_factor * 0.5,
+        #                                          alpha_affine=elastic_factor * 0.01,
+        #                                          interpolation=cv2.INTER_LINEAR, border_mode=cv2.BORDER_CONSTANT,  # BORDER_CONSTANT
+        #                                          value=(0, 0, 0), mask_value=(0, 0, 0))
+        #     grid_aug = Album.GridDistortion(5, distort_limit=0.5, interpolation=cv2.INTER_LINEAR,
+        #                                     border_mode=cv2.BORDER_CONSTANT, value=(0, 0, 0), mask_value=(0, 0, 0),
+        #                                     always_apply=True, p=1)
+        #     transforms = Album.Compose([elastic_aug,grid_aug])  # elastic_aug,
+        #     text_img = im[ymin:ymax, xmin:xmax, :]
+        #     mask_img = distance_map[ymin:ymax, xmin:xmax]
+        #     result = transforms(image=text_img, masks=[mask_img, text_img_mask])
+        #     transformed_text_img_mask = result['masks'][1]
+        #     # cv2.namedWindow("text_img_mask", cv2.WINDOW_NORMAL)
+        #     # cv2.imshow('text_img_mask', transformed_text_img_mask*255)
+        #     distance_map[ymin:ymax, xmin:xmax] = np.where((distance_map[ymin:ymax, xmin:xmax] > 0) & (text_img_mask == 1), 0, distance_map[ymin:ymax, xmin:xmax])
+        #     distance_map[ymin:ymax, xmin:xmax] = np.where(transformed_text_img_mask == 1, result['masks'][0], mask_img)
+        #
+        #     transformed_text_img_mask = np.expand_dims(transformed_text_img_mask, axis=2)
+        #     im[ymin:ymax, xmin:xmax, :] = np.where(transformed_text_img_mask == 1, result['image'], text_img)
+        #     # cv2.namedWindow("textimg2", cv2.WINDOW_NORMAL)
+        #     # cv2.namedWindow("dist_map2", cv2.WINDOW_NORMAL)
+        #     # cv2.imshow('textimg2', text_img)
+        #     # cv2.imshow('dist_map2', mask_img)
+        #     # cv2.waitKey()
 
-    #####################################
-    distance_map = get_distance_map_v3(text_polys, h, w, intersection_threld)
-
-    # print('all time: ', (time.time() - start) * 1000)
+            # print('all time: ', (time.time() - start) * 1000)
     if for_test:
         return im, training_mask, distance_map
 
-    ##############################
     imgs = data_aug.random_crop_author([im, training_mask, np.expand_dims(distance_map, 2)], (input_size, input_size))
     im = imgs[0]
     training_mask = imgs[1]
@@ -246,7 +274,6 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
         else:
             cv2.fillPoly(dist_map, [text_poly], i)
 
-
     for (idx, text_poly) in enumerate(text_polys, start=1):
         if not idx in undraw_list:
             continue
@@ -284,15 +311,13 @@ def get_distance_map_v3(text_polys, h, w, intersection_threld):
                 break
 
     for (i, text_poly) in enumerate(text_polys, start=1):
-        text_i = np.where(dist_map == i, 1, 0)
-        text_i = text_i.astype(np.uint8)
+        text_i = np.where(dist_map == i, 1, 0).astype(np.uint8)
         # 距离图
         distance_map_i = cv2.distanceTransform(text_i, distanceType=cv2.DIST_L2, maskSize=5)
-        cv2.normalize(distance_map_i, distance_map_i, 0.3, 1, cv2.NORM_MINMAX, mask=text_i.astype(np.uint8))
+        cv2.normalize(distance_map_i, distance_map_i, 0.3, 1, cv2.NORM_MINMAX, mask=text_i)
         dist_map = np.where(distance_map_i>0.1, distance_map_i, dist_map)
 
     # np.savetxt('F:\\distance_map.csv', distance_map, delimiter=',', fmt='%F')
-    # input()
     return dist_map
 
 #############################################################################
@@ -393,8 +418,8 @@ if __name__ == '__main__':
 
 #F:\\imgs\\psenet_vis2s     F:\zzxs\dl-data\ICDAR\ICDAR2015\\train
     #F:\zzxs\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
-    # F:\zzxs\Experiments\dl - data\ICDAR\ICDAR2015\sample_IC15\\train
-    train_data = IC15Dataset('../../data/IC15/train', data_shape=config.data_shape,
+    # F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\sample_IC15\\train
+    train_data = IC15Dataset('F:\zzxs\Experiments\dl-data\ICDAR\ICDAR2015\sample_IC15\\test', data_shape=config.data_shape,
                            transform=transforms.ToTensor())
     train_loader = DataLoader(dataset=train_data, batch_size=1, shuffle=False, num_workers=0)
 

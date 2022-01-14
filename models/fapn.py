@@ -42,7 +42,6 @@ class FSM(nn.Module):
         x = x + feat
         return self.conv(x)
 
-
 class FAM(nn.Module):
     def __init__(self, c1, c2):
         super().__init__()

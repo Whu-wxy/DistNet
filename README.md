@@ -29,7 +29,7 @@ There are some conversion and reading tools in the **datasets** folder.
 Execute **eval_ic15.py/eval_ReCTS.py/eval_curve.py** to test
 
 # Result
-**VGG16**
+**VGG16 in Paper**
 dataset | pretrained on | precision | recall | F-measure
 ---- | --------- | --------- | ------ | ---------
 IC17 | None | 75.6 |  61.9 | 68.1
@@ -40,7 +40,7 @@ CTW1500 | IC17 | 84.0 | 77.2 | 80.4
 Total-Text | None | 81.2 | 80.1 | 80.6
 Total-Text | IC17 | 84.4 | 78.9 | 81.6
 
-**DLA34 without pretrain ([branch cp]{https://github.com/Whu-wxy/DistNet/tree/cp})**
+**DLA34 without pretrain ([branch cp](https://github.com/Whu-wxy/DistNet/tree/cp))**
 dataset | precision | recall | F-measure
 ----  | --------- | ------ | ---------
 Total-Text | 85.27 | 79.49 | 82.28

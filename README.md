@@ -29,7 +29,7 @@ There are some conversion and reading tools in the **datasets** folder.
 Execute **eval_ic15.py/eval_ReCTS.py/eval_curve.py** to test
 
 # Result
-**VGG16([branch master]{https://github.com/Whu-wxy/DistNet})**
+**VGG16 in Paper([branch master](https://github.com/Whu-wxy/DistNet))**
 dataset | pretrained on | precision | recall | F-measure
 ---- | --------- | --------- | ------ | ---------
 IC17 | None | 75.6 |  61.9 | 68.1

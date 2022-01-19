@@ -40,10 +40,10 @@ CTW1500 | IC17 | 84.0 | 77.2 | 80.4
 Total-Text | None | 81.2 | 80.1 | 80.6
 Total-Text | IC17 | 84.4 | 78.9 | 81.6
 
-**DLA34 without pretrain**
+**DLA34 without pretrain ([branch cp]{https://github.com/Whu-wxy/DistNet/tree/cp})**
 dataset | precision | recall | F-measure
 ----  | --------- | ------ | ---------
-Total-Text | 84.1 | 78.55 | 81.22
+Total-Text | 85.27 | 79.49 | 82.28
 CTW1500 | 84.07 | 76.53 | 80.12
 
 # Visualization

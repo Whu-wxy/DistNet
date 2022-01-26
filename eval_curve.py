@@ -62,7 +62,12 @@ class Pytorch_model_curve:
             try:
                 sk = {}
                 for k in self.net:
-                    sk[k[7:]] = self.net[k]
+                    if 'base.fc' in k:
+                        print(k)
+                        continue
+
+                    sk[k] = self.net[k]
+                    # sk[k[7:]] = self.net[k]
                 net.load_state_dict(sk)
             except:
                 net.load_state_dict(self.net)
@@ -184,6 +189,8 @@ if __name__ == '__main__':
 
     long_size = 1000
     name = 'dla'
+    # dla   Best_93_r0.745763_p0.839633_f10.789919.pth
+    # dla_CNN  Best_159_r0.721317_p0.853452_f10.781841.pth
     data_type = 'ctw1500'   # ctw1500/total
     model_path = '../.save/ctw1500/'+name+'/Best_93_r0.745763_p0.839633_f10.789919.pth'
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
@@ -191,13 +198,14 @@ if __name__ == '__main__':
     save_path = '../.save/test/ctw1500/' + name
 
 # dla_down_ratio4_rigid   Best_180_r0.763324_p0.833333_f10.796794.pth
-    # dla_down_ratio4  Best_237_r0.761969_p0.832675_f10.795755.pth
-    long_size = 1400  # 1050
+    # dla34_3  Best_162_r0.762421_p0.838549_f10.798675.pth
+    # dla_head256_fsm  Best_171_r0.757001_p0.848608_f10.800191.pth
+    long_size = 1350  # 1050
     data_type = 'total'  # ctw1500/total
-    name = 'dla_down_ratio4'
-    # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    # Best_162_r0.762421_p0.838549_f10.798675.pth
-    model_path = '../.save/Total/'+name+'/Best_237_r0.761969_p0.832675_f10.795755.pth'
+    name = 'dla_4'
+    # # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    # # Best_162_r0.762421_p0.838549_f10.798675.pth
+    model_path = '../.save/Total/'+name+'/Best_201_r0.770099_p0.840730_f10.803866.pth'
     data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
     gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
     save_path = '../.save/test/total/' + name #+ '_temp'
@@ -216,7 +224,7 @@ if __name__ == '__main__':
     # net = CRAFT(num_out=2, pretrained=False)
     # net = FaPN_ResNet("resnet50", 2, 1, True)
     # net = FaPN_VGG16_bn(num_out=2, pretrained=False)
-    net = get_dlaseg_net(34, heads={'seg_hm': 2}, head_conv=32)
+    net = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4, head_conv=256, bFSM=False)
     save_path = main(net, model_path, long_size,
                      scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
@@ -237,40 +245,9 @@ if __name__ == '__main__':
     # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
     #
 
+# 0.3
+# num_gt, num_det:  2214 2118
+# tiouRecall: 0.46 tiouPrecision: 0.651 tiouHmean: 0.539
+# {'precision': 0.868692070030896, 'recall': 0.7619692863595302, 'hmean': 0.8118383060635226}
 
-### Total
-# origin2
-# 1200  0.285 0.62    0.93, 0.978
-# tiouRecall: 0.477 tiouPrecision: 0.63 tiouHmean: 0.543
-# {'precision': 0.8304836345872008, 'recall': 0.7678410117434508, 'hmean': 0.7979347570992724}
-
-# origin_adam
-# 1200  0.285   0.62   0.93 0.97
-# tiouRecall: 0.304 tiouPrecision: 0.478 tiouHmean: 0.372
-# {'precision': 0.6879781420765028, 'recall': 0.568654019873532, 'hmean': 0.6226508407517308}
-
-#dla_3
-# 1350  0.285   0.56   0.93 0.97
-#  2.1467
-# tiouRecall: 0.451 tiouPrecision: 0.624 tiouHmean: 0.524
-# {'precision': 0.8470185728250245, 'recall': 0.7827461607949413, 'hmean': 0.8136150234741785}
-
-# head 32
-# 1400  0.2 0.56   0.93 0.97
-# tiouRecall: 0.473 tiouPrecision: 0.657 tiouHmean: 0.55
-# {'precision': 0.8679817905918058, 'recall': 0.7750677506775068, 'hmean': 0.8188976377952757}
-
-# head 32 rigid
-# 1250  0.2  0.56   0.93 0.97
-# tiouRecall: 0.465 tiouPrecision: 0.657 tiouHmean: 0.545
-# {'precision': 0.8725140234574197, 'recall': 0.7728093947606143, 'hmean': 0.8196407185628742}
-
-###
-### CTW1500
-# 1000 0.295   0.56   0.93  0.972 180
-# 4.4671
-# tiouRecall: 0.452 tiouPrecision: 0.63 tiouHmean: 0.526
-# {'precision': 0.840673111349803, 'recall': 0.7653194263363755, 'hmean': 0.8012284593072855}
-
-
-
+# 0.4

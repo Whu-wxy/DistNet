@@ -5,7 +5,7 @@ dataset_type = 'total'    # ctw1500  total 在train_ic15.py和在train_ic17.py�
 
 trainroot = '../data/totaltext/train'
 testroot = '../data/totaltext/test'
-output_dir = '../.save/Total/dla_down_ratio4_rigid2'
+output_dir = '../.save/Total/dla_head256_fsm3'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -15,7 +15,8 @@ augment_list = ['flip', 'rotate', 'resize']   # ['flip', 'rotate', 'resize', 'ro
 random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 cp = False
-non_rigid_transform = True
+non_rigid_transform = False
+DCN = True
 
 # train config
 gpu_id = '0'
@@ -47,7 +48,7 @@ lr_scheduler='MultiStepLR'
 if lr_scheduler=='MultiStepLR':
     #MultiStepLR
     lr_gamma = 0.1     # 0.1
-    lr_decay_step = [10, 200]    #  [10, 100]
+    lr_decay_step = [10, 180]    #  [10, 100]
 elif lr_scheduler=='CyclicLR':
     #CyclicLR
     max_lr = 6e-5

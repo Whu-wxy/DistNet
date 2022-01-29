@@ -13,12 +13,12 @@ cmake and GCC >= 4.9
 
 Download and compile opencv(3.x) source code.
 
-pck-config: apt-get install pck-config
+**pck-config:** apt-get install pck-config
 
 # Datasets
 Download datasets from [Scene-Text-Detection](https://github.com/HCIILAB/Scene-Text-Detection).
 
-There are some conversion and reading tools in the **datasets** folder.
+**Note:** There are some conversion and reading tools in the **datasets** folder.
 
 # Train
 1. Copy the contents of the corresponding configuration file in the configs folder to config.py
@@ -43,8 +43,9 @@ Total-Text | IC17 | 84.4 | 78.9 | 81.6
 **DLA34 without pretrain**
 dataset | precision | recall | F-measure
 ----  | --------- | ------ | ---------
-Total-Text | 85.27 | 79.49 | 82.28
-CTW1500 | 84.07 | 76.53 | 80.12
+Total-Text | 85.33 | 79.58 | 82.36
+CTW1500 | 85.58 | 77.77 | 81.49
+IC15 | 88.55 | 78.53 | 83.24
 
 # Visualization
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")

@@ -55,14 +55,16 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
 
 if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
-    long_size = 2200     #2240
+    long_size = 2000     #2240
     scale = 1   # Best_340_r0.773712_p0.847574_f10.808960.pth
     # model_path = '../save/ic15/vgg_test_distv2_IC15/Best_488_r0.482427_p0.904332_f10.629199.pth'
-    model_path = '../.save/IC15/dla4/Best_255_r0.614829_p0.872864_f10.721469.pth'
-
+    # dla4/Best_255_r0.614829_p0.872864_f10.721469.pth
+    # dla_CNN/Best_138_r0.635532_p0.866142_f10.733130.pth
+    # dla5/Best_240_r0.632643_p0.886042_f10.738202.pth
+    model_path = '../.save/IC15/dla_CNN/Best_138_r0.635532_p0.866142_f10.733130.pth'
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt
-    save_path = '../.save/test/ic15/dla4'
+    save_path = '../.save/test/ic15/dla_CNN'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 
@@ -75,7 +77,7 @@ if __name__ == '__main__':
 
     # net = FPN_SCNet('scnet50_v1d', 2,  pretrained=False, scale=scale)
     # net = CRAFT(num_out=2, pretrained=False, scale=scale)
-    net = get_dlaseg_net(34, heads={'seg_hm': 2})
+    net = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4, head_conv=256, bFSM=False)
 
     save_path = main(net, model_path, long_size, scale, data_path, save_path, gpu_id=gpu_id, fast_test=fast_test)
 
@@ -98,11 +100,3 @@ if __name__ == '__main__':
     # print_model_parm_nums(net)
     #show_summary(net, 'E:/summery.xlsx')
     # print(cal_recall_precison_f1('/data2/dataset/ICD151/test/gt', '/data1/zj/tensorflow_PSENet/tmp/'))
-
-# dla2
-# 2200  0.295 0.56 0.93  0.95 250
-# fps:3.26681
-# {'precision': 0.8624733475479744, 'recall': 0.7790081848820414, 'hmean': 0.8186187705540097, 'AP': 0}
-
-# 0.95 0.98
-# {'precision': 0.8932487016733988, 'recall': 0.745305729417429, 'hmean': 0.8125984251968504, 'AP': 0}

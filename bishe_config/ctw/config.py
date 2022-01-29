@@ -5,7 +5,7 @@ dataset_type = 'ctw1500'    # ctw1500  total 在train_ic15.py和在train_ic17.py
 
 trainroot = '../data/ctw1500/train'
 testroot = '../data/ctw1500/test'
-output_dir = '../.save/ctw1500/dla_fsm'
+output_dir = '../.save/ctw1500/dla_CNN'
 eval_script = 'iou'   # deteval, iou, 2013
 data_shape = 640    # 640
 
@@ -114,5 +114,4 @@ def print():
     with open(output_dir+'/config.json', 'w') as f:
         json.dump(tem_d, f, indent=4)
     return pformat(tem_d)
-
 

@@ -473,7 +473,7 @@ if __name__ == '__main__':
     #model = FPN_ResNet(backbone=config.backbone, pretrained=config.pretrained, result_num=2)
 
     # model = CRAFT(num_out=2, pretrained=True)
-    model = get_dlaseg_net(34, heads={'seg_hm': 2})
+    model = get_dlaseg_net(34, heads={'seg_hm': 2}, down_ratio=4, head_conv=256, bFSM=False)
 
     # model = CRAFT_test(num_out=2, pretrained=True)
 

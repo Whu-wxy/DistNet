@@ -187,12 +187,12 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     scale = 1
 
-    long_size = 1000
-    name = 'dla'
+    long_size = 1150
+    name = 'dla_CNN'
     # dla   Best_93_r0.745763_p0.839633_f10.789919.pth
     # dla_CNN  Best_159_r0.721317_p0.853452_f10.781841.pth
     data_type = 'ctw1500'   # ctw1500/total
-    model_path = '../.save/ctw1500/'+name+'/Best_93_r0.745763_p0.839633_f10.789919.pth'
+    model_path = '../.save/ctw1500/'+name+'/Best_159_r0.721317_p0.853452_f10.781841.pth'
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
     save_path = '../.save/test/ctw1500/' + name
@@ -200,15 +200,16 @@ if __name__ == '__main__':
 # dla_down_ratio4_rigid   Best_180_r0.763324_p0.833333_f10.796794.pth
     # dla34_3  Best_162_r0.762421_p0.838549_f10.798675.pth
     # dla_head256_fsm  Best_171_r0.757001_p0.848608_f10.800191.pth
-    long_size = 1350  # 1050
-    data_type = 'total'  # ctw1500/total
-    name = 'dla_4'
-    # # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
-    # # Best_162_r0.762421_p0.838549_f10.798675.pth
-    model_path = '../.save/Total/'+name+'/Best_201_r0.770099_p0.840730_f10.803866.pth'
-    data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
-    gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
-    save_path = '../.save/test/total/' + name #+ '_temp'
+    # dla_head256_woDCN Best_174_r0.754291_p0.818627_f10.785143.pth
+    # long_size = 1350  # 1050
+    # data_type = 'total'  # ctw1500/total
+    # name = 'dla_head256_woDCN'
+    # # # model_path = '../save/Total/distv2_Total_exdata333/Best_164_r0.781843_p0.808123_f10.794766.pth'
+    # # # Best_162_r0.762421_p0.838549_f10.798675.pth
+    # model_path = '../.save/Total/'+name+'/Best_174_r0.754291_p0.818627_f10.785143.pth'
+    # data_path = '../data/totaltext/test/img'  # ../data/totaltext/test/img
+    # gt_path = '../data/totaltext/test/gt'  # ../data/totaltext/test/gt
+    # save_path = '../.save/test/total/' + name #+ '_temp'
 
 
     gpu_id = 0
@@ -244,10 +245,3 @@ if __name__ == '__main__':
     # y = net(x)
     # print('model prediction time(512*512):', time.time() - start)  # 18->4.5  50->5.8
     #
-
-# 0.3
-# num_gt, num_det:  2214 2118
-# tiouRecall: 0.46 tiouPrecision: 0.651 tiouHmean: 0.539
-# {'precision': 0.868692070030896, 'recall': 0.7619692863595302, 'hmean': 0.8118383060635226}
-
-# 0.4

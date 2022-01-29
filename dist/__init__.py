@@ -83,11 +83,11 @@ def decode(preds, scale):
 
     # plt.imshow(preds.cpu().numpy() * 255)
     # plt.show()
-    region = torch.where(preds >= 0.295, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
+    region = torch.where(preds >= 0.2, ones_tensor, zeros_tensor)  # 17:0.285   15:0.295
     # plt.imshow(region.cpu().numpy() * 255)
     # plt.show()
 
-    center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
+    center = torch.where(preds >= 0.605, ones_tensor, zeros_tensor)   # 17:0.54   15:0.64
 
 
     region = region.to(device='cpu', non_blocking=False).numpy()
@@ -98,7 +98,7 @@ def decode(preds, scale):
     #17: 0.91, 0.98, 250
     #15: 0.95, 0.988, 250   extData:0.95,0.976
 
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.95, area_threld) # 93, 97
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.96, area_threld) # 93, 97
 
     # label_num, label_img = cv2.connectedComponents(pred.astype(np.uint8), connectivity=4)
     # print('label_num: ', label_num)
@@ -161,12 +161,12 @@ def decode_curve(preds, scale):
     zeros_tensor = torch.zeros_like(preds, dtype=torch.float32)
 
     #CTW
-    # region = torch.where(preds >= 0.22, ones_tensor, zeros_tensor)   # 0.295   0.25
-    # center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)     # 0.6     0.6
+    region = torch.where(preds >= 0.22, ones_tensor, zeros_tensor)   # 0.295   0.25
+    center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)     # 0.6     0.6
 
     #Total
-    region = torch.where(preds >= 0.2, ones_tensor, zeros_tensor)  # 0.285  0.2
-    center = torch.where(preds >= 0.4, ones_tensor, zeros_tensor)   # 0.56 0.62
+    # region = torch.where(preds >= 0.2, ones_tensor, zeros_tensor)  # 0.285  0.2
+    # center = torch.where(preds >= 0.62, ones_tensor, zeros_tensor)   # 0.56 0.62
 
     region = region.to(device='cpu', non_blocking=False).numpy()
     center = center.to(device='cpu', non_blocking=False).numpy()
@@ -181,12 +181,12 @@ def decode_curve(preds, scale):
     # cv2.imwrite('../bi_region.jpg', bi_region * 255)
 
     #CTW
-    # area_threld = int(200 * scale)   # 180 0.93, 0.97    best 180 0.93, 0.967
-    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.9637, area_threld)
+    area_threld = int(180 * scale)   # 180 0.93, 0.97    best 180 0.93, 0.967
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.967, area_threld)  # 9637
     #
     #Total
-    area_threld = int(300 * scale)   # 300
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.963, area_threld) #0.927, 0.967
+    # area_threld = int(300 * scale)   # 300
+    # pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.963, area_threld) #0.927, 0.967
 
     bbox_list = []
     label_values = int(np.max(pred))

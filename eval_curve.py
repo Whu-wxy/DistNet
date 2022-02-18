@@ -187,12 +187,12 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str('0')
     scale = 1
 
-    long_size = 1150
-    name = 'dla_CNN'
+    long_size = 1000
+    name = 'dla'
     # dla   Best_93_r0.745763_p0.839633_f10.789919.pth
     # dla_CNN  Best_159_r0.721317_p0.853452_f10.781841.pth
     data_type = 'ctw1500'   # ctw1500/total
-    model_path = '../.save/ctw1500/'+name+'/Best_159_r0.721317_p0.853452_f10.781841.pth'
+    model_path = '../.save/ctw1500/'+name+'/Best_93_r0.745763_p0.839633_f10.789919.pth'
     data_path = '../data/ctw1500/test/img'  #../data/totaltext/test/img
     gt_path = '../data/ctw1500/test/gt'   # ../data/totaltext/test/gt
     save_path = '../.save/test/ctw1500/' + name

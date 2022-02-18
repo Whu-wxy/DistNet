@@ -455,7 +455,7 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
         #     resFile + '\t"IoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})",\t"TIoU: (P: {:.3f}. R: {:.3f}. F: {:.3f})".\n'.format(
         #         precision, recall, hmean, tiouPrecision, tiouRecall, tiouHmean))
 
-        # fper_.writelines(resFile + ', {:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
+        fper_.writelines(resFile + ', {:.3f}, {:.3f}, {:.3f}\n'.format(precision, recall, hmean))
         try:
             totalNumGtPols += len(gtPols)
             totalNumDetPols += len(detPols)

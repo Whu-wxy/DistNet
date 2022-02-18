@@ -16,7 +16,7 @@ random_scales = [0.5, 1, 2.0, 3.0]    #[0.5, 1, 2.0, 3.0]
 uniform_scales = False
 cp = False
 non_rigid_transform = False
-DCN = False
+DCN = True
 
 # train config
 gpu_id = '0'

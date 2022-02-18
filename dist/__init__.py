@@ -162,7 +162,7 @@ def decode_curve(preds, scale):
 
     #CTW
     region = torch.where(preds >= 0.22, ones_tensor, zeros_tensor)   # 0.295   0.25
-    center = torch.where(preds >= 0.6, ones_tensor, zeros_tensor)     # 0.6     0.6
+    center = torch.where(preds >= 0.56, ones_tensor, zeros_tensor)     # 0.6     0.6
 
     #Total
     # region = torch.where(preds >= 0.2, ones_tensor, zeros_tensor)  # 0.285  0.2
@@ -181,8 +181,8 @@ def decode_curve(preds, scale):
     # cv2.imwrite('../bi_region.jpg', bi_region * 255)
 
     #CTW
-    area_threld = int(180 * scale)   # 180 0.93, 0.97    best 180 0.93, 0.967
-    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.967, area_threld)  # 9637
+    area_threld = int(200 * scale)   # 180 0.93, 0.97    best 180 0.93, 0.967
+    pred = dist_cpp(center.astype(np.uint8), region.astype(np.uint8), bi_region, 0.93, 0.9637, area_threld)  # 9637
     #
     #Total
     # area_threld = int(300 * scale)   # 300

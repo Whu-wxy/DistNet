@@ -42,7 +42,7 @@ def main(net, model_path, long_size, scale, path, save_path, gpu_id, fast_test):
         total_time += t
         model_total_time += model_time
         decode_total_time += decode_time
-        img = draw_bbox(img_path, boxes_list, color=(0, 0, 255))
+        img = draw_bbox(img_path, boxes_list, color=(0, 255, 0))
 
         cv2.imwrite(os.path.join(save_img_folder, '{}.jpg'.format(img_name)), img)
         np.savetxt(save_name, boxes_list.reshape(-1, 8), delimiter=',', fmt='%d')
@@ -61,10 +61,10 @@ if __name__ == '__main__':
     # dla4/Best_255_r0.614829_p0.872864_f10.721469.pth
     # dla_CNN/Best_138_r0.635532_p0.866142_f10.733130.pth
     # dla5/Best_240_r0.632643_p0.886042_f10.738202.pth
-    model_path = '../.save/IC15/dla_CNN/Best_138_r0.635532_p0.866142_f10.733130.pth'
+    model_path = '../.save/IC15/dla5/Best_240_r0.632643_p0.886042_f10.738202.pth'
     data_path = '../data/IC15/test/img'
     gt_path = '../data/IC15/test/gt'   # gt_2pts, gt
-    save_path = '../.save/test/ic15/dla_CNN'
+    save_path = '../.save/test/ic15/dla5'
     gpu_id = 0
     print('scale:{},model_path:{}'.format(scale,model_path))
 

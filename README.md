@@ -51,5 +51,11 @@ IC15 | 88.55 | 78.53 | 83.24
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")
 
 # Citation
-Please cite the related works in your publications if it helps your research:
-TODO
+Please cite the related works in your publications if it helps your research:     
+
+     @article{Wang2022ArbitraryshapedST,    
+       title={Arbitrary-shaped scene text detection by predicting distance map},    
+       author={Xinyu Wang and Yaohua Yi and Jibing Peng and Kaili Wang},   
+       journal={Applied Intelligence},    
+       year={2022}
+     }

@@ -47,6 +47,9 @@ Total-Text | 85.33 | 79.58 | 82.36
 CTW1500 | 85.58 | 77.77 | 81.49
 IC15 | 88.55 | 78.53 | 83.24
 
+# Models
+Download Trained **DLA34** models ![Baidu Drive](https://pan.baidu.com/s/1NuVyCw6ItavoyCyOVncxrg "Baidu Drive")(download code: 9iye). Models of VGG are missing.
+
 # Visualization
 ![Visualization](https://github.com/Whu-wxy/Text_Exp/blob/master/result.jpg "Visualization")
 
